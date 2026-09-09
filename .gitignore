@@ -1,5 +1,26 @@
+# dependencias
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# entorno
+.env*
+
+# vercel
+.vercel
+
+# varios
+.DS_Store
+*.pem
+npm-debug.log*
+
 # La cosecha en bruto NO se publica: son negocios reales con sus fallos listados.
-# El motor sí; los resultados no.
+# El motor si; los resultados no.
 investigacion/datos/
-.env
-.env.*

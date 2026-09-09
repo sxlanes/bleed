@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/* Un solo fondo en toda la pagina. Nada de blanco plano. */
+:root {
+  --tinta:        #0e1113;
+  --tinta-2:      #161a1d;
+  --papel:        #f4f1ea;
+  --papel-tenue:  #cfc9bd;
+  --papel-debil:  #9a948a;
+  --linea:        #2a2f33;        /* separadores decorativos */
+  --linea-control:#626b72;        /* bordes de control: 3,22:1 sobre el campo */
+  --acento:       #d8613c;
+  --verde:        #6fae8f;
+
+  --fuente:  var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  --mono:    var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+@theme inline {
+  --color-background: var(--tinta);
+  --color-foreground: var(--papel);
+  --font-sans: var(--fuente);
+  --font-mono: var(--mono);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--tinta);
+  color: var(--papel);
+  font-family: var(--fuente);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* El movimiento se gana su sitio: solo entrada, y solo una vez. */
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+.entra { animation: entrar .5s cubic-bezier(.22,.61,.36,1) both; }
+.entra-2 { animation-delay: .09s; }
+.entra-3 { animation-delay: .18s; }
+.entra-4 { animation-delay: .27s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .entra { animation: none; }
+}
