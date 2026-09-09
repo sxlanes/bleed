@@ -1,0 +1,7 @@
+[out:json][timeout:60];
+area["name"="Málaga"]["admin_level"="8"]->.a;
+(
+  node["amenity"="restaurant"]["website"](area.a);
+  node["amenity"="fast_food"]["website"](area.a);
+);
+out body 300;
