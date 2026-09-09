@@ -1,0 +1,675 @@
+.pagina {
+  min-height: 100dvh;
+  background: var(--tinta);
+  color: var(--papel);
+  font-family: var(--fuente);
+  padding: clamp(1rem, 3vw, 2.25rem);
+  max-width: 76rem;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+.cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--linea);
+}
+
+.marca {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.nombreMarca {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.selloMarca {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--papel-debil);
+}
+
+.volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--papel-tenue);
+  text-decoration: none;
+  padding: 0.5rem 0.85rem;
+  background: var(--tinta-2);
+  border: 1px solid var(--linea-control);
+  border-radius: 6px;
+  transition: background 140ms ease;
+}
+
+.volver:hover {
+  background: #232a2f;
+}
+
+.negocioHero {
+  margin: 2rem 0 2.5rem;
+}
+
+.subtituloNegocio {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--papel-debil);
+  margin-bottom: 0.5rem;
+}
+
+.titular {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.enfasisAcento {
+  color: var(--acento);
+  font-style: italic;
+}
+
+.enfasisVerde {
+  color: var(--verde);
+}
+
+.etiquetasFila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  line-height: 1;
+  background: var(--tinta-2);
+  border: 1px solid var(--linea);
+  color: var(--papel-tenue);
+}
+
+.badgeVerde {
+  border-color: #3b5a49;
+  color: var(--verde);
+}
+
+.badgeAcento {
+  border-color: #6a3424;
+  color: var(--acento);
+}
+
+.bleedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1rem;
+  margin: 2rem 0 2.5rem;
+}
+
+.tarjetaTotal {
+  background: var(--tinta-2);
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.tarjetaTotalAcento {
+  border-color: #5c2718;
+}
+
+.tarjetaTotalVerde {
+  border-color: #274936;
+}
+
+.etiquetaCifra {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--papel-debil);
+  margin: 0 0 0.5rem;
+}
+
+.granNumero {
+  font-family: var(--mono);
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  font-weight: 600;
+  line-height: 1;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.03em;
+}
+
+.numeroAcento {
+  color: var(--acento);
+}
+
+.numeroVerde {
+  color: var(--verde);
+}
+
+.descripcionCifra {
+  font-size: 0.875rem;
+  color: var(--papel-tenue);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.pestanas {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--linea);
+  margin: 2.5rem 0 1.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.pestanaBoton {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0.75rem 1rem;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  color: var(--papel-debil);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 140ms ease;
+}
+
+.pestanaBoton:hover {
+  color: var(--papel);
+}
+
+.pestanaBotonActiva {
+  color: var(--papel);
+  border-bottom-color: var(--acento);
+  font-weight: 500;
+}
+
+.seccionTitulo {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.5rem;
+}
+
+.seccionSubtitulo {
+  font-size: 0.9375rem;
+  color: var(--papel-tenue);
+  margin: 0 0 1.5rem;
+  max-width: 48rem;
+}
+
+.simuladorCaja {
+  background: var(--tinta-2);
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.simuladorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--linea);
+}
+
+.simuladorTitulo {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.simuladorControles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1.25rem;
+}
+
+.controlItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.controlEtiqueta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--papel-debil);
+}
+
+.controlValor {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--papel);
+}
+
+.sliderInput {
+  accent-color: var(--acento);
+  width: 100%;
+  cursor: pointer;
+}
+
+.listaFugas {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.tarjetaFuga {
+  background: var(--tinta-2);
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: border-color 140ms ease;
+}
+
+.tarjetaFugaCritica {
+  border-left: 4px solid var(--acento);
+}
+
+.tarjetaFugaAlta {
+  border-left: 4px solid #c97d39;
+}
+
+.tarjetaFugaMedia {
+  border-left: 4px solid var(--linea-control);
+}
+
+.fugaTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.fugaTitulo {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.fugaMonto {
+  font-family: var(--mono);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--acento);
+}
+
+.fugaExplicacion {
+  font-size: 0.9375rem;
+  color: var(--papel-tenue);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.formulaBloque {
+  background: var(--tinta);
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  color: var(--papel);
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+.formulaEtiqueta {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--papel-debil);
+  margin-bottom: 0.25rem;
+}
+
+.supuestosLista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.supuestoItem {
+  font-size: 0.8125rem;
+  color: var(--papel-debil);
+  line-height: 1.4;
+}
+
+.supuestoValor {
+  color: var(--papel-tenue);
+  font-weight: 500;
+}
+
+.remedioBloque {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--papel);
+  background: #141f19;
+  border: 1px solid #234633;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+}
+
+.remedioHoras {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--verde);
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* Mockup de la Prueba / Fix */
+.mockupGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 900px) {
+  .mockupGrid {
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+}
+
+.mockupTelefono {
+  background: var(--tinta-2);
+  border: 1px solid var(--linea-control);
+  border-radius: 24px;
+  padding: 1.25rem;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  max-width: 25rem;
+  margin-inline: auto;
+}
+
+.telefonoBarra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--papel-debil);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--linea);
+  margin-bottom: 1rem;
+}
+
+.mockupProductos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 28rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.productoItem {
+  display: flex;
+  gap: 0.85rem;
+  background: var(--tinta);
+  border: 1px solid var(--linea);
+  border-radius: 10px;
+  padding: 0.75rem;
+  align-items: center;
+}
+
+.productoFoto {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #202428;
+  flex-shrink: 0;
+}
+
+.productoInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.productoNombre {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.productoDesc {
+  font-size: 0.75rem;
+  color: var(--papel-debil);
+  margin: 0 0 0.35rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+.productoPrecio {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--papel);
+}
+
+.botonAnadir {
+  background: var(--papel);
+  color: var(--tinta);
+  border: 0;
+  border-radius: 6px;
+  padding: 0.45rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease;
+  white-space: nowrap;
+}
+
+.botonAnadir:hover {
+  background: #ffffff;
+}
+
+.mockupCarrito {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--linea);
+}
+
+.botonPedirDirecto {
+  width: 100%;
+  padding: 0.85rem;
+  background: var(--verde);
+  color: #0b1a12;
+  border: 0;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.botonPedirDirecto:hover {
+  background: #84c9a7;
+}
+
+.comparativaCaja {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.comparativaFila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.columnaAgregador {
+  background: #1f1412;
+  border: 1px solid #4a2118;
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+.columnaDirecto {
+  background: #101c15;
+  border: 1px solid #1f422e;
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+.columnaTitulo {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.columnaLista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+/* Dossier Ejecutivo */
+.dossierContenedor {
+  background: var(--tinta-2);
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  margin-bottom: 3rem;
+}
+
+.dossierAcciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--linea);
+}
+
+.botonAccion {
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 140ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.botonPrimario {
+  background: var(--acento);
+  border: 1px solid var(--acento);
+  color: #fff;
+}
+
+.botonPrimario:hover {
+  background: #e66f4a;
+}
+
+.botonSecundario {
+  background: var(--tinta);
+  border: 1px solid var(--linea-control);
+  color: var(--papel);
+}
+
+.botonSecundario:hover {
+  background: #20262b;
+}
+
+.dossierTexto {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--papel);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dossierTexto h1 {
+  font-size: 1.35rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.dossierTexto h2 {
+  font-size: 1.15rem;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.dossierTexto blockquote {
+  border-left: 3px solid var(--acento);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: var(--papel-tenue);
+}
+
+.pieDePagina {
+  border-top: 1px solid var(--linea);
+  padding-top: 1.5rem;
+  margin-top: 3rem;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.8125rem;
+  color: var(--papel-debil);
+}
+
+.pieDePagina a {
+  color: var(--papel-tenue);
+  text-decoration: underline;
+}

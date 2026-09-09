@@ -121,6 +121,49 @@
   color: var(--papel-debil);
 }
 
+.casosReales {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--linea);
+}
+
+.casosEtiqueta {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--papel-debil);
+  margin-bottom: 0.75rem;
+}
+
+.casosFila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.casoBoton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 0.5rem 0.85rem;
+  background: var(--tinta-2);
+  border: 1px solid var(--linea-control);
+  border-radius: 8px;
+  color: var(--papel-tenue);
+  text-decoration: none;
+  transition: all 140ms ease;
+}
+
+.casoBoton:hover {
+  background: #23292e;
+  color: var(--papel);
+  border-color: var(--papel-debil);
+}
+
 .pieDePagina {
   border-top: 1px solid var(--linea);
   padding-top: 1.25rem;
@@ -132,3 +175,4 @@
   font-size: 0.875rem;
   color: var(--papel-debil);
 }
+

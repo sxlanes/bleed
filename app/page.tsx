@@ -1,4 +1,6 @@
+import Link from "next/link";
 import styles from "./pagina.module.css";
+import { BENCHMARK_CASES } from "@/lib/benchmarks";
 
 export default function Portada() {
   return (
@@ -44,6 +46,23 @@ export default function Portada() {
           <p className={styles.pie}>
             Un minuto. Sin cuenta, sin tarjeta, sin instalar nada.
           </p>
+
+          <div className={styles.casosReales}>
+            <span className={styles.casosEtiqueta}>
+              O prueba con un caso real del estudio de Málaga:
+            </span>
+            <div className={styles.casosFila}>
+              {BENCHMARK_CASES.map((caso) => (
+                <Link
+                  key={caso.slug}
+                  href={`/informe?demo=${caso.slug}`}
+                  className={styles.casoBoton}
+                >
+                  <span>{caso.name}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
         </form>
       </section>
 
