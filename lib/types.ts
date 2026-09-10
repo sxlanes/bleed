@@ -70,6 +70,9 @@ export interface LeakAssumption {
   label: string;
   value: string;
   citation: string;
+  /** Present when a calibrated constant backs this assumption. Claiming a
+      source the reader cannot open is not the same as citing one. */
+  sourceUrl?: string;
 }
 
 export interface Leak {

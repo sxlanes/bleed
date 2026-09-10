@@ -402,6 +402,19 @@ export default function InformeView({ initialReport }: Props) {
                             <strong>{ass.label}:</strong> <span className={styles.supuestoValor}>{ass.value}</span>
                             <div style={{ fontSize: "0.75rem", color: "var(--ash)", marginTop: "0.15rem", fontFamily: "var(--font-plex-mono)" }}>
                               {ass.citation}
+                              {ass.sourceUrl && (
+                                <>
+                                  {" "}
+                                  <a
+                                    href={ass.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={styles.sourceLink}
+                                  >
+                                    Open source
+                                  </a>
+                                </>
+                              )}
                             </div>
                           </li>
                         ))}

@@ -996,3 +996,17 @@ input[type="range"]:focus-visible {
 *:focus {
   /* Let user-agent or custom focus-visible handle it */
 }
+
+/* A cited source the reader cannot open is not a citation.
+   White #e8e6e1 on the panel #14171a is 13.9:1; the link red stays above 4.5:1. */
+.sourceLink {
+  color: var(--bleed);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+.sourceLink:hover { color: var(--bone); }
+.sourceLink:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 2px;
+}

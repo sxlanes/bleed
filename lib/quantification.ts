@@ -70,16 +70,19 @@ export function calculateLeaks(
           label: "Average ticket",
           value: `${params.ticketMedio} EUR`,
           citation: `${TICKET.fuente} (${TICKET.fecha}). Range ${TICKET.minimo}-${TICKET.maximo} EUR.`,
+          sourceUrl: TICKET.url,
         },
         {
           label: "Aggregator commission",
           value: `${params.comisionAgregadorPct}%`,
           citation: `${COMMISSION_FULL.fuente} (${COMMISSION_FULL.fecha}). ${COMMISSION_FULL.advertencia ?? ""}`.trim(),
+          sourceUrl: COMMISSION_FULL.url,
         },
         {
           label: "Share that would return to a direct channel",
           value: `${params.pctRecuperableCanalPropio}%`,
           citation: `${DIRECT_PREFERENCE.fuente} (${DIRECT_PREFERENCE.fecha}). ${DIRECT_PREFERENCE.advertencia ?? ""}`.trim(),
+          sourceUrl: DIRECT_PREFERENCE.url,
         },
         {
           label: "Daily order volume",
@@ -134,12 +137,13 @@ export function calculateLeaks(
         {
           label: "Homepage image weight",
           value: `${audit.imgKb} KB`,
-          citation: "Sum of image bytes transferred on the main page during this audit.",
+          citation: "Measured live during this audit: sum of image bytes transferred on the main page.",
         },
         {
           label: "Conversion drop per extra second",
           value: `${CONVERSION_DROP_PER_SECOND.valor} points/s`,
           citation: `${CONVERSION_DROP_PER_SECOND.fuente} (${CONVERSION_DROP_PER_SECOND.fecha}). ${CONVERSION_DROP_PER_SECOND.advertencia ?? ""}`.trim(),
+          sourceUrl: CONVERSION_DROP_PER_SECOND.url,
         },
         {
           label: "Baseline conversion of hungry visits",
@@ -174,12 +178,13 @@ export function calculateLeaks(
         {
           label: "Detected stack",
           value: "WordPress + WooCommerce",
-          citation: "Identified from plugin paths and the Store API during this audit.",
+          citation: "Measured live during this audit: identified from plugin paths and the Store API.",
         },
         {
           label: "Digital share of restaurant spend",
           value: `${DIGITAL_CHANNEL_SHARE.valor}%`,
           citation: `${DIGITAL_CHANNEL_SHARE.fuente} (${DIGITAL_CHANNEL_SHARE.fecha}). ${DIGITAL_CHANNEL_SHARE.advertencia ?? ""}`.trim(),
+          sourceUrl: DIGITAL_CHANNEL_SHARE.url,
         },
         {
           label: "Fraction of the digital channel forfeited",
@@ -274,7 +279,7 @@ export function calculateLeaks(
         {
           label: "PHP status",
           value: audit.phpVersion ? `PHP ${audit.phpVersion}` : "unsupported",
-          citation: "The PHP Group official end-of-life calendar.",
+          citation: "Measured from the server headers during this audit, against The PHP Group official end-of-life calendar.",
         },
         {
           label: "Annual risk figure",
