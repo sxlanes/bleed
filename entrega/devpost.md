@@ -110,6 +110,12 @@ paper over it, the report declares what it could not read.
 - **A real field study**, 132 sites audited by hand, rather than assumed benchmarks.
 - **We said no to the two things that would have made the demo better and the product
   worse**: scraping the aggregators, and using vendor-funded statistics to compute money.
+- **The crawler's ethics are in the code, not in a claim.** It identifies itself as
+  `BleedAuditBot/1.0`, fetches and parses `robots.txt` before reading anything, stops if
+  a site says no, and throttles itself to three concurrent requests. We found this gap by
+  auditing ourselves: an earlier version spoofed a Chrome user agent while the README
+  promised ethical crawling. Declaring a posture you have not implemented is worse than
+  not having one.
 - **The businesses we audited are never named publicly.** They never agreed to have their
   figures published, so the pre-audited cases only resolve behind an environment flag and
   never in production.

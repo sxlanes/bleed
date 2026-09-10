@@ -40,6 +40,21 @@ websites in Málaga were sampled from OpenStreetMap and 132 audited one by one.
 The engine is public. The raw harvest is not: those are real businesses with their faults
 listed, and publishing that list would be a different product than this one.
 
+## How it crawls
+
+The audit reads someone else's website, so the rules are in the code, not in a promise:
+
+- **It says who it is.** `BleedAuditBot/1.0` with a contact URL. No spoofed browser string.
+- **It asks first.** `robots.txt` is fetched and parsed before anything else. A disallow
+  that names our agent, or a blanket disallow of the root, ends the audit and the report
+  says why. An unreachable `robots.txt` is not consent, but it is not a refusal either.
+- **It goes slowly.** Image checks run in batches of three with a pause between them.
+  On the other end is a small restaurant's server.
+- **It never touches the aggregators.** Comparing a dish's price against Glovo or Uber
+  Eats would be the most persuasive thing this product could show. Getting it would mean
+  defeating a deliberate block and disguising our traffic, so we do not. The commission
+  rate is cited from published sector figures and the report says where it comes from.
+
 ## Run it
 
 ```bash
