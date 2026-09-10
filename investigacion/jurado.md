@@ -193,3 +193,47 @@ Suma proyectada: **5,93 → 7,86**.
 
 Quedan 4 dias. El punto 1 es el unico que no puedo hacer yo, y vale mas que los otros
 tres juntos.
+
+---
+
+# Bucle, vuelta 2 — 11-sep-2026
+
+**Orquestacion:** 2 workers `agy` implementando en worktrees, mas un **consejo de tres
+modelos** (gemini-3.1-pro, claude-sonnet-4-6, gpt-oss-120b) puntuando el proyecto como
+jurado. Se descarto `llm-council` de Karpathy porque exige una clave de OpenRouter que no
+tenemos; su protocolo se replico con los modelos disponibles a coste cero.
+
+El consejo puntuo **6,3 y 6,55**, cerca de mi 5,93. Y encontro dos cosas que yo no vi:
+
+1. **Las citas eran texto plano.** `lib/calibracion.ts` guardaba la URL de cada constante
+   y el informe no la usaba. Deciamos "cada cifra tiene fuente" y el lector no podia
+   abrir ni una. Corregido: `LeakAssumption.sourceUrl` y enlace en el informe.
+2. **Cero pruebas sobre la aritmetica del dinero.** `calculateLeaks` produce una cifra
+   sobre la que un dueno real puede actuar y no tenia una sola prueba. Corregido: nueve.
+
+**Lo que se construyo en esta vuelta**
+
+| Cambio | Criterio que toca |
+|---|---|
+| `lib/triage.ts`: etapa de modelo con salida estructurada que decide y ordena las fugas de un catalogo cerrado, con validacion posterior y fallback determinista | Technical, Innovation |
+| Nueve pruebas sobre la aritmetica y sobre las promesas de honestidad, mas CI en GitHub Actions | Technical |
+| Fuentes clicables en cada supuesto | Impact |
+| Panel de procedencia: las cuatro etapas y que motor ejecuto cada una | Technical, Innovation |
+| Accesibilidad: foco visible, pestanas por teclado con roles ARIA, contrastes calculados y anotados | UX |
+| Condensacion real sobre el campo rojo, con escurridos y presupuesto de movimiento | UX |
+| Deck de 10 diapositivas y texto de Devpost redactado entero | Presentation |
+
+**Re-puntuacion**
+
+| Criterio | Peso | V1 | V2 | Por que |
+|---|---|---|---|---|
+| Technical Implementation | 25 % | 6,3 | **7,8** | El agujero de la IA esta cerrado: hay etapa de modelo, salida estructurada, validacion y fallback. Y ahora hay pruebas y CI. Sigue faltando la capa de navegador. |
+| Problem Solving & Impact | 25 % | 7,7 | **8,0** | Las fuentes se pueden abrir y las promesas de honestidad estan cubiertas por pruebas, no solo afirmadas. Sigue sin validacion con un dueno real. |
+| Innovation & Creativity | 20 % | 6,5 | **7,3** | "El modelo juzga, el codigo calcula" ya no es una frase: es la arquitectura, y responde a la pregunta de la rubrica sobre aplicacion creativa de la IA. |
+| User Experience & Design | 15 % | 7,5 | **8,5** | Accesibilidad medida, estados de error, panel de procedencia y una portada que nadie va a confundir con una plantilla. |
+| Presentation & Demo | 15 % | 0,0 | **3,5** | Existen el deck y todo el texto de la entrega. **No existe el video y no se ha enviado el formulario.** |
+| **TOTAL** | | **5,93** | **7,21** | |
+
+**Lo que queda, y es una sola cosa.** Grabar los cinco minutos y enviar el formulario.
+Presentation pasaria de 3,5 a 8,5 y la nota final a **7,96**. Es el unico trabajo
+pendiente que no puedo hacer yo, y sigue siendo el de mayor retorno de todos.
