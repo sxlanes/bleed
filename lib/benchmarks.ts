@@ -355,7 +355,16 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
   },
 ];
 
+/**
+ * Los benchmarks son negocios reales de Málaga auditados de verdad. Nunca se
+ * les pidió permiso para publicar sus cifras, así que solo se resuelven cuando
+ * BLEED_DEMOS=1 (local y grabación del vídeo). En producción, findBenchmark no
+ * devuelve nada y /informe audita en vivo la URL que pegue el usuario.
+ */
+export const DEMOS_ENABLED = process.env.BLEED_DEMOS === "1";
+
 export function findBenchmark(query: string): BenchmarkCase | undefined {
+  if (!DEMOS_ENABLED) return undefined;
   const q = query.toLowerCase().trim();
   const cleanQ = q.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "");
   return BENCHMARK_CASES.find((b) => {
