@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateLeaks, DEFAULT_PARAMS } from "../lib/quantification.ts";
-import { constante } from "../lib/calibracion.ts";
-import type { AuditResult, TriageResult } from "../lib/types.ts";
+import { calculateLeaks, DEFAULT_PARAMS } from "../lib/quantification";
+import { constante } from "../lib/calibracion";
+import type { AuditResult, TriageResult } from "../lib/types";
 
 /**
  * This file exists because calculateLeaks turns a website into a number a real
