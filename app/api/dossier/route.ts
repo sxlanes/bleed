@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
 
     if (!report || !report.audit) {
       return NextResponse.json(
-        { error: "Se requiere un informe de auditoría completo 'report'" },
+        { error: "A complete 'report' audit object is required" },
         { status: 400 }
       );
     }
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: `Error generando dossier con Gemini: ${msg}` },
+      { error: `Dossier generation failed: ${msg}` },
       { status: 500 }
     );
   }

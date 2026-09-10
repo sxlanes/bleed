@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   if (!target) {
     return NextResponse.json(
-      { error: "Se requiere un parámetro 'url' o 'demo'" },
+      { error: "A 'url' or 'demo' parameter is required" },
       { status: 400 }
     );
   }
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: `Error al procesar la auditoría: ${msg}` },
+      { error: `Audit failed: ${msg}` },
       { status: 500 }
     );
   }
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     if (!target && !body.audit) {
       return NextResponse.json(
-        { error: "Se requiere una 'url' o un objeto 'audit'" },
+        { error: "A 'url' or an 'audit' object is required" },
         { status: 400 }
       );
     }
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: `Error al procesar la auditoría: ${msg}` },
+      { error: `Audit failed: ${msg}` },
       { status: 500 }
     );
   }
