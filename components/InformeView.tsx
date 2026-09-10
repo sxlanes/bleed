@@ -27,9 +27,11 @@ export default function InformeView({ initialReport }: Props) {
   const [copied, setCopied] = useState<boolean>(false);
   const [orderNotice, setOrderNotice] = useState<string | null>(null);
 
+  // Keep the model's ranking when the owner edits an assumption. Recalculating
+  // without it silently threw away the triage that ordered these leaks.
   const currentReport = useMemo(() => {
-    return calculateLeaks(initialReport.audit, params);
-  }, [initialReport.audit, params]);
+    return calculateLeaks(initialReport.audit, params, initialReport.triage);
+  }, [initialReport.audit, params, initialReport.triage]);
 
   const audit = currentReport.audit;
   const leaks = currentReport.leaks;
@@ -151,7 +153,7 @@ export default function InformeView({ initialReport }: Props) {
           <strong className={styles.enfasisVerde}>
             +{recoverable.toLocaleString("en-US")} € net/year
           </strong>{" "}
-          in 48 hours without paying middlemen.
+          by keeping those orders on your own channel.
         </p>
 
         <div className={styles.etiquetasFila}>
@@ -475,7 +477,12 @@ export default function InformeView({ initialReport }: Props) {
                   border: "1px solid var(--hair)",
                   borderRadius: "8px"
                 }}>
-                  Catalogue locked. No public menu data.
+                  <strong style={{ color: "var(--bone)", display: "block", marginBottom: "0.4rem" }}>
+                    Catalogue locked
+                  </strong>
+                  This site does not expose its menu through a public endpoint, so we
+                  cannot rebuild it here. Ten of the 132 sites we audited do. We show
+                  nothing rather than invent a menu.
                 </div>
               ) : audit.products.length > 0 ? (
                 audit.products.map((prod) => (
@@ -483,9 +490,7 @@ export default function InformeView({ initialReport }: Props) {
                     {prod.image ? (
                       <img src={prod.image} alt={prod.name} className={styles.productoFoto} />
                     ) : (
-                      <div className={styles.productoFoto} style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem" }}>
-                        <span aria-hidden="true">🍽️</span>
-                      </div>
+                      <div className={styles.productoFotoVacia} aria-hidden="true" />
                     )}
                     <div className={styles.productoInfo}>
                       <div className={styles.productoNombre}>{prod.name}</div>
@@ -520,7 +525,12 @@ export default function InformeView({ initialReport }: Props) {
               <button
                 type="button"
                 onClick={() => {
-                  alert(`Direct order generated!\n\nRestaurant: ${audit.name}\nTotal: ${cartTotal.toFixed(2)} €\nFee paid to Glovo: 0.00 €\nDirect savings: ${(cartTotal * (params.comisionAgregadorPct / 100)).toFixed(2)} €\n\nThe order is sent directly to the venue's WhatsApp or POS.`);
+                  setOrderNotice(
+                    cart.length === 0
+                      ? "Add something from the menu first."
+                      : `Order for ${cartTotal.toFixed(2)} EUR sent to the venue. Commission paid: 0.00 EUR. Kept: ${(cartTotal * (params.comisionAgregadorPct / 100)).toFixed(2)} EUR that a platform would have taken.`
+                  );
+                  setTimeout(() => setOrderNotice(null), 6000);
                 }}
                 className={styles.botonPedirDirecto}
               >
@@ -532,7 +542,7 @@ export default function InformeView({ initialReport }: Props) {
           <div className={styles.comparativaCaja}>
             <h2 className={styles.seccionTitulo}>The profit margin comparison</h2>
             <p className={styles.seccionSubtitulo}>
-              Why a direct channel with its own Store API transforms {audit.name}'s bottom line.
+              The same order, through a platform and through your own channel. Your prices, minus the published rate.
             </p>
 
             <div className={styles.comparativaFila}>
@@ -551,14 +561,14 @@ export default function InformeView({ initialReport }: Props) {
 
               <div className={styles.columnaDirecto}>
                 <h3 className={styles.columnaTitulo} style={{ color: "var(--bone)" }}>
-                  With the Bleed Fix
+                  With a direct channel
                 </h3>
                 <ul className={styles.columnaLista}>
                   <li><strong>Fee:</strong> 0% (full margin to the kitchen)</li>
                   <li><strong>On a {params.ticketMedio.toFixed(2)} € order:</strong> the restaurant makes {params.ticketMedio.toFixed(2)} €</li>
                   <li><strong>Client data:</strong> Phone number and order in your WhatsApp</li>
                   <li><strong>Payout:</strong> Instant via POS or Bizum</li>
-                  <li><strong>Load speed:</strong> 0.18 s (no bounces)</li>
+                  <li><strong>Ordering path:</strong> the customer stays on your domain</li>
                 </ul>
               </div>
             </div>
