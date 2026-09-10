@@ -10,15 +10,17 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500&display=swap" />
 <style>
   /* Bleed — a wall of arterial red. White type, one white cut down the left.
-     Single committed world: no light mode, no dark mode. It is the wound. */
+     Single committed world. Motion is deferential: fast in, settle, hold still. */
   :root {
     --red:      #cb1b22;
     --red-deep: #8e1013;
     --white:    #ffffff;
-    --white-2:  #f6dedf;   /* white carrying a whisper of the red */
+    --white-2:  #f6dedf;
 
     --display: "Anton", "Haettenschweiler", "Arial Narrow", sans-serif;
     --mono:    "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
     --rail: clamp(1.25rem, 5.5vw, 4rem);
     --pad:  clamp(3.5rem, 13vw, 9.5rem);
@@ -42,25 +44,15 @@
 
   ::selection { background: var(--white); color: var(--red); }
 
-  /* the cut — white on red now */
-  .rail {
+  /* film grain — static, premium texture over the flat red */
+  .grain {
     position: fixed;
-    inset: 0 auto 0 var(--rail);
-    width: 2px;
-    background: linear-gradient(180deg, var(--white) 0%, rgba(255,255,255,0.65) 60%, rgba(255,255,255,0) 100%);
-    transform: scaleY(0);
-    transform-origin: top;
-    animation: draw 780ms cubic-bezier(0.65,0,0.35,1) both;
-    z-index: 3;
-  }
-  .rail::after {
-    content: "";
-    position: absolute;
-    top: 0; left: -4px;
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--white);
-    animation: beat 1.7s ease-in-out 950ms infinite;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   #ambient {
@@ -68,8 +60,29 @@
     inset: 0;
     width: 100%; height: 100%;
     z-index: 0;
-    opacity: 0.5;
+    opacity: 0.42;
     pointer-events: none;
+  }
+
+  /* the cut */
+  .rail {
+    position: fixed;
+    inset: 0 auto 0 var(--rail);
+    width: 2px;
+    background: linear-gradient(180deg, var(--white) 0%, rgba(255,255,255,0.6) 58%, rgba(255,255,255,0) 100%);
+    transform: scaleY(0);
+    transform-origin: top;
+    animation: draw 900ms var(--ease) both;
+    z-index: 3;
+  }
+  .rail::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -3px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--white);
+    animation: beat 2s ease-in-out 1100ms infinite;
   }
 
   .shell {
@@ -87,7 +100,8 @@
     font-size: 1.4rem;
     letter-spacing: 0.26em;
     text-transform: uppercase;
-    animation: rise 560ms ease-out 160ms both;
+    opacity: 0;
+    animation: rise 700ms var(--ease) 150ms forwards;
   }
 
   main {
@@ -105,11 +119,15 @@
     font-size: clamp(3.1rem, 13vw, 8.5rem);
     text-wrap: balance;
   }
-  h1 span { display: block; animation: rise 660ms cubic-bezier(0.2,0.7,0.2,1) both; }
+  h1 span {
+    display: block;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: rise 820ms var(--ease) forwards;
+  }
   h1 .a { animation-delay: 280ms; }
   h1 .b {
-    animation-delay: 360ms;
-    /* the word bleeds out: white at the top, gone into the red at the foot */
+    animation-delay: 380ms;
     background: linear-gradient(179deg, var(--white) 8%, rgba(255,255,255,0.62) 48%, rgba(255,255,255,0.08) 96%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -117,14 +135,24 @@
     color: rgba(255,255,255,0.6);
   }
 
+  .field {
+    max-width: 40rem;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: rise 820ms var(--ease) 520ms forwards;
+  }
+
   form {
     display: flex;
-    max-width: 40rem;
-    border: 1.5px solid rgba(255,255,255,0.55);
+    position: relative;
+    border: 1.5px solid rgba(255,255,255,0.5);
     background: transparent;
-    animation: rise 660ms ease-out 480ms both;
+    transition: border-color 260ms var(--ease), box-shadow 260ms var(--ease);
   }
-  form:focus-within { border-color: var(--white); }
+  form:focus-within {
+    border-color: var(--white);
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.12);
+  }
 
   .c {
     display: flex;
@@ -133,6 +161,12 @@
     color: var(--white);
     border-right: 1.5px solid rgba(255,255,255,0.28);
     user-select: none;
+  }
+  .c i {
+    width: 2px;
+    height: 1.05em;
+    background: var(--white);
+    animation: caret 1.15s steps(1) infinite;
   }
 
   input {
@@ -145,11 +179,13 @@
     font-size: 0.95rem;
     padding: 1.05rem 0.95rem;
   }
-  input::placeholder { color: rgba(255,255,255,0.66); }
+  input::placeholder { color: rgba(255,255,255,0.62); }
   input:focus { outline: 0; }
 
   button {
     flex: 0 0 auto;
+    position: relative;
+    overflow: hidden;
     border: 0;
     background: var(--white);
     color: var(--red);
@@ -160,34 +196,67 @@
     text-transform: uppercase;
     padding: 0 1.6rem;
     cursor: pointer;
-    transition: background 130ms linear, color 130ms linear;
   }
-  button:hover { background: var(--white-2); }
+  /* a light sweeps across the button on hover — one pass, no loop */
+  button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(203,27,34,0.14) 50%, transparent 65%);
+    transform: translateX(-120%);
+    transition: transform 620ms var(--ease);
+  }
+  button:hover::after { transform: translateX(120%); }
   button:focus-visible { outline: 2px solid var(--white); outline-offset: 3px; }
+
+  .tally {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin: 1.15rem 0 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    color: rgba(255,255,255,0.6);
+  }
+  .tally .lab {
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+  }
+  .tally .val {
+    color: var(--white);
+    font-variant-numeric: tabular-nums;
+  }
+  .tally .rate { margin-left: auto; color: rgba(255,255,255,0.45); }
 
   footer {
     font-size: 0.7rem;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.55);
-    animation: rise 560ms ease-out 640ms both;
+    color: rgba(255,255,255,0.52);
+    opacity: 0;
+    animation: rise 700ms var(--ease) 680ms forwards;
   }
 
   @keyframes draw { to { transform: scaleY(1); } }
-  @keyframes rise { from { opacity: 0; transform: translateY(13px); } to { opacity: 1; transform: none; } }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  @keyframes caret { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
   @keyframes beat {
-    0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(255,255,255,0.5); }
-    45%      { transform: scale(1.18); opacity: 0.8; box-shadow: 0 0 0 7px rgba(255,255,255,0); }
+    0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+    40%      { transform: scale(1.14); opacity: 0.82; box-shadow: 0 0 0 6px rgba(255,255,255,0); }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .rail { animation: none; transform: scaleY(1); }
-    .rail::after { animation: none; }
-    .mark, h1 span, form, footer { animation: none; opacity: 1; transform: none; }
+    .rail::after, .c i { animation: none; }
+    .c i { opacity: 1; }
+    .mark, h1 span, .field, footer { animation: none; opacity: 1; transform: none; }
+    button::after { display: none; }
   }
 </style>
 </head>
 <body>
+<div class="grain" aria-hidden="true"></div>
 <div class="rail" aria-hidden="true"></div>
 <canvas id="ambient" aria-hidden="true"></canvas>
 
@@ -200,12 +269,19 @@
       <span class="b">bleeding.</span>
     </h1>
 
-    <form id="audit">
-      <span class="c" aria-hidden="true">&#9615;</span>
-      <label for="url" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Restaurant website</label>
-      <input id="url" name="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="paste a restaurant website" />
-      <button type="submit">Run</button>
-    </form>
+    <div class="field">
+      <form id="audit">
+        <span class="c" aria-hidden="true"><i></i></span>
+        <label for="url" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Restaurant website</label>
+        <input id="url" name="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="Paste the URL of your website" />
+        <button type="submit">Run</button>
+      </form>
+      <p class="tally">
+        <span class="lab">Session loss</span>
+        <span class="val" id="loss">&euro;0.0000</span>
+        <span class="rate">&euro;0.000152 / s</span>
+      </p>
+    </div>
   </main>
 
   <footer>leak audit &middot; M&aacute;laga</footer>
@@ -216,6 +292,18 @@
     "use strict";
     var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    /* session loss — quiet, precise, four decimals */
+    var perSec = 4800 / (365.25 * 24 * 3600);
+    var t0 = Date.now();
+    var loss = document.getElementById("loss");
+    function tally() {
+      var v = ((Date.now() - t0) / 1000) * perSec;
+      loss.textContent = "€" + v.toFixed(4);
+    }
+    tally();
+    setInterval(tally, 250);
+
+    /* ambient: faint white streaks falling near the cut */
     var canvas = document.getElementById("ambient");
     var ctx = null;
     try { ctx = canvas.getContext("2d"); } catch (e) {}
@@ -225,15 +313,15 @@
         var dpr = window.devicePixelRatio || 1;
         w = canvas.width = canvas.offsetWidth * dpr;
         h = canvas.height = canvas.offsetHeight * dpr;
-        var n = Math.round(Math.min(26, w / 70));
+        var n = Math.round(Math.min(24, w / 74));
         lines = [];
         for (var i = 0; i < n; i++) {
           lines.push({
             x: Math.pow(Math.random(), 1.7) * w,
             y: Math.random() * h,
-            len: 26 + Math.random() * 100,
-            v: 0.12 + Math.random() * 0.7,
-            a: 0.05 + Math.random() * 0.12
+            len: 24 + Math.random() * 92,
+            v: 0.1 + Math.random() * 0.6,
+            a: 0.04 + Math.random() * 0.1
           });
         }
       }
