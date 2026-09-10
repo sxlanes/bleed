@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bleed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+<style>
+  /* Bleed — an ICU monitor for a business.
+     Committed dark world: an operating theatre at 3 a.m. No light mode.
+     Every colour is painted explicitly so the page holds on any host ground. */
+  :root {
+    --void:        #08090b;
+    --void-raised: #101216;
+    --void-edge:   #1b1e22;
+    --bone:        #e8e6e1;
+    --bone-dim:    #b7b9b7;
+    --ash:         #8f9498;
+    --ash-faint:   #5c6165;
+    --bleed:       #ff2b2b;
+    --bleed-bright:#ff5a5a;
+    --bleed-deep:  #a30d12;
+    --clot:        #2a0e10;
+
+    --display: "Anton", "Arial Narrow", sans-serif;
+    --body:    "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --mono:    "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+    --rail-x:  clamp(1.35rem, 6vw, 4.5rem);
+    --gutter:  clamp(3.25rem, 13vw, 10rem);
+    --edge:    clamp(1.35rem, 5vw, 3rem);
+    --measure: 62ch;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--void);
+    color: var(--bone);
+    font-family: var(--body);
+    font-size: clamp(1rem, 0.96rem + 0.2vw, 1.075rem);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  img { max-width: 100%; }
+
+  ::selection { background: var(--bleed); color: var(--void); }
+
+  a { color: var(--bleed-bright); text-underline-offset: 3px; }
+
+  /* The cut. A red hairline running the whole height, the line every
+     other element hangs off. */
+  .rail {
+    position: fixed;
+    top: 0;
+    left: var(--rail-x);
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--bleed) 0%, var(--bleed-deep) 68%, rgba(163, 13, 18, 0) 100%);
+    transform: scaleY(0);
+    transform-origin: top;
+    animation: draw-rail 720ms cubic-bezier(0.7, 0, 0.3, 1) both;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .rail::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -3px;
+    width: 8px;
+    height: 8px;
+    background: var(--bleed);
+    border-radius: 50%;
+  }
+
+  #ambient {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .shell {
+    position: relative;
+    z-index: 2;
+    padding-left: var(--gutter);
+    padding-right: var(--edge);
+    max-width: 78rem;
+  }
+
+  /* ---- header ---- */
+  .top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1.1rem;
+    padding-top: clamp(1.5rem, 4vw, 2.75rem);
+    padding-bottom: clamp(3.5rem, 11vw, 8rem);
+    animation: rise 620ms ease-out 120ms both;
+  }
+  .wordmark {
+    font-family: var(--display);
+    font-size: 1.5rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--bone);
+    margin-right: 0.35em;
+  }
+  .tag {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ash);
+  }
+  .tag .sep { color: var(--bleed); padding: 0 0.5em; }
+  .top .status {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ash-faint);
+    margin-left: auto;
+  }
+
+  /* ---- hero ---- */
+  .hero { padding-bottom: clamp(3rem, 9vw, 6.5rem); }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    margin: 0 0 1.4rem;
+    line-height: 0.92;
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+    font-size: clamp(2.9rem, 11.5vw, 7.2rem);
+    text-wrap: balance;
+  }
+  h1 .l {
+    display: block;
+    animation: rise 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  h1 .l1 { animation-delay: 260ms; color: var(--bone); }
+  h1 .l2 { animation-delay: 340ms; }
+
+  .drip {
+    color: var(--bleed);
+    background: linear-gradient(178deg,
+      var(--bleed-bright) 0%,
+      var(--bleed) 34%,
+      var(--bleed-deep) 66%,
+      rgba(163, 13, 18, 0) 104%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .deck {
+    margin: 0;
+    max-width: var(--measure);
+    color: var(--bone-dim);
+    font-size: clamp(1.02rem, 0.98rem + 0.3vw, 1.2rem);
+    line-height: 1.62;
+    animation: rise 640ms ease-out 440ms both;
+  }
+  .deck b { color: var(--bone); font-weight: 700; }
+
+  /* ---- the meter: the largest thing on the page ---- */
+  .meter {
+    position: relative;
+    margin-top: clamp(2.75rem, 8vw, 5rem);
+    animation: rise 640ms ease-out 560ms both;
+  }
+  .meter::before {
+    content: "";
+    position: absolute;
+    left: -1.5rem;
+    top: 42%;
+    width: min(30rem, 80%);
+    height: 8rem;
+    background: radial-gradient(ellipse at left center, var(--clot) 0%, rgba(42, 14, 16, 0) 72%);
+    transform: translateY(-50%);
+    z-index: -1;
+    pointer-events: none;
+  }
+  .meter-label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ash);
+    margin-bottom: 0.6rem;
+  }
+  .amount {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    font-size: clamp(2.6rem, 8.5vw, 6.5rem);
+    color: var(--bleed);
+    display: flex;
+    align-items: baseline;
+    gap: 0.1em;
+    white-space: nowrap;
+  }
+  .amount .cur { color: var(--bleed-deep); font-size: 0.5em; }
+  .amount .blur { color: var(--bleed-deep); opacity: 0.75; }
+  .meter-caption {
+    margin: 1rem 0 0;
+    max-width: 46ch;
+    color: var(--ash);
+    font-size: 0.95rem;
+  }
+  .meter-caption strong { color: var(--bone-dim); font-weight: 500; }
+
+  .rates {
+    margin-top: 1.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border-top: 1px solid var(--void-edge);
+    border-bottom: 1px solid var(--void-edge);
+  }
+  .rate {
+    padding: 0.85rem 1.4rem 0.85rem 0;
+    margin-right: 1.4rem;
+    border-right: 1px solid var(--void-edge);
+    font-family: var(--mono);
+  }
+  .rate:last-child { border-right: 0; margin-right: 0; }
+  .rate .v {
+    display: block;
+    font-size: 1.05rem;
+    color: var(--bone);
+    font-variant-numeric: tabular-nums;
+  }
+  .rate .k {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ash-faint);
+    margin-top: 0.2rem;
+  }
+
+  /* ---- console ---- */
+  .console {
+    margin-top: clamp(3.5rem, 10vw, 6.5rem);
+    max-width: 46rem;
+  }
+  .console-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ash);
+  }
+  .console-label .c { color: var(--bleed); }
+  .prompt {
+    margin-top: 0.85rem;
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--void-edge);
+    background: var(--void-raised);
+  }
+  .prompt .caret {
+    display: flex;
+    align-items: center;
+    padding: 0 0.85rem;
+    color: var(--bleed);
+    font-family: var(--mono);
+    font-size: 1rem;
+    border-right: 1px solid var(--void-edge);
+    user-select: none;
+  }
+  .prompt input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--bone);
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    padding: 1rem 0.9rem;
+  }
+  .prompt input::placeholder { color: var(--ash-faint); }
+  .prompt input:focus { outline: 0; }
+  .prompt:focus-within { border-color: var(--bleed); }
+  .prompt button {
+    flex: 0 0 auto;
+    border: 0;
+    border-left: 1px solid var(--void-edge);
+    background: var(--bleed);
+    color: var(--void);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0 1.5rem;
+    cursor: pointer;
+    transition: background 130ms linear;
+  }
+  .prompt button:hover { background: var(--bleed-bright); }
+  .prompt button:focus-visible { outline: 2px solid var(--bone); outline-offset: -4px; }
+
+  .subnote {
+    margin: 0.8rem 0 0;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    color: var(--ash-faint);
+  }
+
+  .pipeline {
+    margin-top: 1.5rem;
+    border-left: 2px solid var(--bleed-deep);
+    padding-left: 1.1rem;
+    display: none;
+  }
+  .pipeline.on { display: block; }
+  .pipeline .step {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--ash);
+    padding: 0.28rem 0;
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  .pipeline .step.show { opacity: 1; transform: none; transition: opacity 220ms ease, transform 220ms ease; }
+  .pipeline .step .name { color: var(--bone); display: inline-block; width: 5.5em; }
+  .pipeline .step .ok { color: var(--bleed-bright); }
+  .pipeline .done {
+    margin-top: 0.9rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--bone-dim);
+    opacity: 0;
+  }
+  .pipeline .done.show { opacity: 1; transition: opacity 300ms ease; }
+  .pipeline .done a { font-weight: 500; }
+
+  /* ---- instruments ---- */
+  .instruments {
+    margin-top: clamp(4rem, 11vw, 7.5rem);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
+    border-top: 1px solid var(--void-edge);
+    border-left: 1px solid var(--void-edge);
+  }
+  .gauge {
+    border-right: 1px solid var(--void-edge);
+    border-bottom: 1px solid var(--void-edge);
+    padding: 1.4rem 1.4rem 1.6rem;
+  }
+  .gauge .n {
+    font-family: var(--mono);
+    font-size: 1.5rem;
+    color: var(--bleed);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .gauge .d {
+    margin-top: 0.55rem;
+    font-size: 0.9rem;
+    color: var(--bone-dim);
+    line-height: 1.5;
+  }
+  .gauge .src {
+    margin-top: 0.7rem;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ash-faint);
+  }
+
+  /* ---- footer ---- */
+  footer {
+    margin-top: clamp(4rem, 12vw, 8rem);
+    padding: clamp(2rem, 6vw, 3.5rem) 0 clamp(2.5rem, 7vw, 4rem);
+    border-top: 1px solid var(--void-edge);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem 3rem;
+    align-items: baseline;
+  }
+  footer .creed {
+    margin: 0;
+    max-width: 48ch;
+    color: var(--ash);
+    font-size: 0.95rem;
+  }
+  footer .sign {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ash-faint);
+    margin-left: auto;
+  }
+
+  @keyframes draw-rail { to { transform: scaleY(1); } }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rail { animation: none; transform: scaleY(1); }
+    .top, .deck, .meter, h1 .l { animation: none; opacity: 1; transform: none; }
+    .pipeline .step, .pipeline .done { transition: none; }
+  }
+
+  @media (max-width: 46rem) {
+    .rate { border-right: 0; margin-right: 0; padding-right: 0; }
+    .top .status { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="rail" aria-hidden="true"></div>
+<canvas id="ambient" aria-hidden="true"></canvas>
+
+<div class="shell">
+  <header class="top">
+    <span class="wordmark">Bleed</span>
+    <span class="tag">leak audit <span class="sep">/</span> euros per year</span>
+    <span class="status">field preview</span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>
+        <span class="l l1">Your site is</span>
+        <span class="l l2 drip">bleeding.</span>
+      </h1>
+      <p class="deck">
+        Three of four Spanish restaurants that deliver hand <b>13 to 35 percent
+        of every order</b> to an aggregator, while their own channel sits paid
+        for and unused. Nobody has ever put a number on that. Bleed does, in one
+        minute, and shows the assumption behind every figure.
+      </p>
+
+      <div class="meter">
+        <span class="meter-label">Lost since you opened this page</span>
+        <div class="amount" id="amount" aria-live="off">
+          <span class="cur">&euro;</span><span id="whole">0</span><span id="frac">.000000</span>
+        </div>
+        <p class="meter-caption">
+          Running at the rate of an <strong>average aggregator-dependent
+          restaurant</strong>. It moves in ten-thousandths of a euro. This is
+          why nobody notices.
+        </p>
+        <div class="rates">
+          <div class="rate"><span class="v">&euro;4,800</span><span class="k">per year</span></div>
+          <div class="rate"><span class="v">&euro;13.15</span><span class="k">per day</span></div>
+          <div class="rate"><span class="v">&euro;0.55</span><span class="k">per hour</span></div>
+          <div class="rate"><span class="v">&euro;0.000152</span><span class="k">per second</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="console">
+      <span class="console-label"><span class="c">&gt;</span> point it at a restaurant website</span>
+      <form class="prompt" id="audit">
+        <span class="caret" aria-hidden="true">&#9615;</span>
+        <label for="url" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Restaurant website address</label>
+        <input id="url" name="url" type="url" inputmode="url" autocomplete="off" spellcheck="false"
+               placeholder="https://your-restaurant.es" />
+        <button type="submit">Run audit</button>
+      </form>
+      <p class="subnote">one minute &middot; no account &middot; no card &middot; nothing to install</p>
+
+      <div class="pipeline" id="pipeline" aria-live="polite">
+        <div class="step" data-name="recon"><span class="name">recon</span> reading stack, weight, order paths <span class="ok">&rarr; mapped</span></div>
+        <div class="step" data-name="detect"><span class="name">detect</span> matching leaks to this business type <span class="ok">&rarr; shortlisted</span></div>
+        <div class="step" data-name="quantify"><span class="name">quantify</span> applying calibrated constants <span class="ok">&rarr; range + assumptions</span></div>
+        <div class="step" data-name="dossier"><span class="name">dossier</span> writing the owner&rsquo;s one-page brief <span class="ok">&rarr; ready</span></div>
+        <div class="step" data-name="proof"><span class="name">proof</span> rebuilding the order screen with the real menu <span class="ok">&rarr; preview</span></div>
+        <p class="done">Preview only. The full run happens at <a href="#">bleed.io</a>, with every figure traced to its source.</p>
+      </div>
+    </section>
+
+    <section class="instruments" aria-label="Field study, Malaga, September 2026">
+      <div class="gauge">
+        <div class="n">132</div>
+        <div class="d">restaurant sites read end to end, in one metropolitan area</div>
+        <div class="src">Malaga &middot; Sept 2026</div>
+      </div>
+      <div class="gauge">
+        <div class="n">76.4%</div>
+        <div class="d">of restaurants that deliver depend entirely on an aggregator</div>
+        <div class="src">BCC Innovation / Delectatech, 2022</div>
+      </div>
+      <div class="gauge">
+        <div class="n">13&ndash;35%</div>
+        <div class="d">aggregator commission on every single order, delivery included</div>
+        <div class="src">sector rate comparison, 2025</div>
+      </div>
+      <div class="gauge">
+        <div class="n">58%</div>
+        <div class="d">of diners would rather order from the restaurant directly</div>
+        <div class="src">NCR Voyix, US survey, 2025</div>
+      </div>
+      <div class="gauge">
+        <div class="n">10 / 132</div>
+        <div class="d">sites expose their full catalogue and prices through an open endpoint</div>
+        <div class="src">measured, not estimated</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p class="creed">
+      Every figure shows the assumption it came from. When the owner&rsquo;s data
+      is missing, we say so instead of inventing it.
+    </p>
+    <span class="sign">Bleed &middot; Malaga &middot; 2026</span>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /* ---- the hemorrhage meter ---------------------------------------- */
+    var ANNUAL = 4800;
+    var perSecond = ANNUAL / (365.25 * 24 * 3600);
+    var start = Date.now();
+    var whole = document.getElementById("whole");
+    var frac = document.getElementById("frac");
+
+    function paint() {
+      var lost = ((Date.now() - start) / 1000) * perSecond;
+      var s = lost.toFixed(6);
+      var parts = s.split(".");
+      whole.textContent = Number(parts[0]).toLocaleString("en-US");
+      var d = parts[1] || "000000";
+      frac.innerHTML = "." + d.slice(0, 4) + '<span class="blur">' + d.slice(4) + "</span>";
+    }
+    paint();
+    if (reduce) {
+      setInterval(paint, 1000);
+    } else {
+      (function loop() { paint(); requestAnimationFrame(loop); })();
+    }
+
+    /* ---- console: reveal the pipeline as an explainer --------------- */
+    var form = document.getElementById("audit");
+    var pipe = document.getElementById("pipeline");
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (pipe.classList.contains("on")) return;
+      pipe.classList.add("on");
+      var steps = pipe.querySelectorAll(".step");
+      var done = pipe.querySelector(".done");
+      steps.forEach(function (step, i) {
+        setTimeout(function () { step.classList.add("show"); }, reduce ? 0 : i * 520);
+      });
+      setTimeout(function () { done.classList.add("show"); }, reduce ? 0 : steps.length * 520 + 200);
+    });
+
+    /* ---- ambient: slow red streaks descending near the cut --------- */
+    var canvas = document.getElementById("ambient");
+    var ctx;
+    try { ctx = canvas.getContext("2d"); } catch (err) { ctx = null; }
+    if (ctx) {
+      var w, h, streaks;
+      function seed() {
+        w = canvas.width = canvas.offsetWidth * (window.devicePixelRatio || 1);
+        h = canvas.height = canvas.offsetHeight * (window.devicePixelRatio || 1);
+        var n = Math.round(Math.min(38, w / 46));
+        streaks = [];
+        for (var i = 0; i < n; i++) {
+          streaks.push({
+            x: Math.pow(Math.random(), 1.7) * w,
+            y: Math.random() * h,
+            len: 40 + Math.random() * 120,
+            v: 0.18 + Math.random() * 0.9,
+            a: 0.05 + Math.random() * 0.13
+          });
+        }
+      }
+      function frameDraw(moving) {
+        ctx.clearRect(0, 0, w, h);
+        ctx.globalCompositeOperation = "lighter";
+        for (var i = 0; i < streaks.length; i++) {
+          var s = streaks[i];
+          var g = ctx.createLinearGradient(s.x, s.y, s.x, s.y + s.len);
+          g.addColorStop(0, "rgba(255, 43, 43, 0)");
+          g.addColorStop(0.5, "rgba(255, 43, 43, " + s.a + ")");
+          g.addColorStop(1, "rgba(255, 43, 43, 0)");
+          ctx.strokeStyle = g;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y);
+          ctx.lineTo(s.x, s.y + s.len);
+          ctx.stroke();
+          if (moving) {
+            s.y += s.v;
+            if (s.y > h + s.len) { s.y = -s.len; s.x = Math.pow(Math.random(), 1.7) * w; }
+          }
+        }
+      }
+      seed();
+      frameDraw(false);
+      if (!reduce) {
+        (function anim() { frameDraw(true); requestAnimationFrame(anim); })();
+      }
+      var t;
+      window.addEventListener("resize", function () {
+        clearTimeout(t);
+        t = setTimeout(function () { seed(); frameDraw(!reduce); }, 200);
+      });
+    }
+  })();
+</script>
+</body>
+</html>
