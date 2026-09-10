@@ -156,3 +156,40 @@ Sumadas: **5,81 → 8,0**. Eso si compite.
   lo que refuerza la prioridad 1.
 - Si "Best SaaS Product" exige modelo de precios explicito. La convocatoria no lo dice,
   pero el nombre del premio empuja a decirlo igualmente.
+
+---
+
+# Bucle, vuelta 1 — 11-sep-2026
+
+**Lo que se hizo:** tres agentes en paralelo (agy para metricas y coherencia, copilot
+para diseno), verificacion del arquitecto sobre sus entregas, y los arreglos baratos
+de coherencia ya desplegados.
+
+**Lo que cambio en la nota:**
+
+| Criterio | Antes | Ahora | Por que |
+|---|---|---|---|
+| Technical Implementation | 6,0 | 6,3 | Repo limpio, tipos muertos fuera, README con instrucciones de ejecucion y URL en vivo. El agujero de la IA sigue intacto. |
+| Problem Solving & Impact | 7,5 | 7,7 | El README ya no promete distinguir una pizzeria de un dentista. La honestidad es ahora consistente entre lo que se dice y lo que hace el codigo. |
+| Innovation & Creativity | 6,5 | 6,5 | Sin cambios. |
+| User Experience & Design | 7,5 | 7,5 | Sin cambios. Las 10 mejoras de `diseno.md` estan pendientes. |
+| Presentation & Demo | 0,0 | 0,0 | Sin cambios. |
+| **TOTAL** | **5,81** | **5,93** | |
+
+**La conclusion incomoda de la vuelta 1:** se hizo trabajo real y la nota subio 0,12.
+Porque el agujero no esta donde se trabajo. Mientras Presentation valga 15 % y sea un
+cero, ninguna mejora del producto mueve la aguja de forma comparable.
+
+**Vuelta 2, por retorno:**
+
+| # | Que | Gana | Quien puede hacerlo |
+|---|---|---|---|
+| 1 | Video de 5 min, deck de 10, formulario de Devpost | **+1,20** | **Solo Nico.** El guion esta escrito en `planes/01-guion-y-entrega.md`. |
+| 2 | IA real en la deteccion y priorizacion de fugas, con salida estructurada | +0,50 | Yo diseno, los agentes implementan |
+| 3 | Mejoras 1 a 5 de `investigacion/diseno.md` | +0,15 | Agentes |
+| 4 | Accesibilidad medida: contraste, foco, teclado, movil | +0,08 | Agentes |
+
+Suma proyectada: **5,93 → 7,86**.
+
+Quedan 4 dias. El punto 1 es el unico que no puedo hacer yo, y vale mas que los otros
+tres juntos.
