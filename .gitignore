@@ -24,3 +24,4 @@ npm-debug.log*
 # La cosecha en bruto NO se publica: son negocios reales con sus fallos listados.
 # El motor si; los resultados no.
 investigacion/datos/
+CLAUDE.md

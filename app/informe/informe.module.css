@@ -1,8 +1,24 @@
 .pagina {
+  --void: #0b0d0f;
+  --panel: #14171a;
+  --hair: #22262a;
+  --bone: #e8e6e1;
+  --bone-dim: #9a9c9b;
+  --bleed: #ff3b3b;
+  --ash: #6b7075;
+
+  --void: #0b0d0f;
+  --panel: #14171a;
+  --hair: #22262a;
+  --bone: #e8e6e1;
+  --bone-dim: #9a9c9b;
+  --bleed: #ff3b3b;
+  --ash: #6b7075;
+
   min-height: 100dvh;
-  background: var(--tinta);
-  color: var(--papel);
-  font-family: var(--fuente);
+  background: var(--void);
+  color: var(--bone);
+  font-family: var(--font-instrument);
   padding: clamp(1rem, 3vw, 2.25rem);
   max-width: 76rem;
   margin-inline: auto;
@@ -16,7 +32,7 @@
   flex-wrap: wrap;
   gap: 1rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--linea);
+  border-bottom: 1px solid var(--hair);
 }
 
 .marca {
@@ -34,31 +50,31 @@
 }
 
 .selloMarca {
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.75rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--papel-debil);
+  color: var(--bone-dim);
 }
 
 .volver {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.75rem;
   letter-spacing: 0.04em;
-  color: var(--papel-tenue);
+  color: var(--bone-dim);
   text-decoration: none;
   padding: 0.5rem 0.85rem;
-  background: var(--tinta-2);
-  border: 1px solid var(--linea-control);
+  background: var(--panel);
+  border: 1px solid var(--hair);
   border-radius: 6px;
   transition: background 140ms ease;
 }
 
 .volver:hover {
-  background: #232a2f;
+  background: var(--hair);
 }
 
 .negocioHero {
@@ -66,11 +82,11 @@
 }
 
 .subtituloNegocio {
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.8125rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--papel-debil);
+  color: var(--bone-dim);
   margin-bottom: 0.5rem;
 }
 
@@ -84,12 +100,12 @@
 }
 
 .enfasisAcento {
-  color: var(--acento);
+  color: var(--bleed);
   font-style: italic;
 }
 
 .enfasisVerde {
-  color: var(--verde);
+  color: var(--bone);
 }
 
 .etiquetasFila {
@@ -105,22 +121,22 @@
   gap: 0.4rem;
   padding: 0.35rem 0.65rem;
   border-radius: 4px;
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.75rem;
   line-height: 1;
-  background: var(--tinta-2);
-  border: 1px solid var(--linea);
-  color: var(--papel-tenue);
+  background: var(--panel);
+  border: 1px solid var(--hair);
+  color: var(--bone-dim);
 }
 
 .badgeVerde {
-  border-color: #3b5a49;
-  color: var(--verde);
+  border-color: var(--hair);
+  color: var(--bone);
 }
 
 .badgeAcento {
-  border-color: #6a3424;
-  color: var(--acento);
+  border-color: var(--bleed);
+  color: var(--bleed);
 }
 
 .bleedGrid {
@@ -131,31 +147,31 @@
 }
 
 .tarjetaTotal {
-  background: var(--tinta-2);
-  border: 1px solid var(--linea);
+  background: var(--panel);
+  border: 1px solid var(--hair);
   border-radius: 12px;
   padding: 1.5rem;
 }
 
 .tarjetaTotalAcento {
-  border-color: #5c2718;
+  border-color: var(--bleed);
 }
 
 .tarjetaTotalVerde {
-  border-color: #274936;
+  border-color: var(--hair);
 }
 
 .etiquetaCifra {
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.75rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--papel-debil);
+  color: var(--bone-dim);
   margin: 0 0 0.5rem;
 }
 
 .granNumero {
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: clamp(2rem, 4.5vw, 3rem);
   font-weight: 600;
   line-height: 1;
@@ -164,16 +180,16 @@
 }
 
 .numeroAcento {
-  color: var(--acento);
+  color: var(--bleed);
 }
 
 .numeroVerde {
-  color: var(--verde);
+  color: var(--bone);
 }
 
 .descripcionCifra {
   font-size: 0.875rem;
-  color: var(--papel-tenue);
+  color: var(--bone-dim);
   margin: 0;
   line-height: 1.45;
 }
@@ -181,7 +197,7 @@
 .pestanas {
   display: flex;
   gap: 0.5rem;
-  border-bottom: 1px solid var(--linea);
+  border-bottom: 1px solid var(--hair);
   margin: 2.5rem 0 1.75rem;
   overflow-x: auto;
   padding-bottom: 0.25rem;
@@ -192,22 +208,22 @@
   border: 0;
   border-bottom: 2px solid transparent;
   padding: 0.75rem 1rem;
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.8125rem;
   letter-spacing: 0.04em;
-  color: var(--papel-debil);
+  color: var(--bone-dim);
   cursor: pointer;
   white-space: nowrap;
   transition: all 140ms ease;
 }
 
 .pestanaBoton:hover {
-  color: var(--papel);
+  color: var(--bone);
 }
 
 .pestanaBotonActiva {
-  color: var(--papel);
-  border-bottom-color: var(--acento);
+  color: var(--bone);
+  border-bottom-color: var(--bleed);
   font-weight: 500;
 }
 
@@ -220,14 +236,14 @@
 
 .seccionSubtitulo {
   font-size: 0.9375rem;
-  color: var(--papel-tenue);
+  color: var(--bone-dim);
   margin: 0 0 1.5rem;
   max-width: 48rem;
 }
 
 .simuladorCaja {
-  background: var(--tinta-2);
-  border: 1px solid var(--linea);
+  background: var(--panel);
+  border: 1px solid var(--hair);
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 2.5rem;
@@ -241,7 +257,7 @@
   gap: 0.75rem;
   margin-bottom: 1.25rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--linea);
+  border-bottom: 1px solid var(--hair);
 }
 
 .simuladorTitulo {
@@ -266,20 +282,20 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.75rem;
-  color: var(--papel-debil);
+  color: var(--bone-dim);
 }
 
 .controlValor {
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--papel);
+  color: var(--bone);
 }
 
 .sliderInput {
-  accent-color: var(--acento);
+  accent-color: var(--bleed);
   width: 100%;
   cursor: pointer;
 }
@@ -292,23 +308,23 @@
 }
 
 .tarjetaFuga {
-  background: var(--tinta-2);
-  border: 1px solid var(--linea);
+  background: var(--panel);
+  border: 1px solid var(--hair);
   border-radius: 12px;
   padding: 1.5rem;
   transition: border-color 140ms ease;
 }
 
 .tarjetaFugaCritica {
-  border-left: 4px solid var(--acento);
+  border-left: 4px solid var(--bleed);
 }
 
 .tarjetaFugaAlta {
-  border-left: 4px solid #c97d39;
+  border-left: 4px solid var(--bone);
 }
 
 .tarjetaFugaMedia {
-  border-left: 4px solid var(--linea-control);
+  border-left: 4px solid var(--hair);
 }
 
 .fugaTop {
@@ -327,27 +343,27 @@
 }
 
 .fugaMonto {
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--acento);
+  color: var(--bleed);
 }
 
 .fugaExplicacion {
   font-size: 0.9375rem;
-  color: var(--papel-tenue);
+  color: var(--bone-dim);
   margin: 0 0 1rem;
   line-height: 1.5;
 }
 
 .formulaBloque {
-  background: var(--tinta);
-  border: 1px solid var(--linea);
+  background: var(--void);
+  border: 1px solid var(--hair);
   border-radius: 8px;
   padding: 0.75rem 1rem;
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.8125rem;
-  color: var(--papel);
+  color: var(--bone);
   margin-bottom: 1rem;
   overflow-x: auto;
 }
@@ -357,7 +373,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--papel-debil);
+  color: var(--bone-dim);
   margin-bottom: 0.25rem;
 }
 
@@ -372,12 +388,12 @@
 
 .supuestoItem {
   font-size: 0.8125rem;
-  color: var(--papel-debil);
+  color: var(--bone-dim);
   line-height: 1.4;
 }
 
 .supuestoValor {
-  color: var(--papel-tenue);
+  color: var(--bone-dim);
   font-weight: 500;
 }
 
@@ -386,17 +402,17 @@
   align-items: baseline;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: var(--papel);
-  background: #141f19;
-  border: 1px solid #234633;
+  color: var(--bone);
+  background: var(--panel);
+  border: 1px solid var(--hair);
   padding: 0.75rem 1rem;
   border-radius: 8px;
 }
 
 .remedioHoras {
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.75rem;
-  color: var(--verde);
+  color: var(--bone);
   white-space: nowrap;
   font-weight: 600;
 }
@@ -416,8 +432,8 @@
 }
 
 .mockupTelefono {
-  background: var(--tinta-2);
-  border: 1px solid var(--linea-control);
+  background: var(--panel);
+  border: 1px solid var(--hair);
   border-radius: 24px;
   padding: 1.25rem;
   box-shadow: 0 20px 40px rgba(0,0,0,0.5);
@@ -429,11 +445,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.75rem;
-  color: var(--papel-debil);
+  color: var(--bone-dim);
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--linea);
+  border-bottom: 1px solid var(--hair);
   margin-bottom: 1rem;
 }
 
@@ -449,8 +465,8 @@
 .productoItem {
   display: flex;
   gap: 0.85rem;
-  background: var(--tinta);
-  border: 1px solid var(--linea);
+  background: var(--void);
+  border: 1px solid var(--hair);
   border-radius: 10px;
   padding: 0.75rem;
   align-items: center;
@@ -481,7 +497,7 @@
 
 .productoDesc {
   font-size: 0.75rem;
-  color: var(--papel-debil);
+  color: var(--bone-dim);
   margin: 0 0 0.35rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -491,15 +507,15 @@
 }
 
 .productoPrecio {
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--papel);
+  color: var(--bone);
 }
 
 .botonAnadir {
-  background: var(--papel);
-  color: var(--tinta);
+  background: var(--bone);
+  color: var(--void);
   border: 0;
   border-radius: 6px;
   padding: 0.45rem 0.75rem;
@@ -518,14 +534,14 @@
 .mockupCarrito {
   margin-top: 1rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--linea);
+  border-top: 1px solid var(--hair);
 }
 
 .botonPedirDirecto {
   width: 100%;
   padding: 0.85rem;
-  background: var(--verde);
-  color: #0b1a12;
+  background: var(--bone);
+  color: var(--void);
   border: 0;
   border-radius: 8px;
   font-family: inherit;
@@ -536,7 +552,7 @@
 }
 
 .botonPedirDirecto:hover {
-  background: #84c9a7;
+  background: var(--bone-dim);
 }
 
 .comparativaCaja {
@@ -552,15 +568,15 @@
 }
 
 .columnaAgregador {
-  background: #1f1412;
-  border: 1px solid #4a2118;
+  background: var(--panel);
+  border: 1px solid var(--hair);
   border-radius: 10px;
   padding: 1.25rem;
 }
 
 .columnaDirecto {
-  background: #101c15;
-  border: 1px solid #1f422e;
+  background: var(--panel);
+  border: 1px solid var(--hair);
   border-radius: 10px;
   padding: 1.25rem;
 }
@@ -583,8 +599,8 @@
 
 /* Dossier Ejecutivo */
 .dossierContenedor {
-  background: var(--tinta-2);
-  border: 1px solid var(--linea);
+  background: var(--panel);
+  border: 1px solid var(--hair);
   border-radius: 12px;
   padding: clamp(1.25rem, 3vw, 2.25rem);
   margin-bottom: 3rem;
@@ -596,13 +612,13 @@
   gap: 0.75rem;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--linea);
+  border-bottom: 1px solid var(--hair);
 }
 
 .botonAccion {
   padding: 0.6rem 1.1rem;
   border-radius: 8px;
-  font-family: var(--mono);
+  font-family: var(--font-anton);
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
@@ -613,29 +629,29 @@
 }
 
 .botonPrimario {
-  background: var(--acento);
-  border: 1px solid var(--acento);
+  background: var(--bleed);
+  border: 1px solid var(--bleed);
   color: #fff;
 }
 
 .botonPrimario:hover {
-  background: #e66f4a;
+  background: var(--bleed);
 }
 
 .botonSecundario {
-  background: var(--tinta);
-  border: 1px solid var(--linea-control);
-  color: var(--papel);
+  background: var(--void);
+  border: 1px solid var(--hair);
+  color: var(--bone);
 }
 
 .botonSecundario:hover {
-  background: #20262b;
+  background: var(--hair);
 }
 
 .dossierTexto {
   font-size: 0.9375rem;
   line-height: 1.7;
-  color: var(--papel);
+  color: var(--bone);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -651,14 +667,14 @@
 }
 
 .dossierTexto blockquote {
-  border-left: 3px solid var(--acento);
+  border-left: 3px solid var(--bleed);
   padding-left: 1rem;
   margin: 1rem 0;
-  color: var(--papel-tenue);
+  color: var(--bone-dim);
 }
 
 .pieDePagina {
-  border-top: 1px solid var(--linea);
+  border-top: 1px solid var(--hair);
   padding-top: 1.5rem;
   margin-top: 3rem;
   display: flex;
@@ -666,10 +682,100 @@
   flex-wrap: wrap;
   gap: 1rem;
   font-size: 0.8125rem;
-  color: var(--papel-debil);
+  color: var(--bone-dim);
 }
 
 .pieDePagina a {
-  color: var(--papel-tenue);
+  color: var(--bone-dim);
   text-decoration: underline;
+}
+
+
+.loadingMain {
+  min-height: 100dvh;
+  background: var(--void);
+  color: var(--bone);
+  font-family: var(--font-anton);
+  padding: clamp(1rem, 3vw, 2.25rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+.loadingTitle {
+  font-family: var(--font-anton, Anton);
+  font-size: 2rem;
+  color: var(--bone);
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+}
+
+.loadingConsole {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.loadingMessage {
+  font-size: 0.875rem;
+  color: var(--ash);
+  animation: entrar 0.3s ease-out forwards;
+}
+
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Ensure no horizontal overflow */
+.pagina {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+
+.loadingMain {
+  min-height: 100dvh;
+  background: var(--void);
+  color: var(--bone);
+  font-family: var(--font-plex-mono);
+  padding: clamp(1rem, 3vw, 2.25rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+.loadingTitle {
+  font-family: var(--font-anton, Anton);
+  font-size: 2rem;
+  color: var(--bone);
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+}
+
+.loadingConsole {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.loadingMessage {
+  font-size: 0.875rem;
+  color: var(--ash);
+  animation: entrar 0.3s ease-out forwards;
+}
+
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Ensure no horizontal overflow */
+.pagina {
+  max-width: 100vw;
+  overflow-x: hidden;
 }

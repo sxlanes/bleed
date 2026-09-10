@@ -4,13 +4,27 @@ import {
   FullAuditReport,
   Leak,
 } from "./types";
+import { constante } from "./calibracion";
+
+/**
+ * Every euro on this page traces to a constant in lib/calibracion.ts, which
+ * carries its source and its date. Numbers that have no published source are
+ * marked as team estimates in their own assumption line, never hidden.
+ */
+
+const TICKET = constante("ticketMedioRestauracion"); // 21 EUR
+const COMMISSION_FULL = constante("comisionAgregadorCompleto"); // 25 %
+const COMMISSION_OWN_FLEET = constante("comisionAgregadorCaptacion"); // 13 %
+const DIRECT_PREFERENCE = constante("preferenciaCanalDirecto"); // 58 %
+const CONVERSION_DROP_PER_SECOND = constante("caidaConversionPorSegundo"); // 0.3 points/s
+const DIGITAL_CHANNEL_SHARE = constante("pesoCanalDigital"); // 20 %
 
 export const DEFAULT_PARAMS: AuditSimulationParams = {
-  ticketMedio: 24.5,
+  ticketMedio: TICKET.valor,
   pedidosDia: 15,
-  comisionAgregadorPct: 28,
+  comisionAgregadorPct: COMMISSION_FULL.valor,
   visitasMes: 1200,
-  pctRecuperableCanalPropio: 40,
+  pctRecuperableCanalPropio: DIRECT_PREFERENCE.valor,
   comisionReservaPorCubierto: 2.0,
   reservasMes: 180,
 };
@@ -25,265 +39,278 @@ export function calculateLeaks(
   };
 
   const leaks: Leak[] = [];
+  const eur = (n: number) => Math.round(n).toLocaleString("en-IE");
 
-  // 1. FUGA DE AGREGADORES (Aggregator Commission Drain)
+  // 1. Aggregator commission drain
   if (audit.aggregators.length > 0) {
-    const totalDeliveryAnnualGross = params.pedidosDia * params.ticketMedio * 365;
-    const totalAggregatorCommissions = Math.round(
-      totalDeliveryAnnualGross * (params.comisionAgregadorPct / 100)
+    const deliveryGrossYear = params.pedidosDia * params.ticketMedio * 365;
+    const commissionsYear = Math.round(
+      deliveryGrossYear * (params.comisionAgregadorPct / 100)
     );
-    const recoverableAnnual = Math.round(
-      totalAggregatorCommissions * (params.pctRecuperableCanalPropio / 100)
+    const recoverableYear = Math.round(
+      commissionsYear * (params.pctRecuperableCanalPropio / 100)
     );
-
-    const appsList = audit.aggregators.join(", ");
+    const apps = audit.aggregators.join(", ");
 
     leaks.push({
       id: "fuga-agregadores",
-      title: `Comisiones cedidas a agregadores (${appsList})`,
+      title: `Commission handed to aggregators (${apps})`,
       category: "agregadores",
       severity: "critica",
-      annualLossEuros: totalAggregatorCommissions,
-      monthlyLossEuros: Math.round(totalAggregatorCommissions / 12),
-      formula: `${params.pedidosDia} pedidos/día × ${params.ticketMedio.toFixed(2)} € × ${params.comisionAgregadorPct} % com. × 365 días = ${totalAggregatorCommissions.toLocaleString("es-ES")} €/año`,
-      calculationDetails: `Sobre una facturación anual de delivery estimada de ${totalDeliveryAnnualGross.toLocaleString("es-ES")} €, las plataformas se quedan ${totalAggregatorCommissions.toLocaleString("es-ES")} €. Recuperando solo el ${params.pctRecuperableCanalPropio} % de clientes recurrentes mediante canal propio, el restaurante retiene +${recoverableAnnual.toLocaleString("es-ES")} € limpios en su cuenta.`,
-      explanation: `Tu web enlaza directamente a ${appsList}. Estás regalando entre el 25 % y el 35 % de cada ticket a un tercero por pedidos de clientes que ya estaban en tu propia web o que son vecinos de tu barrio. Además, el agregador se queda con los datos del cliente para venderle al día siguiente la comida de tu competencia.`,
+      annualLossEuros: commissionsYear,
+      monthlyLossEuros: Math.round(commissionsYear / 12),
+      formula: `pedidosDia (${params.pedidosDia}) x ticketMedioRestauracion (${params.ticketMedio} EUR) x comisionAgregadorCompleto (${params.comisionAgregadorPct}%) x 365 = ${eur(commissionsYear)} EUR/year`,
+      calculationDetails: `On an estimated ${eur(deliveryGrossYear)} EUR of yearly delivery revenue, the platforms keep ${eur(commissionsYear)} EUR. Moving back the ${params.pctRecuperableCanalPropio}% of diners who would rather order direct puts +${eur(recoverableYear)} EUR/year back in the till.`,
+      explanation: `Your site links straight to ${apps}. Every order from a regular or a neighbour who was already on your own page still pays the aggregator ${params.comisionAgregadorPct}% of the ticket, and the aggregator keeps the customer's data.`,
       assumptions: [
         {
-          label: "Ticket medio",
-          value: `${params.ticketMedio.toFixed(2)} €`,
-          citation: "Estudio Hostelería de España & KPMG: Ticket medio delivery en España 2024-2026",
+          label: "Average ticket",
+          value: `${params.ticketMedio} EUR`,
+          citation: `${TICKET.fuente} (${TICKET.fecha}). Range ${TICKET.minimo}-${TICKET.maximo} EUR.`,
         },
         {
-          label: "Volumen diario",
-          value: `${params.pedidosDia} pedidos/día`,
-          citation: "Mediana en restaurantes urbanos de comida casual / pizzerías con reparto",
+          label: "Aggregator commission",
+          value: `${params.comisionAgregadorPct}%`,
+          citation: `${COMMISSION_FULL.fuente} (${COMMISSION_FULL.fecha}). ${COMMISSION_FULL.advertencia ?? ""}`.trim(),
         },
         {
-          label: "Comisión agregador",
-          value: `${params.comisionAgregadorPct} %`,
-          citation: "Tarifas comerciales estándar de Glovo (30%), Just Eat (25-28%) y Uber Eats (30-33%)",
+          label: "Share that would return to a direct channel",
+          value: `${params.pctRecuperableCanalPropio}%`,
+          citation: `${DIRECT_PREFERENCE.fuente} (${DIRECT_PREFERENCE.fecha}). ${DIRECT_PREFERENCE.advertencia ?? ""}`.trim(),
         },
         {
-          label: "Tasa de recuperación",
-          value: `${params.pctRecuperableCanalPropio} %`,
-          citation: "Porcentaje de clientes habituales que prefieren pedir directo con incentivo (10% descuento o bebida)",
+          label: "Daily order volume",
+          value: `${params.pedidosDia} orders/day`,
+          citation: "Team estimate for a casual-food restaurant with delivery. No published source; adjustable in the simulator.",
         },
       ],
-      remedy: `Activar canal propio de pedido web/WhatsApp con checkout directo (0 % comisión) y colocar flyer en cada bolsa: "Pide directo en nuestra web y ahórrate el 10 % para siempre".`,
+      remedy: `Turn on a direct web/WhatsApp order path with its own checkout (0% commission) and put a card in every delivery bag: order direct and keep 10% for good.`,
       remedyHours: 4,
     });
   }
 
-  // 2. FUGA POR VELOCIDAD Y PESO MÓVIL (TTFB & Heavy Images)
+  // 2. Load speed and mobile weight
   const isSlowTtfb = audit.ttfb > 1.2;
   const isHeavyPage = audit.imgKb > 1800;
 
   if (isSlowTtfb || isHeavyPage) {
-    // Estimación de rebote: 5% base + 12% por cada segundo sobre 1.0s + 8% si imágenes > 2MB
-    const extraTime = Math.max(0, audit.ttfb - 1.0);
-    const bouncePct = Math.min(
-      45,
-      Math.round(15 + extraTime * 12 + (audit.imgKb > 2500 ? 12 : 0))
+    // Conversion points lost = extra seconds over a 1.0 s baseline x the calibrated drop per second
+    const extraSeconds = Math.max(0, audit.ttfb - 1.0);
+    const heavyPenaltySeconds = audit.imgKb > 2500 ? 1 : audit.imgKb > 1800 ? 0.5 : 0;
+    const pointsLost =
+      (extraSeconds + heavyPenaltySeconds) * CONVERSION_DROP_PER_SECOND.valor;
+    const baselineConversion = 7; // percent of hungry visits that would convert
+    const keptFraction = Math.max(0, (baselineConversion - pointsLost) / baselineConversion);
+    const lostFraction = 1 - keptFraction;
+    const lostOrdersMonth = Math.round(
+      params.visitasMes * (baselineConversion / 100) * lostFraction
     );
-    const conversionRate = 0.07; // 7% de visitas con hambre convierten
-    const lostOrdersPerMonth = Math.round(
-      params.visitasMes * (bouncePct / 100) * conversionRate
-    );
-    const annualSpeedLoss = Math.round(
-      lostOrdersPerMonth * params.ticketMedio * 12
-    );
+    const speedLossYear = Math.round(lostOrdersMonth * params.ticketMedio * 12);
 
     const reasons: string[] = [];
-    if (isSlowTtfb) reasons.push(`TTFB de ${audit.ttfb} s (el umbral recomendado es < 0.6 s)`);
-    if (isHeavyPage) reasons.push(`${audit.imgKb.toLocaleString("es-ES")} KB en imágenes en la portada`);
-    if (audit.heavyImgs.length > 0) {
-      reasons.push(`${audit.heavyImgs.length} fotos superan los 450 KB cada una`);
-    }
+    if (isSlowTtfb) reasons.push(`a ${audit.ttfb}s time to first byte (the recommended threshold is under 0.6s)`);
+    if (isHeavyPage) reasons.push(`${audit.imgKb.toLocaleString("en-IE")} KB of images on the homepage`);
+    if (audit.heavyImgs.length > 0) reasons.push(`${audit.heavyImgs.length} photos over 450 KB each`);
 
     leaks.push({
       id: "fuga-velocidad",
-      title: `Pérdida de clientes por lentitud y peso móvil (${audit.ttfb}s / ${audit.imgKb} KB)`,
+      title: `Customers lost to slow, heavy pages (${audit.ttfb}s / ${audit.imgKb} KB)`,
       category: "velocidad",
       severity: audit.ttfb > 2.0 || audit.imgKb > 3500 ? "critica" : "alta",
-      annualLossEuros: annualSpeedLoss,
-      monthlyLossEuros: Math.round(annualSpeedLoss / 12),
-      formula: `${params.visitasMes} visitas/mes × ${bouncePct} % rebote móvil × 7 % conv. × ${params.ticketMedio.toFixed(2)} € × 12 m = ${annualSpeedLoss.toLocaleString("es-ES")} €/año`,
-      calculationDetails: `Se pierden aproximadamente ${lostOrdersPerMonth} pedidos al mes (${lostOrdersPerMonth * 12} pedidos/año) de personas que entraron con intención de pedir pero cerraron la pestaña ante la lentitud de carga.`,
-      explanation: `Tu web tiene ${reasons.join(" y ")}. Según los estudios de Google y Akamai, en móvil más del 53 % de los usuarios abandonan si la carga tarda más de 3 segundos. A las 21:15 de la noche, un usuario con hambre en el móvil no espera: vuelve a Google o abre la app de Glovo.`,
+      annualLossEuros: speedLossYear,
+      monthlyLossEuros: Math.round(speedLossYear / 12),
+      formula: `${pointsLost.toFixed(2)} conversion points lost = (${extraSeconds.toFixed(1)}s + ${heavyPenaltySeconds}s) x caidaConversionPorSegundo (${CONVERSION_DROP_PER_SECOND.valor} pts/s); ${eur(speedLossYear)} EUR/year at ${params.ticketMedio} EUR ticket`,
+      calculationDetails: `About ${lostOrdersMonth} orders a month (${lostOrdersMonth * 12}/year) from people who arrived meaning to order and closed the tab while it loaded.`,
+      explanation: `Your site has ${reasons.join(" and ")}. At 21:15 a hungry person on a phone does not wait: they go back to search results or open the aggregator app.`,
       assumptions: [
         {
-          label: "TTFB medido",
-          value: `${audit.ttfb} s`,
-          citation: "Medición en tiempo real realizada durante la auditoría con navegador headless",
+          label: "Measured time to first byte",
+          value: `${audit.ttfb}s`,
+          citation: "Measured live during this audit.",
         },
         {
-          label: "Peso imágenes portada",
+          label: "Homepage image weight",
           value: `${audit.imgKb} KB`,
-          citation: "Suma del peso transferido de imágenes detectadas en la página principal",
+          citation: "Sum of image bytes transferred on the main page during this audit.",
         },
         {
-          label: "Tasa de rebote inducido",
-          value: `${bouncePct} %`,
-          citation: "Deloitte Digital / Google: 'Milliseconds Make Millions' (estudio de conversión en hostelería)",
+          label: "Conversion drop per extra second",
+          value: `${CONVERSION_DROP_PER_SECOND.valor} points/s`,
+          citation: `${CONVERSION_DROP_PER_SECOND.fuente} (${CONVERSION_DROP_PER_SECOND.fecha}). ${CONVERSION_DROP_PER_SECOND.advertencia ?? ""}`.trim(),
+        },
+        {
+          label: "Baseline conversion of hungry visits",
+          value: `${baselineConversion}%`,
+          citation: "Team estimate. No published source; adjustable in the simulator.",
         },
       ],
-      remedy: `Convertir fotos a formato WebP/AVIF comprimido (reducción inmediata del 80 % de peso) y habilitar caché de página en servidor o Cloudflare CDN.`,
+      remedy: `Convert photos to compressed WebP/AVIF (about 80% lighter straight away) and cache the page at the server or a CDN.`,
       remedyHours: 2,
     });
   }
 
-  // 3. TIENDA WOOCOMMERCE DESAPROVECHADA (Dormant WooCommerce Store)
+  // 3. Dormant WooCommerce store
   if (audit.woocommerce && (audit.aggregators.length > 0 || !audit.ownOrderSignals.includes("checkout"))) {
-    const directEfficiencyLoss = Math.round(
-      params.pedidosDia * params.ticketMedio * 365 * 0.12
-    );
+    // The digital channel is worth about DIGITAL_CHANNEL_SHARE of restaurant spend;
+    // a store that exists but is bypassed forfeits a slice of that.
+    const digitalYear =
+      params.pedidosDia * params.ticketMedio * 365 * (DIGITAL_CHANNEL_SHARE.valor / 100);
+    const forfeited = Math.round(digitalYear * 0.6);
 
     leaks.push({
       id: "fuga-woocommerce-dormido",
-      title: "Tienda online propia pagada pero sin explotar (WooCommerce)",
+      title: "Own online store paid for and left idle (WooCommerce)",
       category: "canal_propio",
       severity: "alta",
-      annualLossEuros: directEfficiencyLoss,
-      monthlyLossEuros: Math.round(directEfficiencyLoss / 12),
-      formula: `Estimación de coste de oportunidad sobre pedidos propios = ${directEfficiencyLoss.toLocaleString("es-ES")} €/año`,
-      calculationDetails: `El restaurante ya pagó el desarrollo de un WordPress con WooCommerce y catálogo, pero sufre fricción en checkout o deriva usuarios a agregadores.`,
-      explanation: `Tu web ya cuenta con el motor de tienda online de WooCommerce instalado ${audit.storeApi ? "(e incluso la Store API está abierta y funcionando)" : ""}. Sin embargo, o bien la experiencia de compra es lenta y confusa, o bien tienes botones que mandan a tus clientes a Glovo. Ya pagaste la tienda; no tiene sentido pagar comisiones a un intermediario.`,
+      annualLossEuros: forfeited,
+      monthlyLossEuros: Math.round(forfeited / 12),
+      formula: `pedidosDia x ticketMedioRestauracion x 365 x pesoCanalDigital (${DIGITAL_CHANNEL_SHARE.valor}%) x 0.6 forfeited = ${eur(forfeited)} EUR/year`,
+      calculationDetails: `The restaurant already paid to build a WordPress + WooCommerce site with a catalogue, but checkout friction or aggregator buttons send buyers elsewhere.`,
+      explanation: `Your site already has the WooCommerce store engine installed${audit.storeApi ? " with the Store API open and responding" : ""}. Either the buying flow is slow and confusing, or buttons hand customers to Glovo. The store is paid for; paying a middleman on top makes no sense.`,
       assumptions: [
         {
-          label: "Stack detectado",
+          label: "Detected stack",
           value: "WordPress + WooCommerce",
-          citation: "Identificado en rutas de plugins y Store API",
+          citation: "Identified from plugin paths and the Store API during this audit.",
         },
         {
-          label: "Pérdida de eficiencia",
-          value: "12 % sobre ventas potenciales",
-          citation: "Coste de oportunidad de mantener e-commerce desatendido mientras se pagan comisiones externas",
+          label: "Digital share of restaurant spend",
+          value: `${DIGITAL_CHANNEL_SHARE.valor}%`,
+          citation: `${DIGITAL_CHANNEL_SHARE.fuente} (${DIGITAL_CHANNEL_SHARE.fecha}). ${DIGITAL_CHANNEL_SHARE.advertencia ?? ""}`.trim(),
+        },
+        {
+          label: "Fraction of the digital channel forfeited",
+          value: "60%",
+          citation: "Team estimate for a store that is installed but bypassed. No published source.",
         },
       ],
-      remedy: `Conectar la Store API existente con un flujo de checkout ultra-rápido en 2 toques adaptado a pantalla de smartphone o pedido directo por WhatsApp con ticket preparado.`,
+      remedy: `Wire the existing Store API to a two-tap mobile checkout, or a direct WhatsApp order with the ticket prefilled.`,
       remedyHours: 3,
     });
   }
 
-  // 4. FALTA DE CANAL WHATSAPP / RETENCIÓN DIRECTA
+  // 4. No fast direct contact channel (no WhatsApp)
   if (!audit.whatsapp && !audit.ownOrder) {
-    const lostDirectOrders = Math.round(params.visitasMes * 0.04 * 12);
-    const annualLossWhatsapp = Math.round(lostDirectOrders * params.ticketMedio);
+    const lostOrdersYear = Math.round(params.visitasMes * 0.04 * 12);
+    const whatsappLossYear = Math.round(lostOrdersYear * params.ticketMedio);
 
     leaks.push({
       id: "fuga-sin-whatsapp",
-      title: "Cero canales de contacto directo rápido (Sin WhatsApp)",
+      title: "No fast direct contact channel (no WhatsApp)",
       category: "movil",
       severity: "media",
-      annualLossEuros: annualLossWhatsapp,
-      monthlyLossEuros: Math.round(annualLossWhatsapp / 12),
-      formula: `${params.visitasMes} visitas × 4 % intención × 12 m × ${params.ticketMedio.toFixed(2)} € = ${annualLossWhatsapp.toLocaleString("es-ES")} €/año`,
-      calculationDetails: `Aproximadamente ${Math.round(lostDirectOrders / 12)} pedidos al mes se frustran al no encontrar un botón de consulta o pedido directo en su móvil.`,
-      explanation: `En España, más del 90 % de los consumidores tienen WhatsApp abierto en su móvil. Un usuario local que busca "¿tenéis mesa para 6?" o "¿hacéis pizzas sin gluten para recoger?" no quiere rellenar un formulario de contacto de WordPress; si no ve WhatsApp, llama al restaurante de al lado.`,
+      annualLossEuros: whatsappLossYear,
+      monthlyLossEuros: Math.round(whatsappLossYear / 12),
+      formula: `visitasMes (${params.visitasMes}) x 4% intent x 12 x ticketMedioRestauracion (${params.ticketMedio} EUR) = ${eur(whatsappLossYear)} EUR/year`,
+      calculationDetails: `About ${Math.round(lostOrdersYear / 12)} orders a month fall through because there is no direct enquiry or order button on the phone.`,
+      explanation: `A local checking "do you have a table for six?" or "do you do gluten-free for collection?" will not fill in a WordPress contact form. With no WhatsApp in sight, they ring the restaurant next door.`,
       assumptions: [
         {
-          label: "Uso de WhatsApp en España",
-          value: "> 91 % usuarios móviles",
-          citation: "Informe IAB Spain Redes Sociales y Hábitos Digitales",
+          label: "Visit-to-enquiry intent",
+          value: "4%",
+          citation: "Team estimate. No published source; adjustable in the simulator.",
         },
       ],
-      remedy: `Añadir botón flotante de WhatsApp Business con mensaje predefinido ("Hola, quiero pedir para recoger / mesa").`,
+      remedy: `Add a floating WhatsApp Business button with a prefilled message ("Hi, I'd like to order for collection / a table").`,
       remedyHours: 1,
     });
   }
 
-  // 5. PLATAFORMAS DE RESERVA EXTERNAS (TheFork / CoverManager)
+  // 5. External reservation platforms (TheFork / CoverManager)
   if (audit.reserva && !audit.whatsapp) {
-    const annualReservationLoss = Math.round(
+    const reservationLossYear = Math.round(
       params.reservasMes * 2.2 * params.comisionReservaPorCubierto * 12
     );
 
     leaks.push({
       id: "fuga-reservas-externas",
-      title: `Comisiones por comensal en reservas externas (${audit.reservaProvider || "Plataforma"})`,
+      title: `Per-cover fees on external reservations (${audit.reservaProvider || "platform"})`,
       category: "reservas",
       severity: "media",
-      annualLossEuros: annualReservationLoss,
-      monthlyLossEuros: Math.round(annualReservationLoss / 12),
-      formula: `${params.reservasMes} reservas/mes × 2,2 comensales × ${params.comisionReservaPorCubierto.toFixed(2)} €/cubierto × 12 m = ${annualReservationLoss.toLocaleString("es-ES")} €/año`,
-      calculationDetails: `Comisiones pagadas por comensales que reservan a través del widget externo en vez de gestionar la reserva directa.`,
-      explanation: `Tu web utiliza ${audit.reservaProvider || "un intermediario de reservas"}. Cada vez que un cliente reserva mesa por este widget, el intermediario cobra entre 1,50 € y 3,00 € por cada comensal. Fomentar la reserva directa por WhatsApp ahorra miles de euros en restaurantes concurridos.`,
+      annualLossEuros: reservationLossYear,
+      monthlyLossEuros: Math.round(reservationLossYear / 12),
+      formula: `reservasMes (${params.reservasMes}) x 2.2 covers x ${params.comisionReservaPorCubierto.toFixed(2)} EUR/cover x 12 = ${eur(reservationLossYear)} EUR/year`,
+      calculationDetails: `Fees paid on covers that book through the external widget instead of a direct reservation.`,
+      explanation: `Your site uses ${audit.reservaProvider || "a reservation middleman"}. Each table booked through that widget costs 1.50 to 3.00 EUR per cover. Steering regulars to a direct WhatsApp booking saves thousands in a busy restaurant.`,
       assumptions: [
         {
-          label: "Coste por cubierto",
-          value: `${params.comisionReservaPorCubierto.toFixed(2)} €`,
-          citation: "Comisión estándar TheFork / ElTenedor y software de reservas con fee por reserva",
+          label: "Cost per cover",
+          value: `${params.comisionReservaPorCubierto.toFixed(2)} EUR`,
+          citation: "Team estimate from TheFork / reservation-software per-booking fees. No single published rate.",
         },
         {
-          label: "Comensales por reserva",
-          value: "2,2 comensales",
-          citation: "Media del sector de restauración en España",
+          label: "Covers per reservation",
+          value: "2.2",
+          citation: "Team estimate, Spanish restaurant average.",
         },
       ],
-      remedy: `Priorizar botón de reserva propia por WhatsApp antes del widget de terceros para fidelizar al cliente recurrente.`,
+      remedy: `Put a direct WhatsApp booking button ahead of the third-party widget for repeat customers.`,
       remedyHours: 1,
     });
   }
 
-  // 6. OBSOLESCENCIA TÉCNICA Y SEGURIDAD (PHP EOL / Sin HTTPS)
+  // 6. Technical obsolescence and security (PHP EOL / no HTTPS)
   if (audit.eolPhp || !audit.https || !audit.viewport) {
-    const annualSecurityRisk = 1200;
+    const securityRiskYear = 1200;
     const reasons: string[] = [];
-    if (audit.eolPhp) reasons.push(`PHP ${audit.phpVersion || "antiguo"} (sin parches de seguridad)`);
-    if (!audit.https) reasons.push("Conexión no cifrada (sin HTTPS)");
-    if (!audit.viewport) reasons.push("Falta etiqueta viewport móvil");
+    if (audit.eolPhp) reasons.push(`PHP ${audit.phpVersion || "end-of-life"} (no security patches)`);
+    if (!audit.https) reasons.push("unencrypted connection (no HTTPS)");
+    if (!audit.viewport) reasons.push("missing mobile viewport tag");
 
     leaks.push({
       id: "fuga-seguridad-tecnica",
-      title: `Vulnerabilidad técnica y penalización SEO (${reasons.join(", ")})`,
+      title: `Technical vulnerability and SEO penalty (${reasons.join(", ")})`,
       category: "tecnico",
       severity: !audit.https || audit.eolPhp ? "alta" : "media",
-      annualLossEuros: annualSecurityRisk,
+      annualLossEuros: securityRiskYear,
       monthlyLossEuros: 100,
-      formula: `Coste estimado de parada de servicio y caída de posicionamiento local = 1.200 €/año`,
-      calculationDetails: `Riesgo de infección por malware, penalización activa de Google Chrome con advertencia de 'Sitio no seguro' y pérdida de visibilidad orgánica en Google Maps.`,
-      explanation: `Tu servidor anuncia una versión obsoleta (${reasons.join(", ")}). Esto no solo es un riesgo crítico de hackeo o pérdida de la web, sino que los navegadores modernos penalizan el ranking y alertan a los usuarios con avisos de seguridad que destruyen la confianza.`,
+      formula: `Flat estimate of downtime plus lost local ranking = 1,200 EUR/year`,
+      calculationDetails: `Risk of malware, an active Chrome "Not secure" warning, and lost organic visibility on Google Maps.`,
+      explanation: `Your server advertises an out-of-date setup (${reasons.join(", ")}). Beyond the hack risk, modern browsers demote the ranking and warn users in ways that break trust.`,
       assumptions: [
         {
-          label: "Estado de PHP",
-          value: audit.phpVersion ? `PHP ${audit.phpVersion}` : "Sin soporte",
-          citation: "The PHP Group: calendario oficial de fin de vida de versiones (EOL)",
+          label: "PHP status",
+          value: audit.phpVersion ? `PHP ${audit.phpVersion}` : "unsupported",
+          citation: "The PHP Group official end-of-life calendar.",
+        },
+        {
+          label: "Annual risk figure",
+          value: "1,200 EUR",
+          citation: "Team estimate. Flat placeholder for downtime and ranking loss; no per-site source.",
         },
       ],
-      remedy: `Actualizar PHP a versión 8.2 o superior en el panel de hosting y forzar HTTPS con certificado SSL gratuito Let's Encrypt.`,
+      remedy: `Move PHP to 8.2 or newer in the hosting panel and force HTTPS with a free Let's Encrypt certificate.`,
       remedyHours: 1,
     });
   }
 
-  // Si no se detectó ninguna fuga específica (web muy limpia), cuantificamos la fuga mínima de optimización
+  // If nothing specific fired (a clean site), quantify the minimum optimisation gap
   if (leaks.length === 0) {
     const minLoss = Math.round(params.visitasMes * 0.03 * params.ticketMedio * 12);
     leaks.push({
       id: "fuga-potencial-directo",
-      title: "Coste de oportunidad en conversión móvil",
+      title: "Opportunity cost in mobile conversion",
       category: "canal_propio",
       severity: "media",
       annualLossEuros: minLoss,
       monthlyLossEuros: Math.round(minLoss / 12),
-      formula: `${params.visitasMes} visitas/mes × 3 % pérdida fricción × ${params.ticketMedio.toFixed(2)} € × 12 m = ${minLoss.toLocaleString("es-ES")} €/año`,
-      calculationDetails: `Margen no capturado por falta de llamado a la acción directo e interactivo para pedidos móviles.`,
-      explanation: `Aunque la web responde bien técnicamente, carece de un canal directo interactivo (0 % comisiones) optimizado para smartphone que convierta visitas casuales en pedidos recurrentes.`,
+      formula: `visitasMes (${params.visitasMes}) x 3% friction loss x ticketMedioRestauracion (${params.ticketMedio} EUR) x 12 = ${eur(minLoss)} EUR/year`,
+      calculationDetails: `Margin not captured for want of a direct, interactive call to action for mobile orders.`,
+      explanation: `The site is technically sound but has no direct interactive channel (0% commission) built for a phone to turn casual visits into repeat orders.`,
       assumptions: [
         {
-          label: "Fricción de conversión",
-          value: "3 %",
-          citation: "Benchmark de hostelería digital",
+          label: "Conversion friction",
+          value: "3%",
+          citation: "Team estimate. No published source; adjustable in the simulator.",
         },
       ],
-      remedy: `Instalar una tarjeta de pedido rápido con catálogo táctil y botón de pedido inmediato.`,
+      remedy: `Add a quick-order card with a touch catalogue and an immediate order button.`,
       remedyHours: 2,
     });
   }
 
   const totalAnnualLossEuros = leaks.reduce((acc, l) => acc + l.annualLossEuros, 0);
 
-  // Cantidad recuperable en 48 horas mediante la solución
   const aggregatorLeak = leaks.find((l) => l.id === "fuga-agregadores");
   const speedLeak = leaks.find((l) => l.id === "fuga-velocidad");
   const recoverableAnnualEuros = Math.round(

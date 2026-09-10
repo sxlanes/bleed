@@ -10,69 +10,70 @@ export interface DossierResult {
 export function generateDeterministicDossier(report: FullAuditReport): string {
   const { audit, leaks, totalAnnualLossEuros, recoverableAnnualEuros, params } = report;
   const name = audit.name || audit.domain;
+  const eur = (n: number) => Math.round(n).toLocaleString("en-IE");
 
   const topLeaksText = leaks
     .slice(0, 3)
     .map(
       (l, idx) =>
-        `### ${idx + 1}. ${l.title} — Pérdida: **-${l.annualLossEuros.toLocaleString("es-ES")} €/año**\n` +
-        `- **Por qué ocurre:** ${l.explanation}\n` +
-        `- **Supuesto matemático:** \`${l.formula}\`\n` +
-        `- **Solución en 48h:** ${l.remedy}`
+        `### ${idx + 1}. ${l.title} — Loss: **-${eur(l.annualLossEuros)} EUR/year**\n` +
+        `- **Why it happens:** ${l.explanation}\n` +
+        `- **The maths:** \`${l.formula}\`\n` +
+        `- **Fix in 48h:** ${l.remedy}`
     )
     .join("\n\n");
 
   const techNote = audit.wordpress
-    ? `Tu web está montada en **WordPress**${audit.woocommerce ? " con **WooCommerce**" : ""}. Ya tienes la infraestructura técnica pagada, lo que significa que solucionar esto no requiere empezar desde cero, sino encender el canal que dejaste apagado.`
-    : `Tu web es accesible en \`${audit.finalUrl}\`, pero sufre de fricciones de carga y dependencia externa que alejan al cliente recurrente.`;
+    ? `Your site runs on **WordPress**${audit.woocommerce ? " with **WooCommerce**" : ""}. The technical infrastructure is already paid for, which means fixing this does not mean starting from scratch, only switching on the channel you left off.`
+    : `Your site is reachable at \`${audit.finalUrl}\`, but load friction and reliance on third parties keep repeat customers away.`;
 
   return `
-# Dossier de Diagnóstico y Recuperación de Margen
-**Para:** Dirección de ${name}  
-**Fecha:** ${new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}  
-**Elaborado por:** Bleed · Auditoría Financiera de Presencia Web  
+# Margin Recovery Diagnostic
+**For:** the management of ${name}
+**Date:** ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+**Prepared by:** Bleed · financial audit of web presence
 
 ---
 
-## 1. Diagnóstico Ejecutivo: La fuga de dinero en cifras
+## 1. Executive diagnosis: the leak in figures
 
-Tras analizar minuciosamente la presencia digital de **${name}** (\`${audit.domain}\`), hemos detectado que tu operativa digital actual está perdiendo aproximadamente:
+After a close look at the digital presence of **${name}** (\`${audit.domain}\`), the current setup is losing roughly:
 
-> ### **-${totalAnnualLossEuros.toLocaleString("es-ES")} € al año**  
-> *(Unos **${Math.round(totalAnnualLossEuros / 12).toLocaleString("es-ES")} € al mes** en comisiones evitables y pedidos no capturados).*
+> ### **-${eur(totalAnnualLossEuros)} EUR a year**
+> *(about **${eur(totalAnnualLossEuros / 12)} EUR a month** in avoidable commission and orders not captured).*
 
 ${techNote}
 
-Implementando una corrección directa en tu canal web, tu negocio puede recuperar de inmediato un estimado de **+${recoverableAnnualEuros.toLocaleString("es-ES")} € limpios al año** en caja neta, sin invertir en publicidad adicional ni contratar más personal.
+With a direct fix on your own channel, the business can recover an estimated **+${eur(recoverableAnnualEuros)} EUR net a year** in cash, with no extra advertising and no extra staff.
 
 ---
 
-## 2. Las fugas detectadas y sus causas
+## 2. The leaks and what causes them
 
 ${topLeaksText}
 
 ---
 
-## 3. Plan de Acción en 48 Horas: Cómo cortar la fuga
+## 3. 48-hour action plan: how to stop the bleed
 
-Para cerrar este sangrado sin alterar tu operativa de cocina ni cambiar de TPV:
+To close this without touching your kitchen or changing your till:
 
-1. **Paso 1: Activación del Canal Directo (Día 1)**  
-   Habilitar una pasarela de pedido directo ultra-rápida (carga en menos de 0.2 segundos) que permita al cliente pedir desde su teléfono en 2 clics o enviar su comanda directamente a tu WhatsApp/TPV con el ticket desglosado. **Comisión: 0 %.**
+1. **Step 1: switch on the direct channel (day 1)**
+   Stand up a fast direct-order path that lets a customer order from their phone in two taps, or send the order straight to your WhatsApp/till with the ticket itemised. **Commission: 0%.**
 
-2. **Paso 2: Retención del Cliente Vecino (Día 1 - 2)**  
-   Colocar en cada bolsa de reparto un tarjetón con mensaje directo: *"Pide siempre directo en nuestra web y ahórrate el 10 % para siempre. Código: VECINO"*. Los clientes de tu barrio prefieren apoyarte directamente si el proceso es rápido y más barato.
+2. **Step 2: keep the local customer (day 1-2)**
+   Put a card in every delivery bag: *"Order direct on our site and keep 10% for good. Code: LOCAL"*. Neighbours will back you directly if the process is fast and cheaper.
 
-3. **Paso 3: Optimización de Carga y Fotos (Día 2)**  
-   Comprimir los archivos gráficos pesados a formatos modernos (WebP) y configurar aceleración de servidor. Esto reduce el rebote móvil de clientes con hambre en horas punta.
+3. **Step 3: fix load speed and photos (day 2)**
+   Compress the heavy image files to modern formats (WebP) and set up server or CDN caching. This cuts the mobile bounce from hungry customers at peak hours.
 
 ---
 
-## 4. Conclusión
+## 4. Conclusion
 
-Los agregadores (Glovo, Uber Eats, Just Eat) son útiles para que te descubran clientes nuevos, pero **no para que tus clientes habituales pidan cada fin de semana cobrándote el ${params.comisionAgregadorPct} %**.
+Aggregators (Glovo, Uber Eats, Just Eat) are useful for new customers discovering you, but **not for your regulars ordering every weekend at ${params.comisionAgregadorPct}%**.
 
-Convertir el ${params.pctRecuperableCanalPropio} % de tus pedidos habituales a canal propio significa ingresar **+${recoverableAnnualEuros.toLocaleString("es-ES")} € más este año**.
+Moving ${params.pctRecuperableCanalPropio}% of your repeat orders to your own channel means **+${eur(recoverableAnnualEuros)} EUR more this year**.
 `.trim();
 }
 
@@ -91,36 +92,38 @@ export async function generateGeminiDossier(
   try {
     const ai = new GoogleGenAI({ apiKey });
     const { audit, leaks, totalAnnualLossEuros, recoverableAnnualEuros, params } = report;
+    const eur = (n: number) => Math.round(n).toLocaleString("en-IE");
 
     const prompt = `
-Eres un consultor de estrategia financiera para hostelería y negocios locales en España.
-Escribe un dossier ejecutivo, persuasivo, directo y riguroso para el dueño del restaurante: "${audit.name || audit.domain}".
-Usa un tono profesional, cercano, de empresario a empresario ("hablamos de margen y de caja, no de código").
-El idioma debe ser exclusivamente español peninsular impecable.
+You are a financial strategy consultant for hospitality and local businesses in Spain.
+Write an executive dossier for the owner of the restaurant "${audit.name || audit.domain}":
+persuasive, direct and rigorous.
+Use a professional, plain tone, business owner to business owner ("we are talking margin and cash, not code").
+Write exclusively in clear British English.
 
-DATOS AUDITADOS REALES:
-- Nombre: ${audit.name}
+REAL AUDITED DATA:
+- Name: ${audit.name}
 - URL: ${audit.finalUrl}
-- Plataformas de agregadores detectadas: ${audit.aggregators.join(", ") || "Ninguna"}
+- Aggregator platforms detected: ${audit.aggregators.join(", ") || "None"}
 - WordPress: ${audit.wordpress} | WooCommerce: ${audit.woocommerce}
-- Store API pública abierta: ${audit.storeApi ? "SÍ (" + audit.storeApiItems + " productos encontrados)" : "NO"}
-- Tiempo de respuesta (TTFB): ${audit.ttfb} s
-- Peso imágenes portada: ${audit.imgKb} KB
-- Fuga total anual calculada: ${totalAnnualLossEuros.toLocaleString("es-ES")} €/año
-- Margen recuperable anual estimado: +${recoverableAnnualEuros.toLocaleString("es-ES")} €/año
-- Supuestos: ${params.pedidosDia} pedidos/día, ticket medio ${params.ticketMedio} €, comisión agregadores ${params.comisionAgregadorPct}%.
+- Public Store API open: ${audit.storeApi ? "YES (" + audit.storeApiItems + " products found)" : "NO"}
+- Time to first byte (TTFB): ${audit.ttfb} s
+- Homepage image weight: ${audit.imgKb} KB
+- Total annual leak calculated: ${eur(totalAnnualLossEuros)} EUR/year
+- Estimated recoverable margin: +${eur(recoverableAnnualEuros)} EUR/year
+- Assumptions: ${params.pedidosDia} orders/day, average ticket ${params.ticketMedio} EUR, aggregator commission ${params.comisionAgregadorPct}%.
 
-FUGAS CONCRETAS:
-${leaks.map((l) => `- ${l.title}: -${l.annualLossEuros} €/año. Explicación: ${l.explanation}. Solución: ${l.remedy}`).join("\n")}
+CONCRETE LEAKS:
+${leaks.map((l) => `- ${l.title}: -${eur(l.annualLossEuros)} EUR/year. Explanation: ${l.explanation}. Fix: ${l.remedy}`).join("\n")}
 
-ESTRUCTURA OBLIGATORIA DEL DOSSIER:
-1. Titular contundente con el nombre del restaurante y la cifra exacta de dinero que pierde al año.
-2. Diagnóstico ejecutivo en 2 párrafos: qué está pasando y por qué regalar el ${params.comisionAgregadorPct}% a intermediarios desangra el negocio.
-3. Desglose de las 2-3 fugas más graves explicando con números cómo se originan.
-4. Plan de rescate en 48 horas (3 pasos accionables).
-5. Llamada a la acción: cómo recuperar los ${recoverableAnnualEuros.toLocaleString("es-ES")} € sin tocar el TPV ni cambiar de cocina.
+REQUIRED DOSSIER STRUCTURE:
+1. A hard-hitting headline with the restaurant name and the exact figure it loses per year.
+2. Executive diagnosis in 2 paragraphs: what is happening and why giving ${params.comisionAgregadorPct}% to middlemen bleeds the business.
+3. Breakdown of the 2-3 worst leaks, explaining with numbers how they arise.
+4. A 48-hour rescue plan (3 actionable steps).
+5. Call to action: how to recover the ${eur(recoverableAnnualEuros)} EUR without touching the till or changing the kitchen.
 
-Devuelve SOLO el contenido en formato Markdown limpio, sin preámbulos.
+Return ONLY the content in clean Markdown, no preamble.
 `.trim();
 
     const genPromise = ai.models.generateContent({

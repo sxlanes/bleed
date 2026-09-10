@@ -1,3 +1,7 @@
+# Bleed · Memoria y Reglas Globales
+La memoria central, identidad y directrices de Nico viven en el vault de Obsidian: `/Users/nico/LifeComandNLS/`.
+Consulta `/Users/nico/LifeComandNLS/CLAUDE.md` y `VAULT-INDEX.md` para entender el contexto global y cómo trabajar con Nico.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

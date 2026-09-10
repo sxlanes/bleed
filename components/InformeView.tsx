@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useTransition, useMemo } from "react";
@@ -19,11 +20,10 @@ export default function InformeView({ initialReport }: Props) {
     generateDeterministicDossier(initialReport)
   );
   const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
-  const [aiSource, setAiSource] = useState<string>("Diagnóstico calibrado");
+  const [aiSource, setAiSource] = useState<string>("Calibrated diagnosis");
   const [copied, setCopied] = useState<boolean>(false);
   const [orderNotice, setOrderNotice] = useState<string | null>(null);
 
-  // Recalculate report live when simulation params change
   const currentReport = useMemo(() => {
     return calculateLeaks(initialReport.audit, params);
   }, [initialReport.audit, params]);
@@ -43,7 +43,7 @@ export default function InformeView({ initialReport }: Props) {
 
   const handleAddToCart = (product: AuditProduct) => {
     setCart((prev) => [...prev, product]);
-    setOrderNotice(`Añadido: ${product.name}`);
+    setOrderNotice(`Added: ${product.name}`);
     setTimeout(() => setOrderNotice(null), 2500);
   };
 
@@ -66,7 +66,7 @@ export default function InformeView({ initialReport }: Props) {
         const data = await res.json();
         if (data.markdown) {
           setDossierMarkdown(data.markdown);
-          setAiSource(data.modelUsed ? `Generado con Google Gemini (${data.modelUsed})` : "Redactado con Gemini AI");
+          setAiSource(data.modelUsed ? `Generated with Google Gemini (${data.modelUsed})` : "Drafted with Gemini AI");
         }
       }
     } catch {
@@ -83,49 +83,46 @@ export default function InformeView({ initialReport }: Props) {
   };
 
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(
-    `Auditoría Bleed para ${audit.name}: tu web está perdiendo ${totalLoss.toLocaleString("es-ES")} €/año en comisiones. Consulta el informe aquí: ${typeof window !== "undefined" ? window.location.href : ""}`
+    `Bleed Audit for ${audit.name}: your site is losing ${totalLoss.toLocaleString("en-US")} €/year in fees. View the report here: ${typeof window !== "undefined" ? window.location.href : ""}`
   )}`;
 
   return (
     <main className={styles.pagina}>
-      {/* Cabecera */}
       <header className={styles.cabecera}>
         <Link href="/" className={styles.marca}>
           <span className={styles.nombreMarca}>Bleed</span>
-          <span className={styles.selloMarca}>auditoría de fugas</span>
+          <span className={styles.selloMarca}>leak audit</span>
         </Link>
         <Link href="/" className={styles.volver}>
-          ← Auditar otra web
+          ← Audit another site
         </Link>
       </header>
 
-      {/* Titular y Badges del Negocio */}
       <section className={styles.negocioHero}>
         <div className={styles.subtituloNegocio}>
-          Auditoría de presencia y canal directo · {audit.domain}
+          Presence and direct channel audit · {audit.cuisine || "Restaurant"} · {audit.address ? audit.address.split(",")[0] : audit.domain}
         </div>
         <h1 className={styles.titular}>
-          {audit.name}: tu web pierde{" "}
+          {audit.name}: your site is losing{" "}
           <em className={styles.enfasisAcento}>
-            -{totalLoss.toLocaleString("es-ES")} € al año
+            -{totalLoss.toLocaleString("en-US")} € per year
           </em>
         </h1>
         <p className={styles.seccionSubtitulo}>
-          Detectadas {leaks.length} fugas operativas y técnicas en `{audit.finalUrl}`.
-          Con un canal directo optimizado puedes rescatar{" "}
+          Detected {leaks.length} operational and technical leaks at `{audit.finalUrl}`.
+          With an optimized direct channel you can recover{" "}
           <strong className={styles.enfasisVerde}>
-            +{recoverable.toLocaleString("es-ES")} € limpios/año
+            +{recoverable.toLocaleString("en-US")} € net/year
           </strong>{" "}
-          en 48 horas sin pagar intermediarios.
+          in 48 hours without paying middlemen.
         </p>
 
-        {/* Fila de Insignias Técnicas */}
         <div className={styles.etiquetasFila}>
           <span className={`${styles.badge} ${audit.ttfb < 1.0 ? styles.badgeVerde : styles.badgeAcento}`}>
-            TTFB: {audit.ttfb} s {audit.ttfb > 1.2 ? "(Lento)" : "(Rápido)"}
+            TTFB: {audit.ttfb} s {audit.ttfb > 1.2 ? "(Slow)" : "(Fast)"}
           </span>
           <span className={styles.badge}>
-            Imágenes: {audit.imgKb.toLocaleString("es-ES")} KB
+            Images: {audit.imgKb.toLocaleString("en-US")} KB
           </span>
           {audit.wordpress && (
             <span className={styles.badge}>
@@ -134,111 +131,107 @@ export default function InformeView({ initialReport }: Props) {
           )}
           {audit.storeApi && (
             <span className={`${styles.badge} ${styles.badgeVerde}`}>
-              Store API abierta ({audit.products.length} productos)
+              Open Store API ({audit.products.length} products)
             </span>
           )}
           {audit.aggregators.length > 0 && (
             <span className={`${styles.badge} ${styles.badgeAcento}`}>
-              Agregadores: {audit.aggregators.join(", ")}
+              Aggregators: {audit.aggregators.join(", ")}
             </span>
           )}
           {audit.whatsapp ? (
             <span className={`${styles.badge} ${styles.badgeVerde}`}>
-              WhatsApp directo detectado
+              Direct WhatsApp detected
             </span>
           ) : (
             <span className={`${styles.badge} ${styles.badgeAcento}`}>
-              Sin botón WhatsApp
+              No WhatsApp button
             </span>
           )}
           <span className={styles.badge}>
-            {audit.https ? "HTTPS Seguro" : "Sin HTTPS"}
+            {audit.https ? "Secure HTTPS" : "No HTTPS"}
           </span>
         </div>
       </section>
 
-      {/* Tarjetas de Resumen Financiero */}
       <section className={styles.bleedGrid}>
         <div className={`${styles.tarjetaTotal} ${styles.tarjetaTotalAcento}`}>
-          <div className={styles.etiquetaCifra}>Fuga anual total estimada</div>
+          <div className={styles.etiquetaCifra}>Total estimated annual leak</div>
           <div className={`${styles.granNumero} ${styles.numeroAcento}`}>
-            -{totalLoss.toLocaleString("es-ES")} €
+            -{totalLoss.toLocaleString("en-US")} € <span style={{fontSize: "1rem", color: "var(--ash)", fontWeight: "normal"}}>estimated</span>
           </div>
           <p className={styles.descripcionCifra}>
-            Equivale a <strong>-{Math.round(totalLoss / 12).toLocaleString("es-ES")} € al mes</strong> perdidos
-            en comisiones de Glovo/UberEats y rebote de clientes por lentitud en móvil.
+            Equivalent to <strong>-{Math.round(totalLoss / 12).toLocaleString("en-US")} € per month</strong> lost
+            in Glovo/UberEats fees and customer bounce rate due to mobile slowness.
           </p>
         </div>
 
         <div className={`${styles.tarjetaTotal} ${styles.tarjetaTotalVerde}`}>
-          <div className={styles.etiquetaCifra}>Margen neto recuperable</div>
+          <div className={styles.etiquetaCifra}>Recoverable net margin</div>
           <div className={`${styles.granNumero} ${styles.numeroVerde}`}>
-            +{recoverable.toLocaleString("es-ES")} €
+            +{recoverable.toLocaleString("en-US")} €
           </div>
           <p className={styles.descripcionCifra}>
-            Beneficio limpio directo a tu cuenta al convertir el {params.pctRecuperableCanalPropio} % de clientes
-            habituales a tu canal propio en 48 horas.
+            Clean profit straight to your account by converting {params.pctRecuperableCanalPropio}% of regular customers
+            to your own channel in 48 hours.
           </p>
         </div>
 
         <div className={styles.tarjetaTotal}>
-          <div className={styles.etiquetaCifra}>Tiempo estimado de arreglo</div>
+          <div className={styles.etiquetaCifra}>Estimated fix time</div>
           <div className={styles.granNumero}>
-            48 horas
+            48 hours
           </div>
           <p className={styles.descripcionCifra}>
-            Sin cambiar de TPV, sin contratar informáticos a nómina y sin alterar la operativa de la cocina.
+            Without changing POS, without hiring on-staff IT, and without altering kitchen operations.
           </p>
         </div>
       </section>
 
-      {/* Pestañas de Navegación */}
-      <nav className={styles.pestanas} aria-label="Secciones del informe">
+      <nav className={styles.pestanas} aria-label="Report sections">
         <button
           type="button"
           onClick={() => setActiveTab("fugas")}
           className={`${styles.pestanaBoton} ${activeTab === "fugas" ? styles.pestanaBotonActiva : ""}`}
         >
-          1. Auditoría y Fugas ({leaks.length})
+          1. Audit & Leaks ({leaks.length})
         </button>
         <button
           type="button"
           onClick={() => setActiveTab("prueba")}
           className={`${styles.pestanaBoton} ${activeTab === "prueba" ? styles.pestanaBotonActiva : ""}`}
         >
-          2. La Prueba: Fix en 1 Clic
+          2. The Proof: 1-Click Fix
         </button>
         <button
           type="button"
           onClick={() => setActiveTab("dossier")}
           className={`${styles.pestanaBoton} ${activeTab === "dossier" ? styles.pestanaBotonActiva : ""}`}
         >
-          3. Dossier Ejecutivo para el Dueño
+          3. Executive Dossier for Owner
         </button>
       </nav>
 
-      {/* CONTENIDO PESTAÑA 1: FUGAS Y SIMULADOR */}
       {activeTab === "fugas" && (
         <>
-          {/* Calculadora de Simulación */}
           <section className={styles.simuladorCaja}>
             <div className={styles.simuladorHeader}>
               <h2 className={styles.simuladorTitulo}>
-                Ajusta los supuestos con los números reales de tu negocio
+                Adjust the assumptions with your business's real numbers
               </h2>
               <button
                 type="button"
                 onClick={resetParams}
                 className={styles.volver}
               >
-                Restablecer supuestos
+                Reset assumptions
               </button>
             </div>
 
             <div className={styles.simuladorControles}>
               <div className={styles.controlItem}>
                 <div className={styles.controlEtiqueta}>
-                  <label htmlFor="ticketMedio">Ticket medio delivery</label>
+                  <label htmlFor="ticketMedio">Avg. delivery ticket</label>
                   <span className={styles.controlValor}>{params.ticketMedio.toFixed(2)} €</span>
                 </div>
                 <input
@@ -255,8 +248,8 @@ export default function InformeView({ initialReport }: Props) {
 
               <div className={styles.controlItem}>
                 <div className={styles.controlEtiqueta}>
-                  <label htmlFor="pedidosDia">Pedidos a domicilio / día</label>
-                  <span className={styles.controlValor}>{params.pedidosDia} pedidos</span>
+                  <label htmlFor="pedidosDia">Delivery orders / day</label>
+                  <span className={styles.controlValor}>{params.pedidosDia} orders</span>
                 </div>
                 <input
                   id="pedidosDia"
@@ -272,7 +265,7 @@ export default function InformeView({ initialReport }: Props) {
 
               <div className={styles.controlItem}>
                 <div className={styles.controlEtiqueta}>
-                  <label htmlFor="comisionAgregador">Comisión agregador</label>
+                  <label htmlFor="comisionAgregador">Aggregator fee</label>
                   <span className={styles.controlValor}>{params.comisionAgregadorPct} %</span>
                 </div>
                 <input
@@ -289,7 +282,7 @@ export default function InformeView({ initialReport }: Props) {
 
               <div className={styles.controlItem}>
                 <div className={styles.controlEtiqueta}>
-                  <label htmlFor="pctRecuperable">% Clientes recuperables</label>
+                  <label htmlFor="pctRecuperable">% Recoverable clients</label>
                   <span className={styles.controlValor}>{params.pctRecuperableCanalPropio} %</span>
                 </div>
                 <input
@@ -306,11 +299,10 @@ export default function InformeView({ initialReport }: Props) {
             </div>
           </section>
 
-          {/* Lista de Fugas Detalladas */}
           <section className={styles.listaFugas}>
-            <h2 className={styles.seccionTitulo}>Desglose de fugas detectadas</h2>
+            <h2 className={styles.seccionTitulo}>Breakdown of detected leaks</h2>
             <p className={styles.seccionSubtitulo}>
-              Cada cifra enseña el supuesto del que sale. Las fórmulas se calculan en vivo con las métricas medidas de tu web.
+              Every figure displays the assumption it's based on. Formulas are calculated live with metrics measured from your site.
             </p>
 
             {leaks.map((leak) => {
@@ -326,14 +318,14 @@ export default function InformeView({ initialReport }: Props) {
                   <div className={styles.fugaTop}>
                     <h3 className={styles.fugaTitulo}>{leak.title}</h3>
                     <div className={styles.fugaMonto}>
-                      -{leak.annualLossEuros.toLocaleString("es-ES")} €/año
+                      -{leak.annualLossEuros.toLocaleString("en-US")} €/year
                     </div>
                   </div>
 
                   <p className={styles.fugaExplicacion}>{leak.explanation}</p>
 
                   <div className={styles.formulaBloque}>
-                    <span className={styles.formulaEtiqueta}>Fórmula de cálculo y supuestos:</span>
+                    <span className={styles.formulaEtiqueta}>Calculation formula and assumptions:</span>
                     <code>{leak.formula}</code>
                   </div>
 
@@ -341,15 +333,18 @@ export default function InformeView({ initialReport }: Props) {
                     <ul className={styles.supuestosLista}>
                       {leak.assumptions.map((ass, i) => (
                         <li key={i} className={styles.supuestoItem}>
-                          <strong>{ass.label}:</strong> <span className={styles.supuestoValor}>{ass.value}</span> · <em>{ass.citation}</em>
+                          <strong>{ass.label}:</strong> <span className={styles.supuestoValor}>{ass.value}</span>
+                          <div style={{ fontSize: "0.75rem", color: "var(--ash)", marginTop: "0.15rem", fontFamily: "var(--font-plex-mono)" }}>
+                            {ass.citation}
+                          </div>
                         </li>
                       ))}
                     </ul>
                   )}
 
                   <div className={styles.remedioBloque}>
-                    <span><strong>Solución recomendada:</strong> {leak.remedy}</span>
-                    <span className={styles.remedioHoras}>({leak.remedyHours}h de trabajo)</span>
+                    <span><strong>Recommended fix:</strong> {leak.remedy}</span>
+                    <span className={styles.remedioHoras}>({leak.remedyHours}h of work)</span>
                   </div>
                 </article>
               );
@@ -358,44 +353,53 @@ export default function InformeView({ initialReport }: Props) {
         </>
       )}
 
-      {/* CONTENIDO PESTAÑA 2: LA PRUEBA / MOCKUP DEL FIX */}
       {activeTab === "prueba" && (
         <section className={styles.mockupGrid}>
-          {/* Columna Izquierda: Teléfono con Mockup Real */}
           <div className={styles.mockupTelefono}>
             <div className={styles.telefonoBarra}>
               <span>{audit.name}</span>
-              <span>Canal Directo · 0% comisiones</span>
+              <span>Direct Channel · 0% fees</span>
             </div>
 
             <div style={{ marginBottom: "1rem" }}>
-              <div style={{ fontSize: "0.875rem", fontWeight: 600 }}>Pide directo y ahórrate el 10%</div>
-              <div style={{ fontSize: "0.75rem", color: "var(--papel-debil)" }}>
-                Entrega rápida · Sin intermediarios
+              <div style={{ fontSize: "0.875rem", fontWeight: 600 }}>Order direct and save 10%</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--bone-dim)" }}>
+                Fast delivery · No middlemen
               </div>
             </div>
 
             {orderNotice && (
               <div style={{
-                background: "#122a1c",
-                border: "1px solid #235c39",
-                color: "var(--verde)",
+                background: "var(--panel)",
+                border: "1px solid var(--hair)",
+                color: "var(--bone)",
                 padding: "0.5rem 0.75rem",
                 borderRadius: "6px",
                 fontSize: "0.75rem",
                 marginBottom: "0.75rem",
-                fontFamily: "var(--mono)"
+                fontFamily: "var(--font-plex-mono)"
               }}>
                 ✓ {orderNotice}
               </div>
             )}
 
             <div className={styles.mockupProductos}>
-              {audit.products.length > 0 ? (
+              {audit.storeApi === undefined || audit.storeApi === null ? (
+                <div style={{ 
+                  padding: "2rem", 
+                  textAlign: "center", 
+                  color: "var(--bone-dim)", 
+                  fontSize: "0.875rem",
+                  background: "repeating-linear-gradient(45deg, transparent, transparent 10px, var(--panel) 10px, var(--panel) 20px)",
+                  border: "1px solid var(--hair)",
+                  borderRadius: "8px"
+                }}>
+                  Catalogue locked. No public menu data.
+                </div>
+              ) : audit.products.length > 0 ? (
                 audit.products.map((prod) => (
                   <div key={prod.id} className={styles.productoItem}>
                     {prod.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={prod.image} alt={prod.name} className={styles.productoFoto} />
                     ) : (
                       <div className={styles.productoFoto} style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem" }}>
@@ -416,84 +420,82 @@ export default function InformeView({ initialReport }: Props) {
                       onClick={() => handleAddToCart(prod)}
                       className={styles.botonAnadir}
                     >
-                      + Añadir
+                      + Add
                     </button>
                   </div>
                 ))
               ) : (
-                <div style={{ padding: "1.5rem 0", textAlign: "center", color: "var(--papel-debil)", fontSize: "0.875rem" }}>
-                  Cargando catálogo optimizado para {audit.name}...
+                <div style={{ padding: "1.5rem 0", textAlign: "center", color: "var(--bone-dim)", fontSize: "0.875rem" }}>
+                  Loading optimized catalogue for {audit.name}...
                 </div>
               )}
             </div>
 
             <div className={styles.mockupCarrito}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.75rem", fontFamily: "var(--mono)", fontSize: "0.875rem" }}>
-                <span>Total comanda ({cart.length} platos):</span>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.75rem", fontFamily: "var(--font-plex-mono)", fontSize: "0.875rem" }}>
+                <span>Order total ({cart.length} items):</span>
                 <strong>{cartTotal.toFixed(2)} €</strong>
               </div>
               <button
                 type="button"
                 onClick={() => {
-                  alert(`¡Comanda directa generada!\n\nRestaurante: ${audit.name}\nTotal: ${cartTotal.toFixed(2)} €\nComisión pagada a Glovo: 0,00 €\nAhorro directo: ${(cartTotal * (params.comisionAgregadorPct / 100)).toFixed(2)} €\n\nEl pedido se envía directamente al WhatsApp o TPV del local.`);
+                  alert(`Direct order generated!\n\nRestaurant: ${audit.name}\nTotal: ${cartTotal.toFixed(2)} €\nFee paid to Glovo: 0.00 €\nDirect savings: ${(cartTotal * (params.comisionAgregadorPct / 100)).toFixed(2)} €\n\nThe order is sent directly to the venue's WhatsApp or POS.`);
                 }}
                 className={styles.botonPedirDirecto}
               >
-                Pedir directo por WhatsApp (0 % comisiones)
+                Order direct via WhatsApp (0% fees)
               </button>
             </div>
           </div>
 
-          {/* Columna Derecha: Comparativa de Margen */}
           <div className={styles.comparativaCaja}>
-            <h2 className={styles.seccionTitulo}>La comparativa de caja</h2>
+            <h2 className={styles.seccionTitulo}>The profit margin comparison</h2>
             <p className={styles.seccionSubtitulo}>
-              Por qué el canal directo con Store API propia transforma la cuenta de resultados de {audit.name}.
+              Why a direct channel with its own Store API transforms {audit.name}'s bottom line.
             </p>
 
             <div className={styles.comparativaFila}>
               <div className={styles.columnaAgregador}>
-                <h3 className={styles.columnaTitulo} style={{ color: "var(--acento)" }}>
-                  Con Glovo / UberEats
+                <h3 className={styles.columnaTitulo} style={{ color: "var(--bleed)" }}>
+                  With Glovo / UberEats
                 </h3>
                 <ul className={styles.columnaLista}>
-                  <li><strong>Comisión:</strong> {params.comisionAgregadorPct} % de cada pedido</li>
-                  <li><strong>En un pedido de {params.ticketMedio.toFixed(2)} €:</strong> el restaurante ingresa solo {(params.ticketMedio * (1 - params.comisionAgregadorPct / 100)).toFixed(2)} €</li>
-                  <li><strong>Datos del cliente:</strong> Propiedad de Glovo</li>
-                  <li><strong>Cobro:</strong> Liquidación quincenal</li>
-                  <li><strong>Fidelización:</strong> Cero (la app le ofrece a tu vecino tu competencia)</li>
+                  <li><strong>Fee:</strong> {params.comisionAgregadorPct}% of each order</li>
+                  <li><strong>On a {params.ticketMedio.toFixed(2)} € order:</strong> the restaurant makes only {(params.ticketMedio * (1 - params.comisionAgregadorPct / 100)).toFixed(2)} €</li>
+                  <li><strong>Client data:</strong> Owned by Glovo</li>
+                  <li><strong>Payout:</strong> Bi-weekly settlement</li>
+                  <li><strong>Loyalty:</strong> Zero (the app offers your neighbor your competition)</li>
                 </ul>
               </div>
 
               <div className={styles.columnaDirecto}>
-                <h3 className={styles.columnaTitulo} style={{ color: "var(--verde)" }}>
-                  Con el Fix de Bleed
+                <h3 className={styles.columnaTitulo} style={{ color: "var(--bone)" }}>
+                  With the Bleed Fix
                 </h3>
                 <ul className={styles.columnaLista}>
-                  <li><strong>Comisión:</strong> 0 % (margen íntegro en cocina)</li>
-                  <li><strong>En un pedido de {params.ticketMedio.toFixed(2)} €:</strong> el restaurante ingresa {params.ticketMedio.toFixed(2)} €</li>
-                  <li><strong>Datos del cliente:</strong> Teléfono y comanda en tu WhatsApp</li>
-                  <li><strong>Cobro:</strong> Inmediato en tu TPV o Bizum</li>
-                  <li><strong>Velocidad de carga:</strong> 0.18 s (sin rebotes)</li>
+                  <li><strong>Fee:</strong> 0% (full margin to the kitchen)</li>
+                  <li><strong>On a {params.ticketMedio.toFixed(2)} € order:</strong> the restaurant makes {params.ticketMedio.toFixed(2)} €</li>
+                  <li><strong>Client data:</strong> Phone number and order in your WhatsApp</li>
+                  <li><strong>Payout:</strong> Instant via POS or Bizum</li>
+                  <li><strong>Load speed:</strong> 0.18 s (no bounces)</li>
                 </ul>
               </div>
             </div>
 
             <div className={styles.tarjetaTotal} style={{ marginTop: "1rem" }}>
-              <div className={styles.etiquetaCifra}>Impacto acumulado en 100 pedidos</div>
-              <div style={{ fontFamily: "var(--mono)", fontSize: "1.5rem", fontWeight: 600, color: "var(--verde)", margin: "0.25rem 0" }}>
-                +{(100 * params.ticketMedio * (params.comisionAgregadorPct / 100)).toFixed(2)} € más de beneficio neto
+              <div className={styles.etiquetaCifra}>Cumulative impact over 100 orders</div>
+              <div style={{ fontFamily: "var(--font-plex-mono)", fontSize: "1.5rem", fontWeight: 600, color: "var(--bone)", margin: "0.25rem 0" }}>
+                +{(100 * params.ticketMedio * (params.comisionAgregadorPct / 100)).toFixed(2)} € more net profit
               </div>
               <p className={styles.descripcionCifra}>
-                Por cada 100 pedidos que tus clientes habituales hacen por tu canal propio en vez de Glovo, te embolsas{" "}
-                +{(100 * params.ticketMedio * (params.comisionAgregadorPct / 100)).toFixed(2)} € limpios adicionales.
+                For every 100 orders your regular clients make through your own channel instead of Glovo, you pocket{" "}
+                +{(100 * params.ticketMedio * (params.comisionAgregadorPct / 100)).toFixed(2)} € clean additional margin.
               </p>
             </div>
           </div>
         </section>
       )}
 
-      {/* CONTENIDO PESTAÑA 3: DOSSIER EJECUTIVO */}
       {activeTab === "dossier" && (
         <section className={styles.dossierContenedor}>
           <div className={styles.dossierAcciones}>
@@ -503,14 +505,14 @@ export default function InformeView({ initialReport }: Props) {
               disabled={isGeneratingAi}
               className={`${styles.botonAccion} ${styles.botonPrimario}`}
             >
-              {isGeneratingAi ? "Generando con Gemini..." : "⚡ Redactar propuesta a medida con Gemini AI"}
+              {isGeneratingAi ? "Generating with Gemini..." : "⚡ Draft custom proposal with Gemini AI"}
             </button>
             <button
               type="button"
               onClick={copyDossier}
               className={`${styles.botonAccion} ${styles.botonSecundario}`}
             >
-              {copied ? "✓ ¡Copiado!" : "Copiar dossier (Markdown)"}
+              {copied ? "✓ Copied!" : "Copy dossier (Markdown)"}
             </button>
             <a
               href={whatsappShareUrl}
@@ -518,19 +520,19 @@ export default function InformeView({ initialReport }: Props) {
               rel="noopener noreferrer"
               className={`${styles.botonAccion} ${styles.botonSecundario}`}
             >
-              Compartir por WhatsApp
+              Share via WhatsApp
             </a>
             <button
               type="button"
               onClick={() => window.print()}
               className={`${styles.botonAccion} ${styles.botonSecundario}`}
             >
-              Imprimir / Guardar PDF
+              Print / Save PDF
             </button>
           </div>
 
-          <div style={{ fontFamily: "var(--mono)", fontSize: "0.75rem", color: "var(--papel-debil)", marginBottom: "1.5rem" }}>
-            Fuente del informe: {aiSource}
+          <div style={{ fontFamily: "var(--font-plex-mono)", fontSize: "0.75rem", color: "var(--bone-dim)", marginBottom: "1.5rem" }}>
+            Report source: {aiSource}
           </div>
 
           <div className={styles.dossierTexto}>
@@ -539,13 +541,12 @@ export default function InformeView({ initialReport }: Props) {
         </section>
       )}
 
-      {/* Pie de Página */}
       <footer className={styles.pieDePagina}>
         <span>
-          Bleed · Auditoría calibrada sobre el estudio de 132 restaurantes de Málaga.
+          Bleed · Audit calibrated on the study of 132 restaurants in Málaga.
         </span>
         <span>
-          Desarrollado para el AI Builders Hackathon 2026.
+          Built for the AI Builders Hackathon 2026.
         </span>
       </footer>
     </main>
