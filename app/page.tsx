@@ -68,54 +68,75 @@ export default function Portada() {
         a: 0.5 + Math.random() * 0.5,
       }));
       runners = [];
+      if (!sprite) sprite = bakeSprite();
     };
 
-    // A droplet is a lens: light bends through it, so it lifts the ground it sits
-    // on and throws one small specular. The rim goes dark where it refracts away.
+    /* A droplet is a lens: light bends through it, so it lifts the ground it
+       sits on and throws one small specular. Building those four gradients per
+       droplet per frame cost about 26,000 gradient objects a second, so the
+       droplet is baked once into an offscreen sprite and blitted from there. */
+    const SPRITE = 128;
+    const SPRITE_R = 40;
+    const SPRITE_CY = 60;
+    let sprite: HTMLCanvasElement | null = null;
+
+    const bakeSprite = () => {
+      const c = document.createElement("canvas");
+      c.width = SPRITE;
+      c.height = SPRITE;
+      const g2 = c.getContext("2d");
+      if (!g2) return null;
+      const x = SPRITE / 2;
+      const y = SPRITE_CY;
+      const r = SPRITE_R;
+
+      const sh = g2.createRadialGradient(x, y + r * 0.42, r * 0.2, x, y + r * 0.42, r * 1.24);
+      sh.addColorStop(0, "rgba(74,4,7,0.3)");
+      sh.addColorStop(1, "rgba(74,4,7,0)");
+      g2.fillStyle = sh;
+      g2.beginPath();
+      g2.arc(x, y + r * 0.42, r * 1.24, 0, Math.PI * 2);
+      g2.fill();
+
+      const g = g2.createRadialGradient(x - r * 0.32, y - r * 0.32, r * 0.06, x, y, r);
+      g.addColorStop(0, "rgba(255,236,232,0.34)");
+      g.addColorStop(0.4, "rgba(255,190,186,0.12)");
+      g.addColorStop(0.72, "rgba(255,255,255,0.04)");
+      g.addColorStop(0.93, "rgba(120,10,14,0.2)");
+      g.addColorStop(1, "rgba(255,255,255,0.16)");
+      g2.fillStyle = g;
+      g2.beginPath();
+      g2.arc(x, y, r, 0, Math.PI * 2);
+      g2.fill();
+
+      const hx = x - r * 0.33;
+      const hy = y - r * 0.37;
+      const hr = r * 0.3;
+      const hg = g2.createRadialGradient(hx, hy, 0, hx, hy, hr);
+      hg.addColorStop(0, "rgba(255,255,255,0.82)");
+      hg.addColorStop(1, "rgba(255,255,255,0)");
+      g2.fillStyle = hg;
+      g2.beginPath();
+      g2.arc(hx, hy, hr, 0, Math.PI * 2);
+      g2.fill();
+      return c;
+    };
+
     const drawDrop = (d: Drop, stretch = 0) => {
+      if (!sprite) return;
       const { x, y, r, a } = d;
+      ctx.globalAlpha = a;
       if (stretch > 0) {
-        const tg = ctx.createLinearGradient(x, y - r - stretch, x, y);
-        tg.addColorStop(0, "rgba(255,255,255,0)");
-        tg.addColorStop(1, `rgba(255,255,255,${0.05 * a})`);
-        ctx.fillStyle = tg;
+        ctx.fillStyle = `rgba(255,255,255,${0.05 * a})`;
         ctx.beginPath();
         ctx.moveTo(x - r * 0.34, y);
         ctx.quadraticCurveTo(x, y - r - stretch, x + r * 0.34, y);
         ctx.closePath();
         ctx.fill();
       }
-
-      // the shadow it casts is what makes it sit on the surface instead of in it
-      const sh = ctx.createRadialGradient(x, y + r * 0.42, r * 0.2, x, y + r * 0.42, r * 1.24);
-      sh.addColorStop(0, `rgba(74,4,7,${0.3 * a})`);
-      sh.addColorStop(1, "rgba(74,4,7,0)");
-      ctx.fillStyle = sh;
-      ctx.beginPath();
-      ctx.arc(x, y + r * 0.42, r * 1.24, 0, Math.PI * 2);
-      ctx.fill();
-
-      const g = ctx.createRadialGradient(x - r * 0.32, y - r * 0.32, r * 0.06, x, y, r);
-      g.addColorStop(0, `rgba(255,236,232,${0.34 * a})`);
-      g.addColorStop(0.4, `rgba(255,190,186,${0.12 * a})`);
-      g.addColorStop(0.72, `rgba(255,255,255,${0.04 * a})`);
-      g.addColorStop(0.93, `rgba(120,10,14,${0.2 * a})`);
-      g.addColorStop(1, `rgba(255,255,255,${0.16 * a})`);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-
-      const hx = x - r * 0.33;
-      const hy = y - r * 0.37;
-      const hr = r * 0.3;
-      const hg = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
-      hg.addColorStop(0, `rgba(255,255,255,${0.82 * a})`);
-      hg.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = hg;
-      ctx.beginPath();
-      ctx.arc(hx, hy, hr, 0, Math.PI * 2);
-      ctx.fill();
+      const k = r / SPRITE_R;
+      ctx.drawImage(sprite, x - (SPRITE / 2) * k, y - SPRITE_CY * k, SPRITE * k, SPRITE * k);
+      ctx.globalAlpha = 1;
     };
 
     const step = (dt: number) => {

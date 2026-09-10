@@ -3,8 +3,66 @@ import path from "path";
 import { AuditProduct, AuditResult, HeavyImage, AggregatorLink } from "./types";
 import { BENCHMARK_CASES, findBenchmark } from "./benchmarks";
 
-const USER_AGENT =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36";
+/**
+ * We say who we are. Auditing someone's site behind a spoofed Chrome string
+ * while claiming to crawl ethically is not a posture, it is a lie in the code.
+ */
+const USER_AGENT = "BleedAuditBot/1.0 (+https://bleed-omega.vercel.app; one-off audit requested by a visitor)";
+
+/** Concurrent requests we allow ourselves against a single host. */
+const MAX_CONCURRENT = 3;
+/** Pause between batches, so a small restaurant server is never hammered. */
+const BATCH_PAUSE_MS = 250;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Run tasks in small batches instead of all at once. */
+async function inBatches<T>(tasks: (() => Promise<T>)[], size = MAX_CONCURRENT): Promise<T[]> {
+  const out: T[] = [];
+  for (let i = 0; i < tasks.length; i += size) {
+    const batch = await Promise.all(tasks.slice(i, i + size).map((t) => t()));
+    out.push(...batch);
+    if (i + size < tasks.length) await sleep(BATCH_PAUSE_MS);
+  }
+  return out;
+}
+
+/**
+ * Ask robots.txt before reading anything. A disallow that names us, or a
+ * blanket disallow of the root, stops the audit. Failing to reach robots.txt
+ * is not consent, but it is not a refusal either, so we continue.
+ */
+export async function robotsAllows(origin: string, path = "/"): Promise<{ allowed: boolean; reason: string }> {
+  try {
+    const res = await fetch(new URL("/robots.txt", origin).href, {
+      headers: { "User-Agent": USER_AGENT },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return { allowed: true, reason: "no robots.txt published" };
+    const body = (await res.text()).slice(0, 20000);
+
+    let applies = false;
+    const disallows: string[] = [];
+    for (const raw of body.split(/\r?\n/)) {
+      const line = raw.split("#")[0].trim();
+      if (!line) continue;
+      const [rawKey, ...rest] = line.split(":");
+      const key = rawKey.trim().toLowerCase();
+      const value = rest.join(":").trim();
+      if (key === "user-agent") {
+        applies = value === "*" || value.toLowerCase().includes("bleedauditbot");
+      } else if (key === "disallow" && applies && value) {
+        disallows.push(value);
+      }
+    }
+    const blocked = disallows.some((d) => d === "/" || (d !== "" && path.startsWith(d)));
+    return blocked
+      ? { allowed: false, reason: "robots.txt disallows this path for our agent" }
+      : { allowed: true, reason: "allowed by robots.txt" };
+  } catch {
+    return { allowed: true, reason: "robots.txt unreachable" };
+  }
+}
 
 export function normalizeUrl(raw: string): { normalized: string; domain: string } {
   let u = raw.trim();
@@ -108,7 +166,37 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     return { ...benchmark.audit, source: "benchmark" };
   }
 
-  // 2. Perform live fetch & inspection
+  // 2. Ask permission before reading. A site that tells our agent no gets a no.
+  const permission = await robotsAllows(new URL(normalized).origin, new URL(normalized).pathname);
+  if (!permission.allowed) {
+    return {
+      url: normalized,
+      finalUrl: normalized,
+      domain,
+      name: domain,
+      status: 0,
+      ttfb: 0,
+      https: normalized.startsWith("https://"),
+      htmlKb: 0,
+      viewport: true,
+      wordpress: false,
+      woocommerce: false,
+      products: [],
+      aggregators: [],
+      aggregatorLinks: [],
+      ownOrder: false,
+      ownOrderSignals: [],
+      whatsapp: false,
+      reserva: false,
+      imgKb: 0,
+      heavyImgs: [],
+      error: `Not audited: ${permission.reason}. We do not read a site that asks us not to.`,
+      source: "fallback",
+      auditedAt: new Date().toISOString(),
+    };
+  }
+
+  // 3. Perform live fetch & inspection
   const t0 = performance.now();
   let response: Response;
   let finalUrl = normalized;
@@ -311,7 +399,7 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
   const heavyImgs: HeavyImage[] = [];
 
   try {
-    const headTasks = imgMatches.map(async (m) => {
+    const headTasks = imgMatches.map((m) => async () => {
       try {
         const rawSrc = m[1];
         if (rawSrc.startsWith("data:")) return null;
@@ -334,7 +422,7 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
       }
     });
 
-    const results = await Promise.all(headTasks);
+    const results = await inBatches(headTasks);
     for (const r of results) {
       if (r) {
         totalImgBytes += r.bytes;

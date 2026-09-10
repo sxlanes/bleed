@@ -107,7 +107,10 @@
 .line1 { animation-delay: 280ms; }
 .line2 {
   animation-delay: 380ms;
-  background: linear-gradient(179deg, var(--white) 8%, rgba(255, 255, 255, 0.62) 48%, rgba(255, 255, 255, 0.08) 96%);
+  /* Measured over #cb1b22: solid white is 5.65:1, and the dimmest stop of this
+     gradient (75% white) is 3.68:1, clearing the 3:1 floor for display text.
+     The earlier version bottomed out at 2.78:1 and failed. */
+  background: linear-gradient(179deg, var(--white) 22%, rgba(255, 255, 255, 0.9) 62%, rgba(255, 255, 255, 0.75) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -158,7 +161,7 @@
   font-size: 0.95rem;
   padding: 1.05rem 0.95rem;
 }
-.input::placeholder { color: rgba(255, 255, 255, 0.62); }
+.input::placeholder { color: rgba(255, 255, 255, 0.8); }
 .input:focus { outline: 0; }
 
 .run {
@@ -194,12 +197,12 @@
   margin: 1.15rem 0 0;
   font-size: 0.75rem;
   letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.82);
 }
 .lab {
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 .val {
   color: var(--white);
@@ -207,14 +210,14 @@
 }
 .rate {
   margin-left: auto;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .foot {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.52);
+  color: rgba(255, 255, 255, 0.8);
   opacity: 0;
   animation: rise 700ms var(--ease) 680ms forwards;
 }
@@ -256,7 +259,7 @@
 }
 
 .hint {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 0.75rem;
   margin-top: 0.5rem;
 }
