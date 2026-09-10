@@ -142,3 +142,12 @@ Cuatro worktrees en `/Users/nico/orca/workspaces/bleed/`, uno por frente, con su
   codigo cero. Solo se usa con `gemini-3.1-pro-high`.
 - **La verificacion de un worker es que su fichero existe y tiene contenido**, jamas que el
   proceso termino bien.
+
+---
+
+## Decisiones de Nico — 10-sep, mañana
+
+✅ **Idioma:** todo en inglés (interfaz, dossier, prompts)
+✅ **Dominio:** `bleed.io` en Namecheap
+✅ **API Anthropic:** free tier (build), después upgradeable
+⏳ **Despliegue Vercel:** pendiente
