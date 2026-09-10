@@ -3,28 +3,26 @@
 import { useState, useEffect } from "react";
 import styles from "./informe.module.css";
 
-const messages = [
-  "Reading the site",
-  "Detecting the order path",
-  "Weighing the images",
-  "Matching leaks to this business",
-  "Applying calibrated constants",
-  "Writing the brief"
+const stages = [
+  { label: "Fetching", detail: "Downloading site resources" },
+  { label: "Checking mobile signals", detail: "Lighthouse mobile simulation" },
+  { label: "Calculating leaks", detail: "Mapping fees and bounces" },
+  { label: "Building report", detail: "Generating visual evidence" }
 ];
 
 export default function Loading() {
-  const [visibleCount, setVisibleCount] = useState(1);
+  const [activeIdx, setActiveIdx] = useState(0);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
-      setVisibleCount(messages.length);
+      setActiveIdx(stages.length - 1);
       return;
     }
 
     const interval = setInterval(() => {
-      setVisibleCount((prev) => {
-        if (prev >= messages.length) {
+      setActiveIdx((prev) => {
+        if (prev >= stages.length - 1) {
           clearInterval(interval);
           return prev;
         }
@@ -38,10 +36,24 @@ export default function Loading() {
   return (
     <main className={styles.loadingMain}>
       <h1 className={styles.loadingTitle}>Running diagnostics...</h1>
-      <div className={styles.loadingConsole}>
-        {messages.slice(0, visibleCount).map((msg, idx) => (
-          <div key={idx} className={styles.loadingMessage}>{msg}</div>
-        ))}
+      <div className={styles.loadingConsole} role="status" aria-live="polite">
+        {stages.map((stage, idx) => {
+          const isActive = idx === activeIdx;
+          const isPast = idx < activeIdx;
+          const isFuture = idx > activeIdx;
+          
+          if (isFuture) return null;
+
+          return (
+            <div key={idx} className={`${styles.loadingMessage} ${isActive ? styles.loadingMessageActive : ''}`}>
+              <span className={styles.loadingMessageIcon}>{isPast ? "✓" : "⟳"}</span>
+              <div className={styles.loadingMessageText}>
+                <strong>{stage.label}</strong>
+                {isActive && <span className={styles.loadingMessageDetail}>{stage.detail}</span>}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </main>
   );

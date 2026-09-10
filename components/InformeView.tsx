@@ -14,6 +14,9 @@ interface Props {
 
 export default function InformeView({ initialReport }: Props) {
   const [params, setParams] = useState<AuditSimulationParams>(initialReport.params);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<number>(0);
+  const [updateMsg, setUpdateMsg] = useState("");
   const [activeTab, setActiveTab] = useState<"fugas" | "prueba" | "dossier">("fugas");
   const [cart, setCart] = useState<AuditProduct[]>([]);
   const [dossierMarkdown, setDossierMarkdown] = useState<string>(() =>
@@ -30,11 +33,26 @@ export default function InformeView({ initialReport }: Props) {
 
   const audit = currentReport.audit;
   const leaks = currentReport.leaks;
+  const maxLoss = Math.max(...leaks.map(l => l.annualLossEuros), 1);
   const totalLoss = currentReport.totalAnnualLossEuros;
   const recoverable = currentReport.recoverableAnnualEuros;
 
   const handleParamChange = (field: keyof AuditSimulationParams, value: number) => {
+    setIsUpdating(true);
+    setUpdateMsg("Recalculating...");
     setParams((prev) => ({ ...prev, [field]: value }));
+    const now = Date.now();
+    setLastUpdate(now);
+    setTimeout(() => {
+      setLastUpdate((current) => {
+        if (current === now) {
+          setIsUpdating(false);
+          setUpdateMsg("Updated just now");
+          setTimeout(() => setUpdateMsg(""), 2000);
+        }
+        return current;
+      });
+    }, 300);
   };
 
   const resetParams = () => {
@@ -46,6 +64,25 @@ export default function InformeView({ initialReport }: Props) {
     setOrderNotice(`Added: ${product.name}`);
     setTimeout(() => setOrderNotice(null), 2500);
   };
+
+  
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, current: "fugas" | "prueba" | "dossier") => {
+    const tabs: ("fugas" | "prueba" | "dossier")[] = ["fugas", "prueba", "dossier"];
+    const idx = tabs.indexOf(current);
+    let nextIdx = idx;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      nextIdx = (idx + 1) % tabs.length;
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      nextIdx = (idx - 1 + tabs.length) % tabs.length;
+    }
+    if (nextIdx !== idx) {
+      e.preventDefault();
+      const nextTab = tabs[nextIdx];
+      setActiveTab(nextTab);
+      document.getElementById(`tab-${nextTab}`)?.focus();
+    }
+  };
+
 
   const cartTotal = useMemo(() => {
     return cart.reduce((sum, item) => {
@@ -155,7 +192,7 @@ export default function InformeView({ initialReport }: Props) {
       </section>
 
       <section className={styles.bleedGrid}>
-        <div className={`${styles.tarjetaTotal} ${styles.tarjetaTotalAcento}`}>
+        <div className={`${styles.tarjetaTotal} ${styles.tarjetaTotalAcento} ${isUpdating ? styles.recalculating : ''}`}>
           <div className={styles.etiquetaCifra}>Total estimated annual leak</div>
           <div className={`${styles.granNumero} ${styles.numeroAcento}`}>
             -{totalLoss.toLocaleString("en-US")} € <span style={{fontSize: "1rem", color: "var(--ash)", fontWeight: "normal"}}>estimated</span>
@@ -166,7 +203,7 @@ export default function InformeView({ initialReport }: Props) {
           </p>
         </div>
 
-        <div className={`${styles.tarjetaTotal} ${styles.tarjetaTotalVerde}`}>
+        <div className={`${styles.tarjetaTotal} ${styles.tarjetaTotalVerde} ${isUpdating ? styles.recalculating : ''}`}>
           <div className={styles.etiquetaCifra}>Recoverable net margin</div>
           <div className={`${styles.granNumero} ${styles.numeroVerde}`}>
             +{recoverable.toLocaleString("en-US")} €
@@ -188,24 +225,36 @@ export default function InformeView({ initialReport }: Props) {
         </div>
       </section>
 
-      <nav className={styles.pestanas} aria-label="Report sections">
+      <nav className={styles.pestanas} aria-label="Report sections" role="tablist">
         <button
           type="button"
-          onClick={() => setActiveTab("fugas")}
+          role="tab"
+          aria-selected={activeTab === "fugas"}
+          aria-controls="panel-fugas"
+          id="tab-fugas"
+          onClick={() => setActiveTab("fugas")} onKeyDown={(e) => handleTabKeyDown(e, "fugas")}
           className={`${styles.pestanaBoton} ${activeTab === "fugas" ? styles.pestanaBotonActiva : ""}`}
         >
           1. Audit & Leaks ({leaks.length})
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab("prueba")}
+          role="tab"
+          aria-selected={activeTab === "prueba"}
+          aria-controls="panel-prueba"
+          id="tab-prueba"
+          onClick={() => setActiveTab("prueba")} onKeyDown={(e) => handleTabKeyDown(e, "prueba")}
           className={`${styles.pestanaBoton} ${activeTab === "prueba" ? styles.pestanaBotonActiva : ""}`}
         >
           2. The Proof: 1-Click Fix
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab("dossier")}
+          role="tab"
+          aria-selected={activeTab === "dossier"}
+          aria-controls="panel-dossier"
+          id="tab-dossier"
+          onClick={() => setActiveTab("dossier")} onKeyDown={(e) => handleTabKeyDown(e, "dossier")}
           className={`${styles.pestanaBoton} ${activeTab === "dossier" ? styles.pestanaBotonActiva : ""}`}
         >
           3. Executive Dossier for Owner
@@ -213,11 +262,12 @@ export default function InformeView({ initialReport }: Props) {
       </nav>
 
       {activeTab === "fugas" && (
-        <>
+        <div id="panel-fugas" role="tabpanel" aria-labelledby="tab-fugas">
           <section className={styles.simuladorCaja}>
             <div className={styles.simuladorHeader}>
               <h2 className={styles.simuladorTitulo}>
                 Adjust the assumptions with your business's real numbers
+                {updateMsg && <span className={styles.updateMsg} role="status" aria-live="polite">{updateMsg}</span>}
               </h2>
               <button
                 type="button"
@@ -237,6 +287,7 @@ export default function InformeView({ initialReport }: Props) {
                 <input
                   id="ticketMedio"
                   type="range"
+                  aria-valuetext={`${params.ticketMedio.toFixed(2)} euros`}
                   min="12"
                   max="60"
                   step="0.5"
@@ -254,6 +305,7 @@ export default function InformeView({ initialReport }: Props) {
                 <input
                   id="pedidosDia"
                   type="range"
+                  aria-valuetext={`${params.pedidosDia} orders`}
                   min="3"
                   max="60"
                   step="1"
@@ -271,6 +323,7 @@ export default function InformeView({ initialReport }: Props) {
                 <input
                   id="comisionAgregador"
                   type="range"
+                  aria-valuetext={`${params.comisionAgregadorPct} percent`}
                   min="15"
                   max="35"
                   step="1"
@@ -288,6 +341,7 @@ export default function InformeView({ initialReport }: Props) {
                 <input
                   id="pctRecuperable"
                   type="range"
+                  aria-valuetext={`${params.pctRecuperableCanalPropio} percent`}
                   min="15"
                   max="70"
                   step="5"
@@ -304,6 +358,9 @@ export default function InformeView({ initialReport }: Props) {
             <p className={styles.seccionSubtitulo}>
               Every figure displays the assumption it's based on. Formulas are calculated live with metrics measured from your site.
             </p>
+            <div className={styles.leyendaSeveridad}>
+              <strong>Severity:</strong> <span className={styles.legCritica}>Critical (immediate loss)</span> · <span className={styles.legAlta}>High</span> · <span className={styles.legMedia}>Medium</span>
+            </div>
 
             {leaks.map((leak) => {
               const borderClass =
@@ -314,12 +371,19 @@ export default function InformeView({ initialReport }: Props) {
                   : styles.tarjetaFugaMedia;
 
               return (
-                <article key={leak.id} className={`${styles.tarjetaFuga} ${borderClass}`}>
+                <article key={leak.id} className={`${styles.tarjetaFuga} ${borderClass} ${isUpdating ? styles.recalculating : ''}`}>
                   <div className={styles.fugaTop}>
-                    <h3 className={styles.fugaTitulo}>{leak.title}</h3>
+                    <h3 className={styles.fugaTitulo}>
+                      {leak.title}
+                      <span className={styles.badgeSeveridad}>{leak.severity}</span>
+                    </h3>
                     <div className={styles.fugaMonto}>
                       -{leak.annualLossEuros.toLocaleString("en-US")} €/year
                     </div>
+                  </div>
+                  
+                  <div className={styles.barraContenedor} aria-label={`Loss bar: ${leak.annualLossEuros} euros`}>
+                    <div className={styles.barraRelleno} style={{ width: `${Math.max(2, (leak.annualLossEuros / maxLoss) * 100)}%` }} />
                   </div>
 
                   <p className={styles.fugaExplicacion}>{leak.explanation}</p>
@@ -330,16 +394,19 @@ export default function InformeView({ initialReport }: Props) {
                   </div>
 
                   {leak.assumptions.length > 0 && (
-                    <ul className={styles.supuestosLista}>
-                      {leak.assumptions.map((ass, i) => (
-                        <li key={i} className={styles.supuestoItem}>
-                          <strong>{ass.label}:</strong> <span className={styles.supuestoValor}>{ass.value}</span>
-                          <div style={{ fontSize: "0.75rem", color: "var(--ash)", marginTop: "0.15rem", fontFamily: "var(--font-plex-mono)" }}>
-                            {ass.citation}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                    <details className={styles.supuestosDetails}>
+                      <summary className={styles.supuestosSummary}>Source & Assumptions ({leak.assumptions.length})</summary>
+                      <ul className={styles.supuestosLista}>
+                        {leak.assumptions.map((ass, i) => (
+                          <li key={i} className={styles.supuestoItem}>
+                            <strong>{ass.label}:</strong> <span className={styles.supuestoValor}>{ass.value}</span>
+                            <div style={{ fontSize: "0.75rem", color: "var(--ash)", marginTop: "0.15rem", fontFamily: "var(--font-plex-mono)" }}>
+                              {ass.citation}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   )}
 
                   <div className={styles.remedioBloque}>
@@ -350,10 +417,11 @@ export default function InformeView({ initialReport }: Props) {
               );
             })}
           </section>
-        </>
+        </div>
       )}
 
       {activeTab === "prueba" && (
+        <div id="panel-prueba" role="tabpanel" aria-labelledby="tab-prueba">
         <section className={styles.mockupGrid}>
           <div className={styles.mockupTelefono}>
             <div className={styles.telefonoBarra}>
@@ -403,7 +471,7 @@ export default function InformeView({ initialReport }: Props) {
                       <img src={prod.image} alt={prod.name} className={styles.productoFoto} />
                     ) : (
                       <div className={styles.productoFoto} style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem" }}>
-                        🍽️
+                        <span aria-hidden="true">🍽️</span>
                       </div>
                     )}
                     <div className={styles.productoInfo}>
@@ -494,9 +562,11 @@ export default function InformeView({ initialReport }: Props) {
             </div>
           </div>
         </section>
+        </div>
       )}
 
       {activeTab === "dossier" && (
+        <div id="panel-dossier" role="tabpanel" aria-labelledby="tab-dossier">
         <section className={styles.dossierContenedor}>
           <div className={styles.dossierAcciones}>
             <button
@@ -539,9 +609,32 @@ export default function InformeView({ initialReport }: Props) {
             {dossierMarkdown}
           </div>
         </section>
+        </div>
+      )}
+
+      {(initialReport as any)?.pipeline && (
+        <section className={styles.provenancePanel} aria-label="Analysis provenance">
+          <h2 className={styles.provenanceTitle}>How this was analysed</h2>
+          {(initialReport as any)?.triage?.businessRead && (
+            <div className={styles.provenanceTriage}>
+              <strong>Business Read:</strong> {(initialReport as any).triage.businessRead} 
+              <span className={styles.provenanceEngine}>({(initialReport as any).triage.source === "gemini" ? ((initialReport as any).triage.modelUsed || "Gemini") : "Deterministic"})</span>
+            </div>
+          )}
+          <div className={styles.provenanceStages}>
+            {(initialReport as any).pipeline.map((stage: any, idx: number) => (
+              <div key={stage.id || idx} className={styles.provenanceStage}>
+                <div className={styles.stageLabel}>{stage.label}</div>
+                <div className={styles.stageEngine}>{stage.engine === "deterministic" ? "Deterministic Engine" : "Google Gemini"}</div>
+                {stage.ms && <div className={styles.stageTime}>{stage.ms} ms</div>}
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       <footer className={styles.pieDePagina}>
+
         <span>
           Bleed · Audit calibrated on the study of 132 restaurants in Málaga.
         </span>

@@ -38,7 +38,7 @@
   width: 100%;
   height: 100%;
   z-index: 0;
-  opacity: 0.42;
+  opacity: 0.9;
   pointer-events: none;
 }
 
@@ -233,4 +233,36 @@
   .caret { opacity: 1; }
   .mark, .title span, .field, .foot { animation: none; opacity: 1; transform: none; }
   .run::after { display: none; }
+}
+
+/*
+  Measured Contrast Ratios:
+  red (#cb1b22) vs white (#ffffff): 5.65:1
+*/
+
+.formError {
+  border-color: #ff9999;
+}
+.formError:focus-within {
+  border-color: #ff9999;
+  box-shadow: 0 0 0 4px rgba(255, 153, 153, 0.2);
+}
+
+.errorText {
+  color: #ff9999;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.hint {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* Visibility of focus */
+.run:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 3px;
 }

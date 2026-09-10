@@ -3,6 +3,8 @@ import {
   AuditSimulationParams,
   FullAuditReport,
   Leak,
+  TriageResult,
+  PipelineStage,
 } from "./types";
 import { constante } from "./calibracion";
 
@@ -31,7 +33,8 @@ export const DEFAULT_PARAMS: AuditSimulationParams = {
 
 export function calculateLeaks(
   audit: AuditResult,
-  customParams?: Partial<AuditSimulationParams>
+  customParams?: Partial<AuditSimulationParams>,
+  triage?: TriageResult
 ): FullAuditReport {
   const params: AuditSimulationParams = {
     ...DEFAULT_PARAMS,
@@ -309,22 +312,73 @@ export function calculateLeaks(
     });
   }
 
-  const totalAnnualLossEuros = leaks.reduce((acc, l) => acc + l.annualLossEuros, 0);
+  let finalLeaks = leaks;
 
-  const aggregatorLeak = leaks.find((l) => l.id === "fuga-agregadores");
-  const speedLeak = leaks.find((l) => l.id === "fuga-velocidad");
+  if (triage && triage.source === "gemini") {
+    const triageMap = new Map(triage.verdicts.map((v) => [v.leakId, v]));
+    finalLeaks = leaks.filter((l) => triageMap.has(l.id));
+
+    finalLeaks.forEach((l) => {
+      const verdict = triageMap.get(l.id);
+      if (verdict) {
+        l.explanation = `${verdict.whyItMattersHere} ${l.explanation}`;
+      }
+    });
+
+    finalLeaks.sort((a, b) => {
+      const rankA = triageMap.get(a.id)?.rank ?? 999;
+      const rankB = triageMap.get(b.id)?.rank ?? 999;
+      return rankA - rankB;
+    });
+  }
+
+  const totalAnnualLossEuros = finalLeaks.reduce((acc, l) => acc + l.annualLossEuros, 0);
+
+  const aggregatorLeak = finalLeaks.find((l) => l.id === "fuga-agregadores");
+  const speedLeak = finalLeaks.find((l) => l.id === "fuga-velocidad");
   const recoverableAnnualEuros = Math.round(
     (aggregatorLeak ? aggregatorLeak.annualLossEuros * (params.pctRecuperableCanalPropio / 100) : 0) +
       (speedLeak ? speedLeak.annualLossEuros * 0.75 : 0) +
-      (leaks.length > 2 ? 1200 : 0)
+      (finalLeaks.length > 2 ? 1200 : 0)
   );
+
+  const hasApiKey = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
+  const pipeline: PipelineStage[] = [
+    {
+      id: "recon",
+      label: "Recon",
+      engine: "deterministic",
+      detail: `Audited ${audit.domain}`,
+    },
+    {
+      id: "triage",
+      label: "Triage",
+      engine: triage?.source === "gemini" ? "gemini-3.6-flash" : "deterministic",
+      detail: triage?.source === "gemini" ? "Selected and ranked leaks" : "Skipped / Deterministic fallback",
+      ms: triage?.ms,
+    },
+    {
+      id: "quantify",
+      label: "Quantify",
+      engine: "deterministic",
+      detail: `Calculated exact euros for ${finalLeaks.length} selected leaks`,
+    },
+    {
+      id: "dossier",
+      label: "Dossier",
+      engine: hasApiKey ? "gemini-3.6-flash" : "deterministic",
+      detail: "Ready to write executive summary",
+    },
+  ];
 
   return {
     audit,
     params,
-    leaks,
+    leaks: finalLeaks,
     totalAnnualLossEuros,
     recoverableAnnualEuros,
     generatedAt: new Date().toISOString(),
+    triage,
+    pipeline,
   };
 }

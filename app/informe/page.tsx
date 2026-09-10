@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auditUrl } from "@/lib/recon";
 import { calculateLeaks } from "@/lib/quantification";
+import { triageLeaks } from "@/lib/triage";
 import { findBenchmark, DEMOS_ENABLED } from "@/lib/benchmarks";
 import InformeView from "@/components/InformeView";
 import type { Metadata } from "next";
@@ -31,7 +32,15 @@ export default async function InformePage({ searchParams }: PageProps) {
   if (!target) redirect("/");
 
   const audit = await auditUrl(target);
-  const report = calculateLeaks(audit);
+  
+  let triageResult;
+  try {
+    triageResult = await triageLeaks(audit);
+  } catch (error) {
+    // If triage entirely throws, proceed without it
+  }
+
+  const report = calculateLeaks(audit, undefined, triageResult);
 
   return <InformeView initialReport={report} />;
 }

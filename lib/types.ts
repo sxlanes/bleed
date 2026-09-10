@@ -104,6 +104,31 @@ export interface FullAuditReport {
   totalAnnualLossEuros: number;
   recoverableAnnualEuros: number;
   generatedAt: string;
+  triage?: TriageResult;
+  pipeline?: PipelineStage[];
+}
+
+export interface TriageVerdict {
+  leakId: string;
+  rank: number;               // 1 = el que mas importa aqui
+  whyItMattersHere: string;   // una frase, especifica de ESTE negocio
+  confidence: "high" | "medium" | "low";
+}
+
+export interface TriageResult {
+  verdicts: TriageVerdict[];
+  businessRead: string;       // que tipo de negocio cree que es y por que
+  source: "gemini" | "deterministic";
+  modelUsed?: string;
+  ms: number;
+}
+
+export interface PipelineStage {
+  id: "recon" | "triage" | "quantify" | "dossier";
+  label: string;
+  engine: "deterministic" | "gemini-3.6-flash";
+  detail: string;             // una linea de que hizo
+  ms?: number;
 }
 
 export const DEFAULT_SIMULATION_PARAMS: AuditSimulationParams = {
