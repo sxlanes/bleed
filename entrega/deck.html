@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bleed — Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+<style>
+  /* Bleed deck. 10 slides, 16:9. Same two worlds as the product:
+     the red field is the alarm, the dark room is the diagnosis. */
+  :root {
+    --red:      #cb1b22;
+    --void:     #0b0d0f;
+    --panel:    #14171a;
+    --hair:     #22262a;
+    --bone:     #e8e6e1;
+    --bone-dim: #9a9c9b;
+    --ash:      #6b7075;
+    --bleed:    #ff3b3b;
+    --white:    #ffffff;
+
+    --display: "Anton", "Arial Narrow", sans-serif;
+    --body:    "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --mono:    "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #050607;
+    color: var(--bone);
+    font-family: var(--body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .deck { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 1.5rem; }
+
+  .slide {
+    position: relative;
+    width: min(100%, 1200px);
+    aspect-ratio: 16 / 9;
+    background: var(--void);
+    border: 1px solid var(--hair);
+    padding: clamp(1.5rem, 3.4vw, 3.25rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    container-type: inline-size;
+  }
+  .slide.red { background: var(--red); border-color: transparent; color: var(--white); }
+
+  .num {
+    position: absolute;
+    top: clamp(1.5rem, 3.4vw, 3.25rem);
+    right: clamp(1.5rem, 3.4vw, 3.25rem);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    color: var(--ash);
+  }
+  .slide.red .num { color: rgba(255,255,255,0.55); }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ash);
+    margin-bottom: 1.1rem;
+  }
+  .slide.red .eyebrow { color: rgba(255,255,255,0.7); }
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 0.92;
+    font-size: clamp(1.9rem, 5.2cqi, 3.6rem);
+    margin: 0 0 1.2rem;
+    text-wrap: balance;
+  }
+  h2 .hl { color: var(--bleed); }
+  .slide.red h2 { font-size: clamp(2.4rem, 7.6cqi, 5.4rem); }
+
+  p { margin: 0 0 0.9rem; font-size: clamp(0.85rem, 1.55cqi, 1.05rem); line-height: 1.55; color: var(--bone-dim); max-width: 62ch; }
+  p strong { color: var(--bone); font-weight: 500; }
+  .slide.red p { color: rgba(255,255,255,0.92); }
+
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0; flex: 1; align-content: start; }
+  .cols > div { border-top: 1px solid var(--hair); padding: 0.9rem 1.4rem 0 0; }
+  .cols .k { font-family: var(--mono); font-size: clamp(1.1rem, 2.6cqi, 1.9rem); color: var(--bleed); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .cols .v { margin-top: 0.4rem; font-size: clamp(0.75rem, 1.35cqi, 0.92rem); color: var(--bone-dim); line-height: 1.45; }
+  .cols .s { margin-top: 0.5rem; font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; color: #565b60; }
+
+  ul { margin: 0; padding: 0; list-style: none; flex: 1; }
+  li { border-top: 1px solid var(--hair); padding: 0.75rem 0; font-size: clamp(0.82rem, 1.5cqi, 1rem); display: flex; gap: 1rem; align-items: baseline; }
+  li b { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--bleed); flex: 0 0 8.5em; }
+  li span { color: var(--bone-dim); }
+
+  .pipe { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--hair); border: 1px solid var(--hair); margin-top: 0.5rem; }
+  .pipe > div { background: var(--void); padding: 1rem; }
+  .pipe .st { font-family: var(--mono); font-size: 0.78rem; color: var(--bone); letter-spacing: 0.06em; }
+  .pipe .en { margin-top: 0.45rem; font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .pipe .en.ai { color: var(--bleed); }
+  .pipe .en.det { color: var(--ash); }
+  .pipe .de { margin-top: 0.55rem; font-size: clamp(0.7rem, 1.25cqi, 0.85rem); color: var(--bone-dim); line-height: 1.4; }
+
+  .foot { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--hair); font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: #565b60; }
+  .slide.red .foot { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.6); }
+
+  .big { font-family: var(--display); font-size: clamp(2.4rem, 9cqi, 6rem); line-height: 0.9; color: var(--bleed); letter-spacing: -0.01em; }
+  .drip {
+    background: linear-gradient(178deg, var(--white) 6%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.06) 98%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .deck { gap: 0; padding: 0; }
+    .slide { width: 100%; border: 0; page-break-after: always; break-after: page; }
+    @page { size: 1200px 675px; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- 1 -->
+  <section class="slide red">
+    <span class="num">01 / 10</span>
+    <div class="eyebrow">AI Builders Hackathon 2026</div>
+    <h2><span>Your site is</span><br /><span class="drip">bleeding.</span></h2>
+    <p><strong>Bleed</strong> reads a local restaurant's website and tells the owner, in euros a year, what it is costing them. Every figure shows the assumption behind it.</p>
+    <div class="foot">bleed-omega.vercel.app &middot; github.com/sxlanes/bleed</div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <span class="num">02 / 10</span>
+    <div class="eyebrow">The problem</div>
+    <h2>Nobody has ever put <span class="hl">a number</span> on it</h2>
+    <p>Local restaurants hand a third of every delivery order to an aggregator. Most already own the channel that would keep that money, paid for and unused. They cannot act on it because nobody has told them what it costs.</p>
+    <div class="cols">
+      <div><div class="k">76.4%</div><div class="v">of Spanish restaurants that deliver depend entirely on an aggregator</div><div class="s">BCC Innovation / Delectatech, 240k venues, 2022</div></div>
+      <div><div class="k">13&ndash;35%</div><div class="v">commission taken on every single order</div><div class="s">Sector rate comparison, 2025</div></div>
+      <div><div class="k">58%</div><div class="v">of diners would rather order from the restaurant directly</div><div class="s">NCR Voyix, US survey, 2025</div></div>
+    </div>
+    <div class="foot">Every number on this slide is traceable to its source</div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <span class="num">03 / 10</span>
+    <div class="eyebrow">The solution</div>
+    <h2>Paste a URL. Get the <span class="hl">bill</span>.</h2>
+    <p>One input, one minute, no account. Bleed crawls the site, works out which leaks matter for that specific business, prices each one against calibrated constants, and writes the case in language the owner actually speaks.</p>
+    <ul>
+      <li><b>Measured</b><span>Stack, order path, load time, image weight, aggregator links, open catalogue.</span></li>
+      <li><b>Judged</b><span>A model decides which leaks matter for this business and why, here.</span></li>
+      <li><b>Priced</b><span>Deterministic arithmetic over constants that carry their source and date.</span></li>
+      <li><b>Argued</b><span>A one-page dossier for a non-technical owner, with the assumptions attached.</span></li>
+    </ul>
+    <div class="foot">The model judges. The code calculates. Neither does the other's job.</div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <span class="num">04 / 10</span>
+    <div class="eyebrow">Who it is for</div>
+    <h2>Two users, one report</h2>
+    <ul>
+      <li><b>The owner</b><span>Runs one to three venues. Not technical. Knows something is wrong with delivery margins but has no way to size it. Wants a number and a next step, not an audit.</span></li>
+      <li><b>The agency</b><span>Sells web work to local business. Currently opens with "your site is old". Bleed hands them an opening that is a euro figure with a citation, and a dossier to leave behind.</span></li>
+      <li><b>Not for</b><span>Enterprise. Chains with in-house teams. Anyone who already has the number.</span></li>
+    </ul>
+    <div class="foot">The wedge is restaurants with delivery. Other trades are roadmap, not claim.</div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <span class="num">05 / 10</span>
+    <div class="eyebrow">What it does today</div>
+    <h2>Shipped, not <span class="hl">mocked</span></h2>
+    <ul>
+      <li><b>Recon</b><span>Live HTTP crawl: stack detection, WooCommerce Store API, schema.org hours, aggregator links, image weight, time to first byte.</span></li>
+      <li><b>Triage</b><span>Structured-output model pass that ranks the leaks that apply to this business and says why they matter here.</span></li>
+      <li><b>Quantify</b><span>Seven leak types priced from seven calibrated constants. Numbers with no published source are labelled on screen as team estimates.</span></li>
+      <li><b>Simulate</b><span>The owner edits the assumptions live and the report recalculates. Their numbers beat our averages.</span></li>
+      <li><b>Dossier</b><span>Generated brief, with a deterministic fallback when the model is unavailable.</span></li>
+    </ul>
+    <div class="foot">Live at bleed-omega.vercel.app &middot; source public</div>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <span class="num">06 / 10</span>
+    <div class="eyebrow">Architecture</div>
+    <h2>Four stages, two <span class="hl">engines</span></h2>
+    <div class="pipe">
+      <div><div class="st">1. recon</div><div class="en det">deterministic</div><div class="de">Fetch, parse, measure. Facts only, no interpretation.</div></div>
+      <div><div class="st">2. triage</div><div class="en ai">gemini-3.6-flash</div><div class="de">Structured output. Picks and ranks leaks from a closed catalogue. Returns judgement, never euros.</div></div>
+      <div><div class="st">3. quantify</div><div class="en det">deterministic</div><div class="de">Arithmetic over cited constants. Auditable, repeatable, no hallucination surface.</div></div>
+      <div><div class="st">4. dossier</div><div class="en ai">gemini-3.6-flash</div><div class="de">Writes the owner's case. Falls back to a template if the model is unavailable.</div></div>
+    </div>
+    <p style="margin-top:1.1rem"><strong>The split is the design decision.</strong> Letting a model invent revenue figures is a hallucination waiting to be quoted back at a real business. Letting it judge what matters is exactly what it is good at. Every model output is validated against a closed catalogue before it is used.</p>
+    <div class="foot">Next.js 16 &middot; TypeScript &middot; Vercel &middot; Google Gemini</div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <span class="num">07 / 10</span>
+    <div class="eyebrow">Where the AI is, and where it is not</div>
+    <h2>Honest about the <span class="hl">boundary</span></h2>
+    <ul>
+      <li><b>Model does</b><span>Reads the business from its own site. Decides which of the leaks apply here and ranks them. Explains why each matters for this venue specifically. Writes the owner's brief.</span></li>
+      <li><b>Code does</b><span>Every measurement. Every euro. Every citation. Structured-output validation that rejects any leak the model invents.</span></li>
+      <li><b>Nobody does</b><span>Guess. When a figure needs the owner's own data, the report says so instead of filling it in.</span></li>
+    </ul>
+    <p>Two of the constants proposed during development were rejected because their only sources were vendors selling the fix. That rule is enforced in the codebase, not just claimed on a slide.</p>
+    <div class="foot">Fallback path tested: with no API key the product still works end to end</div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <span class="num">08 / 10</span>
+    <div class="eyebrow">Evidence</div>
+    <h2>Calibrated on <span class="hl">132 real sites</span></h2>
+    <p>163 restaurant websites in Málaga sampled from OpenStreetMap, 132 audited one by one. The constants are not guessed; they are checked against what is actually out there.</p>
+    <div class="cols">
+      <div><div class="k">59 / 132</div><div class="v">time to first byte over 1.5 seconds</div><div class="s">measured</div></div>
+      <div><div class="k">35 / 132</div><div class="v">over 2 MB of images on the homepage</div><div class="s">measured</div></div>
+      <div><div class="k">10 / 132</div><div class="v">expose their full catalogue and prices publicly</div><div class="s">measured</div></div>
+      <div><div class="k">8</div><div class="v">announce end-of-life PHP in their headers</div><div class="s">measured</div></div>
+    </div>
+    <div class="foot">The engine is public. The raw list of businesses is not, and will not be.</div>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <span class="num">09 / 10</span>
+    <div class="eyebrow">Impact and business</div>
+    <h2>A number they can <span class="hl">act on</span></h2>
+    <ul>
+      <li><b>For the owner</b><span>A mid-size aggregator-dependent restaurant is losing on the order of thousands a year to commission it could keep. Bleed sizes it in a minute, for free, with the maths shown.</span></li>
+      <li><b>Model</b><span>Free audit as the wedge. Paid tier for the agency: batch a whole postcode from OpenStreetMap, white-label the dossier, track which leads converted.</span></li>
+      <li><b>Why now</b><span>Aggregator dependence is at a peak and margin pressure is real. The data to price it is public. Nobody is pointing it at the owner.</span></li>
+    </ul>
+    <div class="foot">Ethics: robots.txt respected, no aggregator scraped, audited businesses never named publicly</div>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <span class="num">10 / 10</span>
+    <div class="eyebrow">Roadmap</div>
+    <h2>What comes <span class="hl">next</span></h2>
+    <ul>
+      <li><b>Next</b><span>Browser tier in the recon so JavaScript-rendered sites return a full report. Today they return a thin one, and the report says so.</span></li>
+      <li><b>Then</b><span>Beyond restaurants: dentists, gyms, salons. Each trade needs its own calibrated constants, which means its own field study. No claims until that work is done.</span></li>
+      <li><b>Then</b><span>Batch mode for agencies: a postcode in, a ranked list of leads out, each with its dossier.</span></li>
+      <li><b>Always</b><span>Every new constant carries a citable source and a date, or it does not compute euros.</span></li>
+    </ul>
+    <div class="foot">Bleed &middot; Málaga &middot; 2026 &middot; bleed-omega.vercel.app</div>
+  </section>
+
+</div>
+</body>
+</html>
