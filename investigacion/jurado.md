@@ -237,3 +237,70 @@ El consejo puntuo **6,3 y 6,55**, cerca de mi 5,93. Y encontro dos cosas que yo 
 **Lo que queda, y es una sola cosa.** Grabar los cinco minutos y enviar el formulario.
 Presentation pasaria de 3,5 a 8,5 y la nota final a **7,96**. Es el unico trabajo
 pendiente que no puedo hacer yo, y sigue siendo el de mayor retorno de todos.
+
+---
+
+# Bucle, vuelta 3 — 11-sep-2026
+
+**Orquestacion:** 2 agentes `agy` de investigacion (capa de navegador, auditoria de
+rendimiento), 1 agente `agy` de implementacion, y el arquitecto arreglando lo que la
+investigacion destapo.
+
+## El hallazgo que justifica toda la vuelta
+
+La auditoria de rendimiento leyo `lib/recon.ts` y encontro esto:
+
+| Lo que prometiamos | Lo que hacia el codigo |
+|---|---|
+| "robots.txt respected" en README, deck y Devpost | No se consultaba nunca |
+| Rastreo honesto | User-Agent falsificado haciendose pasar por Chrome 126 |
+| Cadencia respetuosa | 15 peticiones concurrentes sin freno |
+
+**Declarabamos una etica que no habiamos implementado.** Eso es peor que no tener
+ninguna, y en el jurado hay un analista de seguridad de Corteva que lee codigo. Ahora
+el bot se identifica como `BleedAuditBot/1.0`, consulta y parsea robots.txt antes de
+leer nada, para si le dicen que no, y va en lotes de tres con pausa.
+
+En la misma linea se quitaron del informe una cifra inventada ("Load speed: 0.18 s",
+que no salia de ningun sitio en un producto cuya tesis es que ninguna cifra aparece
+sin fuente), un `alert()` del navegador en el boton de pedido, y la promesa de
+arreglarlo todo "in 48 hours".
+
+## Lo demas de la vuelta
+
+- **Capa de navegador funcionando en produccion.** Tres fallos encadenados hasta que
+  arranco: el import estatico reventaba el bundle, los dinamicos no se empaquetaban, y
+  `networkidle` agotaba el presupuesto. Una SPA que antes devolvia un informe hueco
+  ahora se renderiza y se audita en 14 segundos.
+- **CPU del canvas**: las gotas creaban unos 26.000 gradientes por segundo. Ahora la
+  gota se hornea una vez en un sprite.
+- **Contraste**: el degradado del titular bajaba a 2,78:1 y no pasaba ni el umbral de
+  texto grande. Suelo subido a 3,68:1 medido. Textos de 0,68 rem subidos a 0,75.
+- **Cabeceras**: CSP, X-Content-Type-Options, Referrer-Policy, X-Frame-Options y
+  Permissions-Policy, verificadas en produccion.
+
+## Re-puntuacion
+
+| Criterio | Peso | V2 | V3 | Por que |
+|---|---|---|---|---|
+| Technical Implementation | 25 % | 7,8 | **9,0** | El agujero del navegador esta cerrado y probado en produccion. Rastreador etico de verdad, CPU arreglada, cabeceras puestas. Falta streaming durante la espera. |
+| Problem Solving & Impact | 25 % | 8,0 | **8,5** | La honestidad ya es consistente entre lo que se dice y lo que hace el codigo, que era la unica grieta seria. Sigue sin validacion con un dueno real. |
+| Innovation & Creativity | 20 % | 7,3 | **7,5** | Poco movimiento. Es el criterio mas flojo que queda. |
+| User Experience & Design | 15 % | 8,5 | **9,0** | Contraste y tamanos minimos corregidos con medida, sin alert(), estados explicados. |
+| Presentation & Demo | 15 % | 3,5 | **3,5** | Sin cambios. **No hay video y no se ha enviado el formulario.** |
+| **TOTAL** | | **7,21** | **7,75** | |
+
+## Donde esta el techo
+
+Sin el video, Presentation no pasa de 3,5 y el maximo alcanzable ronda **8,1**. Estamos
+a 0,35 de ese techo, y lo que queda son rendimientos decrecientes con riesgo creciente
+a cuatro dias del cierre:
+
+- **Innovation (7,5)** es lo mas flojo. Subirlo pide una capacidad nueva, tipo el modo
+  por codigo postal para agencias. Es construir producto nuevo a cuatro dias.
+- **Impact (8,5)** sube si un dueno de restaurante real ve el informe y reacciona. Eso
+  lo hace Nico, no yo.
+- **Technical (9,0)** sube con streaming durante la auditoria. Cambio arquitectonico.
+
+**Con el video grabado y el formulario enviado, 7,75 pasa a 8,50.** Sigue siendo, con
+diferencia, el trabajo pendiente de mayor retorno.
