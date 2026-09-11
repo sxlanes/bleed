@@ -9,7 +9,6 @@ import { BENCHMARK_CASES, findBenchmark } from "./benchmarks";
  */
 const USER_AGENT = "BleedAuditBot/1.0 (+https://bleed-omega.vercel.app; one-off audit requested by a visitor)";
 
-import { chromium as playwrightCore } from "playwright-core";
 
 /** Concurrent requests we allow ourselves against a single host. */
 const MAX_CONCURRENT = 3;
@@ -23,13 +22,20 @@ async function auditUrlWithBrowser(targetUrl: string): Promise<{ html: string; u
   try {
     const isLocal = !process.env.VERCEL && process.env.NODE_ENV !== "production";
     
+    // Both imports are dynamic on purpose: a static one pulls the browser into
+    // the serverless bundle and the function fails to load at all.
     if (isLocal) {
-      const { chromium: localChromium } = await import("playwright");
-      browser = await localChromium.launch({ headless: true });
+      const { chromium } = await import("playwright");
+      browser = await chromium.launch({ headless: true });
     } else {
-      const sparticuzModule = await import("@sparticuz/chromium");
-      const sparticuz = sparticuzModule.default || sparticuzModule;
-      browser = await playwrightCore.launch({
+      const [{ chromium }, sparticuzModule] = await Promise.all([
+        import("playwright-core"),
+        import("@sparticuz/chromium"),
+      ]);
+      type SparticuzChromium = { args: string[]; executablePath: () => Promise<string> };
+      const mod = sparticuzModule as unknown as { default?: SparticuzChromium } & SparticuzChromium;
+      const sparticuz: SparticuzChromium = mod.default ?? mod;
+      browser = await chromium.launch({
         args: sparticuz.args,
         executablePath: await sparticuz.executablePath(),
         headless: true,
@@ -43,12 +49,11 @@ async function auditUrlWithBrowser(targetUrl: string): Promise<{ html: string; u
     
     const page = await context.newPage();
     
-    // We can't use AbortSignal directly here, but we set a strict timeout.
-    // The instructions ask for a max of 20s budget.
-    await page.goto(targetUrl, { 
-      waitUntil: "networkidle", 
-      timeout: 18000 
-    });
+    /* networkidle waits for 500 ms of silence, which a page with analytics or
+       polling never reaches, so it just burns the whole budget. We wait for the
+       document instead and then give the client render a moment to paint. */
+    await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 12000 });
+    await page.waitForTimeout(1500);
 
     const html = await page.content();
     const url = page.url();

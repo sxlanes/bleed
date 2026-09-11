@@ -28,6 +28,13 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  /* The browser tier is loaded dynamically so it never enters the client bundle.
+     Next then has to be told to ship it with the function anyway, otherwise the
+     import resolves to nothing at runtime. */
+  serverExternalPackages: ["playwright-core", "@sparticuz/chromium"],
+  outputFileTracingIncludes: {
+    "/informe": ["./node_modules/@sparticuz/chromium/**", "./node_modules/playwright-core/**"],
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
