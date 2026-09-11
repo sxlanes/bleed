@@ -54,6 +54,8 @@ export interface AuditResult {
   address?: string;
   telephone?: string;
   error?: string;
+  notRead?: string[];
+  needsJavaScript?: boolean;
   source: "live" | "benchmark" | "fallback" | "cache";
   auditedAt: string;
 }

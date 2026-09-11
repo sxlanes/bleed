@@ -9,12 +9,56 @@ import { BENCHMARK_CASES, findBenchmark } from "./benchmarks";
  */
 const USER_AGENT = "BleedAuditBot/1.0 (+https://bleed-omega.vercel.app; one-off audit requested by a visitor)";
 
+import { chromium as playwrightCore } from "playwright-core";
+
 /** Concurrent requests we allow ourselves against a single host. */
 const MAX_CONCURRENT = 3;
 /** Pause between batches, so a small restaurant server is never hammered. */
 const BATCH_PAUSE_MS = 250;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function auditUrlWithBrowser(targetUrl: string): Promise<{ html: string; url: string }> {
+  let browser;
+  try {
+    const isLocal = !process.env.VERCEL && process.env.NODE_ENV !== "production";
+    
+    if (isLocal) {
+      const { chromium: localChromium } = await import("playwright");
+      browser = await localChromium.launch({ headless: true });
+    } else {
+      const sparticuzModule = await import("@sparticuz/chromium");
+      const sparticuz = sparticuzModule.default || sparticuzModule;
+      browser = await playwrightCore.launch({
+        args: sparticuz.args,
+        executablePath: await sparticuz.executablePath(),
+        headless: true,
+      });
+    }
+
+    const context = await browser.newContext({
+      userAgent: USER_AGENT,
+      viewport: { width: 1280, height: 800 },
+    });
+    
+    const page = await context.newPage();
+    
+    // We can't use AbortSignal directly here, but we set a strict timeout.
+    // The instructions ask for a max of 20s budget.
+    await page.goto(targetUrl, { 
+      waitUntil: "networkidle", 
+      timeout: 18000 
+    });
+
+    const html = await page.content();
+    const url = page.url();
+    return { html, url };
+  } finally {
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
+  }
+}
 
 /** Run tasks in small batches instead of all at once. */
 async function inBatches<T>(tasks: (() => Promise<T>)[], size = MAX_CONCURRENT): Promise<T[]> {
@@ -271,9 +315,53 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     }
   }
 
-  const bodyText = await response.text();
-  const htmlKb = Math.round(bodyText.length / 1024);
-  const low = bodyText.toLowerCase();
+  let bodyText = await response.text();
+  let htmlKb = Math.round(bodyText.length / 1024);
+  let low = bodyText.toLowerCase();
+
+  // Honest detection for SPA / JS-heavy sites
+  const textContent = bodyText
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, "")
+    .replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const isSpaRoot = /<div[^>]*id=["'](?:root|__nuxt|app|__next)["'][^>]*>\s*<\/div>/i.test(bodyText);
+
+  let needsJavaScript = false;
+  let notRead: string[] | undefined = undefined;
+  let fallbackError: string | undefined = undefined;
+
+  if (textContent.length < 400 || isSpaRoot) {
+    needsJavaScript = true;
+    notRead = [
+      "Main page content (requires JavaScript to render)",
+      "Dynamic images and links"
+    ];
+    
+    // Chromium Fallback (Point 2)
+    try {
+      const rendered = await auditUrlWithBrowser(finalUrl);
+      if (rendered.html && rendered.html.length > bodyText.length) {
+        bodyText = rendered.html;
+        finalUrl = rendered.url || finalUrl;
+        low = bodyText.toLowerCase();
+        htmlKb = Math.round(bodyText.length / 1024);
+        
+        // Render success! We now have the content.
+        notRead = undefined;
+      }
+    } catch (err) {
+      // Degrade gracefully
+      fallbackError = "This site renders its content with JavaScript and our browser pass failed or timed out, so this report is partial. What we could not read is listed below.";
+      if (notRead) {
+        notRead.push("Failed to render with headless browser: " + (err instanceof Error ? err.message : String(err)));
+      }
+    }
+  }
 
   // Viewport detection
   const viewport = /<meta[^>]+name=["']viewport["']/i.test(bodyText);
@@ -530,6 +618,9 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     cuisine: benchmark?.cuisine || cuisine,
     address,
     telephone,
+    needsJavaScript,
+    notRead,
+    error: fallbackError,
     source: "live",
     auditedAt: new Date().toISOString(),
   };
