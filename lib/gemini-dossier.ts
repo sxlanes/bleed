@@ -91,47 +91,52 @@ export async function generateGeminiDossier(
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const { audit, leaks, totalAnnualLossEuros, recoverableAnnualEuros, params } = report;
+    const { audit, leaks, totalAnnualLossEuros, recoverableAnnualEuros, params, triage } = report;
     const eur = (n: number) => Math.round(n).toLocaleString("en-IE");
+    
+    // Fallback to "local business" if triage didn't detect it clearly
+    const businessType = (triage as any)?.businessRead || "local business";
 
     const prompt = `
-You are a financial strategy consultant for hospitality and local businesses in Spain.
-Write an executive dossier for the owner of the restaurant "${audit.name || audit.domain}":
-persuasive, direct and rigorous.
-Use a professional, plain tone, business owner to business owner ("we are talking margin and cash, not code").
+You are an elite financial strategy consultant and conversion rate expert.
+Write an executive dossier for the owner of "${audit.name || audit.domain}".
+Crucially, you must adapt your entire language, examples, and metrics to this specific type of business:
+[BUSINESS TYPE/CONTEXT]: ${businessType}
+
+Use a highly professional, direct, and rigorous tone, "owner to owner" (we are talking margin and cash flow, not code).
 Write exclusively in clear British English.
 
 REAL AUDITED DATA:
 - Name: ${audit.name}
 - URL: ${audit.finalUrl}
-- Aggregator platforms detected: ${audit.aggregators.join(", ") || "None"}
-- WordPress: ${audit.wordpress} | WooCommerce: ${audit.woocommerce}
-- Public Store API open: ${audit.storeApi ? "YES (" + audit.storeApiItems + " products found)" : "NO"}
+- Aggregator/Third-party platforms detected: ${audit.aggregators.join(", ") || "None"}
+- CMS/Tech: WordPress: ${audit.wordpress} | WooCommerce: ${audit.woocommerce}
 - Time to first byte (TTFB): ${audit.ttfb} s
 - Homepage image weight: ${audit.imgKb} KB
 - Total annual leak calculated: ${eur(totalAnnualLossEuros)} EUR/year
 - Estimated recoverable margin: +${eur(recoverableAnnualEuros)} EUR/year
-- Assumptions: ${params.pedidosDia} orders/day, average ticket ${params.ticketMedio} EUR, aggregator commission ${params.comisionAgregadorPct}%.
+- Assumptions: ${params.pedidosDia} transactions/day, average ticket ${params.ticketMedio} EUR, third-party commission ${params.comisionAgregadorPct}%.
 
-CONCRETE LEAKS:
+CONCRETE LEAKS DETECTED:
 ${leaks.map((l) => `- ${l.title}: -${eur(l.annualLossEuros)} EUR/year. Explanation: ${l.explanation}. Fix: ${l.remedy}`).join("\n")}
 
-REQUIRED DOSSIER STRUCTURE:
-1. A hard-hitting headline with the restaurant name and the exact figure it loses per year.
-2. Executive diagnosis in 2 paragraphs: what is happening and why giving ${params.comisionAgregadorPct}% to middlemen bleeds the business.
-3. Breakdown of the 2-3 worst leaks, explaining with numbers how they arise.
-4. A 48-hour rescue plan (3 actionable steps).
-5. Call to action: how to recover the ${eur(recoverableAnnualEuros)} EUR without touching the till or changing the kitchen.
+REQUIRED DOSSIER STRUCTURE (You must include Markdown tables):
+1. **Headline**: A hard-hitting headline with the business name and the exact figure it loses per year.
+2. **Executive Diagnosis**: What is happening and why paying ${params.comisionAgregadorPct}% to middlemen is bleeding their specific business model. Use terms relevant to their industry (e.g., if restaurant, talk about tables/kitchen; if clinic, talk about patients/appointments; if retail, talk about inventory/basket size).
+3. **The Margin Reality (Comparison Table)**: Create a markdown table comparing the profit of a typical order/booking through a third-party platform vs. a Direct Channel. Use a realistic example product/service for their specific industry based on the ${params.ticketMedio} EUR average ticket.
+4. **Breakdown of Leaks**: A detailed analysis of the top leaks, explaining with numbers how they arise and their impact on customer acquisition cost.
+5. **48-Hour Action Plan**: 3 actionable, highly specific steps to stop the bleed without disrupting their daily operations.
+6. **Financial Projection (Table)**: A 12-month projection table showing the cumulative cash recovered if they move ${params.pctRecuperableCanalPropio}% of volume to their direct channel.
 
-Return ONLY the content in clean Markdown, no preamble.
+Return ONLY the content in clean Markdown, no preamble. Make it visually engaging with bolding and blockquotes.
 `.trim();
 
     const genPromise = ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-2.5-pro",
       contents: prompt,
     });
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Gemini timeout")), 7000)
+      setTimeout(() => reject(new Error("Gemini timeout")), 25000) // increased timeout for pro model
     );
     const response = await Promise.race([genPromise, timeoutPromise]);
 
@@ -140,7 +145,7 @@ Return ONLY the content in clean Markdown, no preamble.
       return {
         markdown: text,
         source: "gemini",
-        modelUsed: "gemini-3.6-flash",
+        modelUsed: "gemini-2.5-pro",
       };
     }
     return {

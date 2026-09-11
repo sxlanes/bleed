@@ -18,6 +18,7 @@ export default function InformeView({ initialReport }: Props) {
   const [lastUpdate, setLastUpdate] = useState<number>(0);
   const [updateMsg, setUpdateMsg] = useState("");
   const [activeTab, setActiveTab] = useState<"fugas" | "prueba" | "dossier">("fugas");
+  const [expandedLeakId, setExpandedLeakId] = useState<string | null>(null);
   const [cart, setCart] = useState<AuditProduct[]>([]);
   const [dossierMarkdown, setDossierMarkdown] = useState<string>(() =>
     generateDeterministicDossier(initialReport)
@@ -25,7 +26,7 @@ export default function InformeView({ initialReport }: Props) {
   const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
   const [aiSource, setAiSource] = useState<string>("Calibrated diagnosis");
   const [copied, setCopied] = useState<boolean>(false);
-  const [orderNotice, setOrderNotice] = useState<string | null>(null);
+  const [showSimulator, setShowSimulator] = useState(false);
 
   // Keep the model's ranking when the owner edits an assumption. Recalculating
   // without it silently threw away the triage that ordered these leaks.
@@ -156,78 +157,24 @@ export default function InformeView({ initialReport }: Props) {
           by keeping those orders on your own channel.
         </p>
 
-        <div className={styles.etiquetasFila}>
-          <span className={`${styles.badge} ${audit.ttfb < 1.0 ? styles.badgeVerde : styles.badgeAcento}`}>
-            TTFB: {audit.ttfb} s {audit.ttfb > 1.2 ? "(Slow)" : "(Fast)"}
-          </span>
-          <span className={styles.badge}>
-            Images: {audit.imgKb.toLocaleString("en-US")} KB
-          </span>
-          {audit.wordpress && (
-            <span className={styles.badge}>
-              WordPress {audit.woocommerce ? "+ WooCommerce" : ""}
-            </span>
-          )}
-          {audit.storeApi && (
-            <span className={`${styles.badge} ${styles.badgeVerde}`}>
-              Open Store API ({audit.products.length} products)
-            </span>
-          )}
-          {audit.aggregators.length > 0 && (
-            <span className={`${styles.badge} ${styles.badgeAcento}`}>
-              Aggregators: {audit.aggregators.join(", ")}
-            </span>
-          )}
-          {audit.whatsapp ? (
-            <span className={`${styles.badge} ${styles.badgeVerde}`}>
-              Direct WhatsApp detected
-            </span>
-          ) : (
-            <span className={`${styles.badge} ${styles.badgeAcento}`}>
-              No WhatsApp button
-            </span>
-          )}
-          <span className={styles.badge}>
-            {audit.https ? "Secure HTTPS" : "No HTTPS"}
-          </span>
+      </section>
+
+      <section className={styles.minimalStrip}>
+        <div className={styles.stripItem}>
+          <span className={styles.stripLabel}>Annual Bleed</span>
+          <span className={styles.stripValueRed}>-{totalLoss.toLocaleString("en-US")} €</span>
+        </div>
+        <div className={styles.stripItem}>
+          <span className={styles.stripLabel}>Recoverable Margin</span>
+          <span className={styles.stripValueGreen}>+{recoverable.toLocaleString("en-US")} €</span>
+        </div>
+        <div className={styles.stripItem}>
+          <span className={styles.stripLabel}>Estimated Fix Time</span>
+          <span className={styles.stripValueWhite}>48 hours</span>
         </div>
       </section>
 
-      <section className={styles.bleedGrid}>
-        <div className={`${styles.tarjetaTotal} ${styles.tarjetaTotalAcento} ${isUpdating ? styles.recalculating : ''}`}>
-          <div className={styles.etiquetaCifra}>Total estimated annual leak</div>
-          <div className={`${styles.granNumero} ${styles.numeroAcento}`}>
-            -{totalLoss.toLocaleString("en-US")} € <span style={{fontSize: "1rem", color: "var(--ash)", fontWeight: "normal"}}>estimated</span>
-          </div>
-          <p className={styles.descripcionCifra}>
-            Equivalent to <strong>-{Math.round(totalLoss / 12).toLocaleString("en-US")} € per month</strong> lost
-            in Glovo/UberEats fees and customer bounce rate due to mobile slowness.
-          </p>
-        </div>
-
-        <div className={`${styles.tarjetaTotal} ${styles.tarjetaTotalVerde} ${isUpdating ? styles.recalculating : ''}`}>
-          <div className={styles.etiquetaCifra}>Recoverable net margin</div>
-          <div className={`${styles.granNumero} ${styles.numeroVerde}`}>
-            +{recoverable.toLocaleString("en-US")} €
-          </div>
-          <p className={styles.descripcionCifra}>
-            Clean profit straight to your account by converting {params.pctRecuperableCanalPropio}% of regular customers
-            to your own channel in 48 hours.
-          </p>
-        </div>
-
-        <div className={styles.tarjetaTotal}>
-          <div className={styles.etiquetaCifra}>Estimated fix time</div>
-          <div className={styles.granNumero}>
-            48 hours
-          </div>
-          <p className={styles.descripcionCifra}>
-            Without changing POS, without hiring on-staff IT, and without altering kitchen operations.
-          </p>
-        </div>
-      </section>
-
-      <nav className={styles.pestanas} aria-label="Report sections" role="tablist">
+      <nav className={styles.selectorSecciones} aria-label="Report sections" role="tablist">
         <button
           type="button"
           role="tab"
@@ -235,9 +182,9 @@ export default function InformeView({ initialReport }: Props) {
           aria-controls="panel-fugas"
           id="tab-fugas"
           onClick={() => setActiveTab("fugas")} onKeyDown={(e) => handleTabKeyDown(e, "fugas")}
-          className={`${styles.pestanaBoton} ${activeTab === "fugas" ? styles.pestanaBotonActiva : ""}`}
+          className={`${styles.botonSeccion} ${activeTab === "fugas" ? styles.botonSeccionActivo : ""}`}
         >
-          1. Audit & Leaks ({leaks.length})
+          <span className={styles.seccionNumero}>1</span> Audit & Leaks
         </button>
         <button
           type="button"
@@ -246,9 +193,9 @@ export default function InformeView({ initialReport }: Props) {
           aria-controls="panel-prueba"
           id="tab-prueba"
           onClick={() => setActiveTab("prueba")} onKeyDown={(e) => handleTabKeyDown(e, "prueba")}
-          className={`${styles.pestanaBoton} ${activeTab === "prueba" ? styles.pestanaBotonActiva : ""}`}
+          className={`${styles.botonSeccion} ${activeTab === "prueba" ? styles.botonSeccionActivo : ""}`}
         >
-          2. The Proof: 1-Click Fix
+          <span className={styles.seccionNumero}>2</span> 1-Click Fix Proof
         </button>
         <button
           type="button"
@@ -257,102 +204,76 @@ export default function InformeView({ initialReport }: Props) {
           aria-controls="panel-dossier"
           id="tab-dossier"
           onClick={() => setActiveTab("dossier")} onKeyDown={(e) => handleTabKeyDown(e, "dossier")}
-          className={`${styles.pestanaBoton} ${activeTab === "dossier" ? styles.pestanaBotonActiva : ""}`}
+          className={`${styles.botonSeccion} ${activeTab === "dossier" ? styles.botonSeccionActivo : ""}`}
         >
-          3. Executive Dossier for Owner
+          <span className={styles.seccionNumero}>3</span> Executive Dossier
         </button>
       </nav>
 
       {activeTab === "fugas" && (
         <div id="panel-fugas" role="tabpanel" aria-labelledby="tab-fugas">
           <section className={styles.simuladorCaja}>
-            <div className={styles.simuladorHeader}>
-              <h2 className={styles.simuladorTitulo}>
-                Adjust the assumptions with your business's real numbers
-                {updateMsg && <span className={styles.updateMsg} role="status" aria-live="polite">{updateMsg}</span>}
-              </h2>
-              <button
-                type="button"
-                onClick={resetParams}
-                className={styles.volver}
-              >
-                Reset assumptions
-              </button>
-            </div>
+            <button 
+              type="button" 
+              className={styles.simuladorToggleBtn}
+              onClick={() => setShowSimulator(!showSimulator)}
+              aria-expanded={showSimulator}
+            >
+              <span>⚙️ Adjust calculation assumptions</span>
+              <span>{showSimulator ? '−' : '+'}</span>
+            </button>
 
-            <div className={styles.simuladorControles}>
-              <div className={styles.controlItem}>
-                <div className={styles.controlEtiqueta}>
-                  <label htmlFor="ticketMedio">Avg. delivery ticket</label>
-                  <span className={styles.controlValor}>{params.ticketMedio.toFixed(2)} €</span>
+            {showSimulator && (
+              <div className={styles.simuladorContenido}>
+                <div className={styles.simuladorHeader}>
+                  <p className={styles.simuladorSub}>
+                    These are the default metrics estimated for your sector. Change them to match your real numbers.
+                    {updateMsg && <span className={styles.updateMsg} role="status" aria-live="polite">{updateMsg}</span>}
+                  </p>
+                  <button type="button" onClick={resetParams} className={styles.volver}>
+                    Reset
+                  </button>
                 </div>
-                <input
-                  id="ticketMedio"
-                  type="range"
-                  aria-valuetext={`${params.ticketMedio.toFixed(2)} euros`}
-                  min="12"
-                  max="60"
-                  step="0.5"
-                  value={params.ticketMedio}
-                  onChange={(e) => handleParamChange("ticketMedio", parseFloat(e.target.value))}
-                  className={styles.sliderInput}
-                />
+
+                <div className={styles.simuladorControles}>
+              <div className={styles.controlItem}>
+                <div className={styles.controlEtiqueta}>Avg. delivery ticket</div>
+                <div className={styles.stepperControl}>
+                  <button type="button" onClick={() => handleParamChange("ticketMedio", Math.max(12, params.ticketMedio - 1))} className={styles.stepperBtn}>-</button>
+                  <span className={styles.stepperValor}>{params.ticketMedio.toFixed(2)} €</span>
+                  <button type="button" onClick={() => handleParamChange("ticketMedio", Math.min(60, params.ticketMedio + 1))} className={styles.stepperBtn}>+</button>
+                </div>
               </div>
 
               <div className={styles.controlItem}>
-                <div className={styles.controlEtiqueta}>
-                  <label htmlFor="pedidosDia">Delivery orders / day</label>
-                  <span className={styles.controlValor}>{params.pedidosDia} orders</span>
+                <div className={styles.controlEtiqueta}>Delivery orders / day</div>
+                <div className={styles.stepperControl}>
+                  <button type="button" onClick={() => handleParamChange("pedidosDia", Math.max(3, params.pedidosDia - 1))} className={styles.stepperBtn}>-</button>
+                  <span className={styles.stepperValor}>{params.pedidosDia}</span>
+                  <button type="button" onClick={() => handleParamChange("pedidosDia", Math.min(60, params.pedidosDia + 1))} className={styles.stepperBtn}>+</button>
                 </div>
-                <input
-                  id="pedidosDia"
-                  type="range"
-                  aria-valuetext={`${params.pedidosDia} orders`}
-                  min="3"
-                  max="60"
-                  step="1"
-                  value={params.pedidosDia}
-                  onChange={(e) => handleParamChange("pedidosDia", parseInt(e.target.value, 10))}
-                  className={styles.sliderInput}
-                />
               </div>
 
               <div className={styles.controlItem}>
-                <div className={styles.controlEtiqueta}>
-                  <label htmlFor="comisionAgregador">Aggregator fee</label>
-                  <span className={styles.controlValor}>{params.comisionAgregadorPct} %</span>
+                <div className={styles.controlEtiqueta}>Aggregator fee</div>
+                <div className={styles.stepperControl}>
+                  <button type="button" onClick={() => handleParamChange("comisionAgregadorPct", Math.max(15, params.comisionAgregadorPct - 1))} className={styles.stepperBtn}>-</button>
+                  <span className={styles.stepperValor}>{params.comisionAgregadorPct} %</span>
+                  <button type="button" onClick={() => handleParamChange("comisionAgregadorPct", Math.min(35, params.comisionAgregadorPct + 1))} className={styles.stepperBtn}>+</button>
                 </div>
-                <input
-                  id="comisionAgregador"
-                  type="range"
-                  aria-valuetext={`${params.comisionAgregadorPct} percent`}
-                  min="15"
-                  max="35"
-                  step="1"
-                  value={params.comisionAgregadorPct}
-                  onChange={(e) => handleParamChange("comisionAgregadorPct", parseInt(e.target.value, 10))}
-                  className={styles.sliderInput}
-                />
               </div>
 
               <div className={styles.controlItem}>
-                <div className={styles.controlEtiqueta}>
-                  <label htmlFor="pctRecuperable">% Recoverable clients</label>
-                  <span className={styles.controlValor}>{params.pctRecuperableCanalPropio} %</span>
+                <div className={styles.controlEtiqueta}>% Recoverable clients</div>
+                <div className={styles.stepperControl}>
+                  <button type="button" onClick={() => handleParamChange("pctRecuperableCanalPropio", Math.max(15, params.pctRecuperableCanalPropio - 5))} className={styles.stepperBtn}>-</button>
+                  <span className={styles.stepperValor}>{params.pctRecuperableCanalPropio} %</span>
+                  <button type="button" onClick={() => handleParamChange("pctRecuperableCanalPropio", Math.min(70, params.pctRecuperableCanalPropio + 5))} className={styles.stepperBtn}>+</button>
                 </div>
-                <input
-                  id="pctRecuperable"
-                  type="range"
-                  aria-valuetext={`${params.pctRecuperableCanalPropio} percent`}
-                  min="15"
-                  max="70"
-                  step="5"
-                  value={params.pctRecuperableCanalPropio}
-                  onChange={(e) => handleParamChange("pctRecuperableCanalPropio", parseInt(e.target.value, 10))}
-                  className={styles.sliderInput}
-                />
               </div>
-            </div>
+              </div>
+              </div>
+            )}
           </section>
 
           <section className={styles.listaFugas}>
@@ -364,7 +285,7 @@ export default function InformeView({ initialReport }: Props) {
               <strong>Severity:</strong> <span className={styles.legCritica}>Critical (immediate loss)</span> · <span className={styles.legAlta}>High</span> · <span className={styles.legMedia}>Medium</span>
             </div>
 
-            {leaks.map((leak) => {
+            {leaks.map((leak, index) => {
               const borderClass =
                 leak.severity === "critica"
                   ? styles.tarjetaFugaCritica
@@ -372,62 +293,103 @@ export default function InformeView({ initialReport }: Props) {
                   ? styles.tarjetaFugaAlta
                   : styles.tarjetaFugaMedia;
 
+              const isExpanded = expandedLeakId === leak.id;
+
               return (
-                <article key={leak.id} className={`${styles.tarjetaFuga} ${borderClass} ${isUpdating ? styles.recalculating : ''}`}>
-                  <div className={styles.fugaTop}>
-                    <h3 className={styles.fugaTitulo}>
-                      {leak.title}
-                      <span className={styles.badgeSeveridad}>{leak.severity}</span>
-                    </h3>
-                    <div className={styles.fugaMonto}>
-                      -{leak.annualLossEuros.toLocaleString("en-US")} €/year
+                <article key={leak.id} className={`${styles.tarjetaFuga} ${borderClass} ${isUpdating ? styles.recalculating : ''} entra`} style={{ animationDelay: `${index * 0.08}s` }}>
+                  
+                  {/* Collapsed Header - Always visible, clickable */}
+                  <div 
+                    className={styles.fugaResumen} 
+                    onClick={() => setExpandedLeakId(isExpanded ? null : leak.id)}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setExpandedLeakId(isExpanded ? null : leak.id);
+                      }
+                    }}
+                  >
+                    <div className={styles.resumenIzquierda}>
+                      <span className={`${styles.badgeSeveridad} ${
+                        leak.severity === "critica" ? styles.badgeCritica : leak.severity === "alta" ? styles.badgeAlta : styles.badgeMedia
+                      }`}>{leak.severity}</span>
+                      <h3 className={styles.fugaTitulo}>{leak.title}</h3>
+                    </div>
+                    <div className={styles.resumenDerecha}>
+                      <span className={styles.fugaMonto}>-{leak.annualLossEuros.toLocaleString("en-US")} €</span>
+                      <span className={styles.chevronIcon}>{isExpanded ? '↑' : '↓'} View details</span>
                     </div>
                   </div>
-                  
-                  <div className={styles.barraContenedor} aria-label={`Loss bar: ${leak.annualLossEuros} euros`}>
-                    <div className={styles.barraRelleno} style={{ width: `${Math.max(2, (leak.annualLossEuros / maxLoss) * 100)}%` }} />
-                  </div>
 
-                  <p className={styles.fugaExplicacion}>{leak.explanation}</p>
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                    <div className={styles.fugaGrid}>
+                      <div className={styles.fugaContexto}>
+                        <p className={styles.fugaExplicacion}>{leak.explanation}</p>
 
-                  <div className={styles.formulaBloque}>
-                    <span className={styles.formulaEtiqueta}>Calculation formula and assumptions:</span>
-                    <code>{leak.formula}</code>
-                  </div>
+                        <div className={styles.formulaBloque}>
+                          <span className={styles.formulaEtiqueta}>Calculation formula:</span>
+                          <code>{leak.formula}</code>
+                        </div>
 
-                  {leak.assumptions.length > 0 && (
-                    <details className={styles.supuestosDetails}>
-                      <summary className={styles.supuestosSummary}>Source & Assumptions ({leak.assumptions.length})</summary>
-                      <ul className={styles.supuestosLista}>
-                        {leak.assumptions.map((ass, i) => (
-                          <li key={i} className={styles.supuestoItem}>
-                            <strong>{ass.label}:</strong> <span className={styles.supuestoValor}>{ass.value}</span>
-                            <div style={{ fontSize: "0.75rem", color: "var(--ash)", marginTop: "0.15rem", fontFamily: "var(--font-plex-mono)" }}>
-                              {ass.citation}
-                              {ass.sourceUrl && (
-                                <>
-                                  {" "}
-                                  <a
-                                    href={ass.sourceUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={styles.sourceLink}
-                                  >
-                                    Open source
-                                  </a>
-                                </>
-                              )}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
+                        {leak.assumptions.length > 0 && (
+                          <div className={styles.supuestosDetails}>
+                            <div className={styles.supuestosSummary}>Source & Assumptions ({leak.assumptions.length})</div>
+                            <ul className={styles.supuestosLista}>
+                              {leak.assumptions.map((ass, i) => (
+                                <li key={i} className={styles.supuestoItem}>
+                                  <div className={styles.supuestoFila}>
+                                    <strong>{ass.label}:</strong> <span className={styles.supuestoValor}>{ass.value}</span>
+                                  </div>
+                                  <div className={styles.supuestoMeta}>
+                                    {ass.citation}
+                                    {ass.sourceUrl && (
+                                      <>
+                                        {" · "}
+                                        <a
+                                          href={ass.sourceUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className={styles.sourceLink}
+                                        >
+                                          Source ↗
+                                        </a>
+                                      </>
+                                    )}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className={styles.fugaImpacto}>
+                        <div className={styles.impactoCard}>
+                          <div className={styles.impactoHeader}>
+                            <span className={styles.impactoEtiqueta}>Annual Loss</span>
+                            <span className={styles.fugaMonto}>-{leak.annualLossEuros.toLocaleString("en-US")} €</span>
+                          </div>
+                          <div className={styles.barraContenedor} aria-label={`Loss bar: ${leak.annualLossEuros} euros`}>
+                            <div className={styles.barraRelleno} style={{ width: `${Math.max(2, (leak.annualLossEuros / maxLoss) * 100)}%` }} />
+                          </div>
+                        </div>
+
+                        <div className={styles.remedioBloque}>
+                          <div className={styles.remedioCabecera}>
+                            <span className={styles.remedioEtiqueta}>Recommended Fix</span>
+                            <span className={styles.remedioHoras}>{leak.remedyHours}h work</span>
+                          </div>
+                          <div className={styles.remedioTexto}>
+                            {leak.remedy}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
-
-                  <div className={styles.remedioBloque}>
-                    <span><strong>Recommended fix:</strong> {leak.remedy}</span>
-                    <span className={styles.remedioHoras}>({leak.remedyHours}h of work)</span>
-                  </div>
                 </article>
               );
             })}

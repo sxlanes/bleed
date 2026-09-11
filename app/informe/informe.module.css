@@ -1,14 +1,6 @@
 .pagina {
-  --void: #0b0d0f;
-  --panel: #14171a;
-  --hair: #22262a;
-  --bone: #e8e6e1;
-  --bone-dim: #9a9c9b;
-  --bleed: #ff3b3b;
-  --ash: #6b7075;
-
-  --void: #0b0d0f;
-  --panel: #14171a;
+  --void: #0e1113;
+  --panel: #0e1113;
   --hair: #22262a;
   --bone: #e8e6e1;
   --bone-dim: #9a9c9b;
@@ -139,74 +131,107 @@
   color: var(--bleed);
 }
 
-.bleedGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-  gap: 1rem;
-  margin: 2rem 0 2.5rem;
+.minimalStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin: 1.5rem 0 2rem;
+  padding: 1.5rem 0;
+  border-top: 1px dashed rgba(255, 255, 255, 0.05);
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
 }
 
-.tarjetaTotal {
-  background: var(--panel);
-  border: 1px solid var(--hair);
-  border-radius: 12px;
-  padding: 1.5rem;
+.stripItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.tarjetaTotalAcento {
-  border-color: var(--bleed);
-}
-
-.tarjetaTotalVerde {
-  border-color: var(--hair);
-}
-
-.etiquetaCifra {
-  font-family: var(--font-anton);
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
+.stripLabel {
+  font-family: var(--font-plex-mono);
+  font-size: 0.65rem;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--bone-dim);
-  margin: 0 0 0.5rem;
 }
 
-.granNumero {
+.stripValueRed {
   font-family: var(--font-anton);
-  font-size: clamp(2rem, 4.5vw, 3rem);
-  font-weight: 600;
-  line-height: 1;
-  margin: 0 0 0.5rem;
-  letter-spacing: -0.03em;
-}
-
-.numeroAcento {
+  font-size: clamp(2rem, 4vw, 2.5rem);
   color: var(--bleed);
+  line-height: 1;
 }
 
-.numeroVerde {
+.stripValueGreen {
+  font-family: var(--font-anton);
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  color: var(--bone);
+  line-height: 1;
+}
+
+.stripValueWhite {
+  font-family: var(--font-anton);
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  color: var(--bone);
+  line-height: 1;
+}
+
+.stepperControl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--void);
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  overflow: hidden;
+  height: 2.5rem;
+}
+
+.stepperBtn {
+  background: transparent;
+  border: none;
+  color: var(--bone-dim);
+  width: 2.5rem;
+  height: 100%;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 140ms, color 140ms;
+}
+
+.stepperBtn:hover {
+  background: var(--hair);
   color: var(--bone);
 }
 
-.descripcionCifra {
+.stepperValor {
+  font-family: var(--font-anton);
   font-size: 0.875rem;
-  color: var(--bone-dim);
-  margin: 0;
-  line-height: 1.45;
+  font-weight: 600;
+  color: var(--bone);
+  flex: 1;
+  text-align: center;
+  user-select: none;
 }
 
-.pestanas {
+.selectorSecciones {
   display: flex;
   gap: 0.5rem;
-  border-bottom: 1px solid var(--hair);
-  margin: 2.5rem 0 1.75rem;
+  margin: 2.5rem 0 2rem;
   overflow-x: auto;
-  padding-bottom: 0.25rem;
+  padding: 0.25rem;
+  background: var(--panel);
+  border: 1px solid var(--hair);
+  border-radius: 12px;
 }
 
-.pestanaBoton {
+.botonSeccion {
+  flex: 1;
   background: transparent;
-  border: 0;
-  border-bottom: 2px solid transparent;
+  border: none;
+  border-radius: 8px;
   padding: 0.75rem 1rem;
   font-family: var(--font-anton);
   font-size: 0.8125rem;
@@ -215,38 +240,71 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 140ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
-.pestanaBoton:hover {
-  color: var(--bone);
-}
-
-.pestanaBotonActiva {
-  color: var(--bone);
-  border-bottom-color: var(--bleed);
-  font-weight: 500;
-}
-
-.seccionTitulo {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  margin: 0 0 0.5rem;
-}
-
-.seccionSubtitulo {
-  font-size: 0.9375rem;
+.seccionNumero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: rgba(232, 230, 225, 0.1);
   color: var(--bone-dim);
-  margin: 0 0 1.5rem;
-  max-width: 48rem;
+  font-size: 0.65rem;
+}
+
+.botonSeccion:hover {
+  color: var(--bone);
+  background: rgba(232, 230, 225, 0.05);
+}
+
+.botonSeccionActivo {
+  background: var(--void);
+  color: var(--bone);
+  border: 1px solid var(--hair);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.botonSeccionActivo .seccionNumero {
+  background: var(--bleed);
+  color: #fff;
 }
 
 .simuladorCaja {
   background: var(--panel);
   border: 1px solid var(--hair);
   border-radius: 12px;
-  padding: 1.5rem;
   margin-bottom: 2.5rem;
+  overflow: hidden;
+}
+
+.simuladorToggleBtn {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--bone);
+  font-family: var(--font-plex-mono);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.simuladorToggleBtn:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.simuladorContenido {
+  padding: 0 1.5rem 1.5rem;
+  border-top: 1px solid var(--hair);
 }
 
 .simuladorHeader {
@@ -255,15 +313,17 @@
   align-items: baseline;
   flex-wrap: wrap;
   gap: 0.75rem;
+  margin-top: 1rem;
   margin-bottom: 1.25rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--hair);
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
 }
 
-.simuladorTitulo {
-  font-size: 1.0625rem;
-  font-weight: 600;
+.simuladorSub {
+  font-size: 0.8125rem;
+  color: var(--bone-dim);
   margin: 0;
+  max-width: 32rem;
 }
 
 .simuladorControles {
@@ -287,23 +347,23 @@
   color: var(--bone-dim);
 }
 
-.controlValor {
-  font-family: var(--font-anton);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--bone);
+.leyendaSeveridad {
+  font-size: 0.75rem;
+  color: var(--bone-dim);
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
 }
 
-.sliderInput {
-  accent-color: var(--bleed);
-  width: 100%;
-  cursor: pointer;
-}
+.legCritica { color: var(--bleed); font-weight: 600; }
+.legAlta { color: var(--bone); font-weight: 600; }
+.legMedia { color: var(--ash); font-weight: 600; }
 
 .listaFugas {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
   margin-bottom: 3rem;
 }
 
@@ -311,48 +371,120 @@
   background: var(--panel);
   border: 1px solid var(--hair);
   border-radius: 12px;
-  padding: 1.5rem;
   transition: border-color 140ms ease;
+  overflow: hidden;
 }
 
-.tarjetaFugaCritica {
-  border-left: 4px solid var(--bleed);
-}
-
-.tarjetaFugaAlta {
-  border-left: 4px solid var(--bone);
-}
-
-.tarjetaFugaMedia {
-  border-left: 4px solid var(--hair);
-}
-
-.fugaTop {
+.fugaResumen {
+  padding: 1.25rem 1.5rem;
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background 140ms ease;
+}
+
+.fugaResumen:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.resumenIzquierda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resumenDerecha {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.chevronIcon {
+  font-family: var(--font-plex-mono);
+  font-size: 0.65rem;
+  color: var(--bone-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .fugaTitulo {
   font-size: 1.125rem;
   font-weight: 600;
   margin: 0;
+  color: var(--bone);
+  line-height: 1.3;
 }
 
-.fugaMonto {
-  font-family: var(--font-anton);
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--bleed);
+.tarjetaFugaCritica { border-left: 4px solid var(--bleed); }
+.tarjetaFugaAlta { border-left: 4px solid var(--bone); }
+.tarjetaFugaMedia { border-left: 4px solid var(--hair); }
+
+.fugaGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  padding: 0 1.5rem 1.5rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.05);
+  margin-top: 0.5rem;
+  padding-top: 1.5rem;
 }
+
+@media (min-width: 768px) {
+  .fugaGrid {
+    grid-template-columns: 1fr 18rem;
+    gap: 2rem;
+  }
+}
+
+.fugaContexto {
+  display: flex;
+  flex-direction: column;
+}
+
+.fugaImpacto {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fugaTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.fugaTitulo {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--bone);
+  line-height: 1.3;
+}
+
+.badgeSeveridad {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font-anton);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.badgeCritica { background: rgba(255, 59, 59, 0.1); color: var(--bleed); border: 1px solid rgba(255, 59, 59, 0.2); }
+.badgeAlta { background: rgba(232, 230, 225, 0.1); color: var(--bone); border: 1px solid rgba(232, 230, 225, 0.2); }
+.badgeMedia { background: rgba(107, 112, 117, 0.1); color: var(--ash); border: 1px solid rgba(107, 112, 117, 0.2); }
 
 .fugaExplicacion {
   font-size: 0.9375rem;
   color: var(--bone-dim);
-  margin: 0 0 1rem;
+  margin: 0 0 1.25rem;
   line-height: 1.5;
 }
 
@@ -374,47 +506,154 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--bone-dim);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.35rem;
+}
+
+.supuestosDetails {
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.supuestosSummary {
+  background: var(--void);
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--bone-dim);
+  cursor: pointer;
+  user-select: none;
+  transition: background 140ms ease;
+}
+
+.supuestosSummary:hover {
+  background: #1a1e22;
+  color: var(--bone);
 }
 
 .supuestosLista {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 1rem;
-  padding-left: 0;
+  gap: 0.75rem;
+  padding: 1rem;
+  margin: 0;
   list-style: none;
+  background: var(--panel);
+  border-top: 1px solid var(--hair);
 }
 
 .supuestoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.supuestoFila {
   font-size: 0.8125rem;
-  color: var(--bone-dim);
-  line-height: 1.4;
+  color: var(--bone);
 }
 
 .supuestoValor {
+  font-family: var(--font-anton);
   color: var(--bone-dim);
-  font-weight: 500;
+}
+
+.supuestoMeta {
+  font-size: 0.75rem;
+  color: var(--ash);
+  font-family: var(--font-plex-mono);
+}
+
+.sourceLink {
+  color: var(--bone-dim);
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+.sourceLink:hover {
+  color: var(--bone);
+  text-decoration: underline;
+}
+
+.impactoCard {
+  background: var(--void);
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.impactoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.75rem;
+}
+
+.impactoEtiqueta {
+  font-family: var(--font-anton);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+
+.fugaMonto {
+  font-family: var(--font-anton);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--bleed);
+}
+
+.barraContenedor {
+  background: var(--hair);
+  border-radius: 4px;
+  height: 6px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.barraRelleno {
+  background: var(--bleed);
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .remedioBloque {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--bone);
-  background: var(--panel);
+  background: rgba(232, 230, 225, 0.03);
   border: 1px solid var(--hair);
-  padding: 0.75rem 1rem;
   border-radius: 8px;
+  padding: 1rem;
+}
+
+.remedioCabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.remedioEtiqueta {
+  font-family: var(--font-anton);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bone);
 }
 
 .remedioHoras {
   font-family: var(--font-anton);
   font-size: 0.75rem;
-  color: var(--bone);
-  white-space: nowrap;
-  font-weight: 600;
+  color: var(--bone-dim);
+  background: var(--void);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid var(--hair);
+}
+
+.remedioTexto {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--bone-dim);
 }
 
 /* Mockup de la Prueba / Fix */
@@ -695,86 +934,95 @@
   min-height: 100dvh;
   background: var(--void);
   color: var(--bone);
-  font-family: var(--font-anton);
-  padding: clamp(1rem, 3vw, 2.25rem);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  max-width: 40rem;
-  margin-inline: auto;
-}
-
-.loadingTitle {
-  font-family: var(--font-anton, Anton);
-  font-size: 2rem;
-  color: var(--bone);
-  margin-bottom: 2rem;
-  text-transform: uppercase;
-}
-
-.loadingConsole {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.loadingMessage {
-  font-size: 0.875rem;
-  color: var(--ash);
-  animation: entrar 0.3s ease-out forwards;
-}
-
-@keyframes entrar {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Ensure no horizontal overflow */
-.pagina {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-
-.loadingMain {
-  min-height: 100dvh;
-  background: var(--void);
-  color: var(--bone);
   font-family: var(--font-plex-mono);
   padding: clamp(1rem, 3vw, 2.25rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: 40rem;
+  max-width: 48rem;
   margin-inline: auto;
 }
 
 .loadingTitle {
   font-family: var(--font-anton, Anton);
-  font-size: 2rem;
+  font-size: 2.5rem;
   color: var(--bone);
   margin-bottom: 2rem;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.blinkingCursor {
+  animation: blink 1s step-end infinite;
+  color: var(--bleed);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .loadingConsole {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  min-height: 15rem;
 }
 
-.loadingMessage {
+.loadingTerminalLine {
   font-size: 0.875rem;
-  color: var(--ash);
-  animation: entrar 0.3s ease-out forwards;
+  color: var(--bone-dim);
+  animation: typeIn 0.3s ease-out forwards;
 }
 
-@keyframes entrar {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.loadingMessageIcon {
+  color: var(--bleed);
+  margin-right: 0.75rem;
+  font-weight: bold;
 }
 
-/* Ensure no horizontal overflow */
+.loadingTerminalText {
+  color: var(--bone);
+}
+
+.spinner {
+  display: inline-block;
+  animation: spinDots 1.5s infinite linear;
+  margin-left: 0.5rem;
+  color: var(--bleed);
+}
+
+@keyframes spinDots {
+  0% { content: "."; }
+  33% { content: ".."; }
+  66% { content: "..."; }
+}
+
+.checkMark {
+  color: #4CAF50;
+  margin-left: 0.5rem;
+}
+
+@keyframes typeIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.loadingProgressBox {
+  width: 100%;
+  height: 4px;
+  background: var(--hair);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loadingProgressBar {
+  height: 100%;
+  background: var(--bleed);
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .pagina {
   max-width: 100vw;
   overflow-x: hidden;
@@ -819,88 +1067,7 @@ input[type="range"]:focus-visible {
   animation: entrar 0.3s ease-out forwards;
 }
 
-/* Improvement 1: Barra de pérdida por fuga con SVG accesible */
-.barraContenedor {
-  width: 100%;
-  height: 0.5rem;
-  background: var(--void);
-  border: 1px solid var(--hair);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 1rem;
-}
 
-.barraRelleno {
-  height: 100%;
-  background: var(--bleed);
-  transition: width 300ms ease;
-}
-
-/* Improvement 5: Jerarquía de severidad consistente */
-.leyendaSeveridad {
-  font-size: 0.75rem;
-  color: var(--bone-dim);
-  margin-bottom: 1.5rem;
-  display: flex;
-  gap: 0.5rem;
-  align-items: baseline;
-}
-
-.legCritica {
-  color: var(--bleed);
-  font-weight: 600;
-}
-
-.legAlta {
-  color: var(--bone);
-  font-weight: 600;
-}
-
-.legMedia {
-  color: var(--ash);
-  font-weight: 600;
-}
-
-.badgeSeveridad {
-  font-family: var(--font-anton);
-  font-size: 0.65rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
-  margin-left: 0.75rem;
-  vertical-align: middle;
-  background: var(--void);
-  border: 1px solid var(--hair);
-  color: var(--bone-dim);
-}
-
-.tarjetaFugaCritica .badgeSeveridad {
-  color: var(--bleed);
-  border-color: var(--bleed);
-}
-
-.tarjetaFugaAlta .badgeSeveridad {
-  color: var(--bone);
-  border-color: var(--bone);
-}
-
-/* Improvement 6: Panel de fuentes colapsable */
-.supuestosDetails {
-  margin-bottom: 1rem;
-}
-
-.supuestosSummary {
-  font-size: 0.8125rem;
-  color: var(--bone-dim);
-  cursor: pointer;
-  user-select: none;
-  font-weight: 500;
-}
-
-.supuestosSummary:hover {
-  color: var(--bone);
-}
 
 /* Provenance panel */
 .provenancePanel {

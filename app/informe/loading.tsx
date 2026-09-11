@@ -3,57 +3,71 @@
 import { useState, useEffect } from "react";
 import styles from "./informe.module.css";
 
-const stages = [
-  { label: "Fetching", detail: "Downloading site resources" },
-  { label: "Checking mobile signals", detail: "Lighthouse mobile simulation" },
-  { label: "Calculating leaks", detail: "Mapping fees and bounces" },
-  { label: "Building report", detail: "Generating visual evidence" }
+const lines = [
+  "Initializing leak diagnostic engine...",
+  "Resolving target domain...",
+  "Establishing secure connection...",
+  "Fetching site resources and assets...",
+  "Simulating mobile throttling (Fast 4G)...",
+  "Measuring TTFB and paint metrics...",
+  "Extracting checkout flows...",
+  "Scanning for aggregator links (Glovo, UberEats)...",
+  "Checking for direct channel alternatives...",
+  "Mapping fees to order volume...",
+  "Applying calibrated heuristic (N=132)...",
+  "Generating visual evidence...",
+  "Compiling executive dossier..."
 ];
 
 export default function Loading() {
-  const [activeIdx, setActiveIdx] = useState(0);
-
+  const [visibleLines, setVisibleLines] = useState<number[]>([]);
+  
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
-      setActiveIdx(stages.length - 1);
+      setVisibleLines(lines.map((_, i) => i));
       return;
     }
 
+    let i = 0;
     const interval = setInterval(() => {
-      setActiveIdx((prev) => {
-        if (prev >= stages.length - 1) {
-          clearInterval(interval);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 1500);
+      setVisibleLines(prev => [...prev, i]);
+      i++;
+      if (i >= lines.length) {
+        clearInterval(interval);
+      }
+    }, 450); // fast paced hacker text
 
     return () => clearInterval(interval);
   }, []);
 
   return (
     <main className={styles.loadingMain}>
-      <h1 className={styles.loadingTitle}>Running diagnostics...</h1>
+      <h1 className={styles.loadingTitle}>
+        DIAGNOSING
+        <span className={styles.blinkingCursor}>_</span>
+      </h1>
+      
       <div className={styles.loadingConsole} role="status" aria-live="polite">
-        {stages.map((stage, idx) => {
-          const isActive = idx === activeIdx;
-          const isPast = idx < activeIdx;
-          const isFuture = idx > activeIdx;
-          
-          if (isFuture) return null;
-
-          return (
-            <div key={idx} className={`${styles.loadingMessage} ${isActive ? styles.loadingMessageActive : ''}`}>
-              <span className={styles.loadingMessageIcon}>{isPast ? "✓" : "⟳"}</span>
-              <div className={styles.loadingMessageText}>
-                <strong>{stage.label}</strong>
-                {isActive && <span className={styles.loadingMessageDetail}>{stage.detail}</span>}
-              </div>
-            </div>
-          );
-        })}
+        {visibleLines.map(idx => (
+          <div key={idx} className={`${styles.loadingMessage} ${styles.loadingTerminalLine}`}>
+            <span className={styles.loadingMessageIcon}>&gt;</span>
+            <span className={styles.loadingTerminalText}>{lines[idx]}</span>
+            {idx === visibleLines.length - 1 && idx !== lines.length - 1 && (
+              <span className={styles.spinner}>...</span>
+            )}
+            {idx !== visibleLines.length - 1 && (
+              <span className={styles.checkMark}> [OK]</span>
+            )}
+          </div>
+        ))}
+      </div>
+      
+      <div className={styles.loadingProgressBox}>
+        <div 
+          className={styles.loadingProgressBar} 
+          style={{ width: `${Math.min(100, (visibleLines.length / lines.length) * 100)}%` }} 
+        />
       </div>
     </main>
   );
