@@ -1,73 +1,71 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import styles from "./informe.module.css";
 
-const lines = [
-  "Initializing leak diagnostic engine...",
-  "Resolving target domain...",
-  "Establishing secure connection...",
-  "Fetching site resources and assets...",
-  "Simulating mobile throttling (Fast 4G)...",
-  "Measuring TTFB and paint metrics...",
-  "Extracting checkout flows...",
-  "Scanning for aggregator links (Glovo, UberEats)...",
-  "Checking for direct channel alternatives...",
-  "Mapping fees to order volume...",
-  "Applying calibrated heuristic (N=132)...",
-  "Generating visual evidence...",
-  "Compiling executive dossier..."
+/* The wait is the audit running. Naming each step is the only honest way to
+   fill it: the reader learns what the report is made of before it arrives. */
+const steps = [
+  "Resolving the domain",
+  "Asking robots.txt for permission",
+  "Reading the homepage and its assets",
+  "Measuring time to first byte and image weight",
+  "Looking for an ordering path",
+  "Checking links to delivery platforms",
+  "Reading the menu, if it is published",
+  "Ranking what it finds",
+  "Pricing each leak in euros",
+  "Writing the dossier",
 ];
 
 export default function Loading() {
-  const [visibleLines, setVisibleLines] = useState<number[]>([]);
-  
+  const [done, setDone] = useState(0);
+
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) {
-      setVisibleLines(lines.map((_, i) => i));
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setDone(steps.length);
       return;
     }
-
-    let i = 0;
-    const interval = setInterval(() => {
-      setVisibleLines(prev => [...prev, i]);
-      i++;
-      if (i >= lines.length) {
-        clearInterval(interval);
-      }
-    }, 450); // fast paced hacker text
-
-    return () => clearInterval(interval);
+    const id = setInterval(() => {
+      setDone((n) => (n >= steps.length ? n : n + 1));
+    }, 520);
+    return () => clearInterval(id);
   }, []);
 
   return (
-    <main className={styles.loadingMain}>
-      <h1 className={styles.loadingTitle}>
-        DIAGNOSING
-        <span className={styles.blinkingCursor}>_</span>
-      </h1>
-      
-      <div className={styles.loadingConsole} role="status" aria-live="polite">
-        {visibleLines.map(idx => (
-          <div key={idx} className={`${styles.loadingMessage} ${styles.loadingTerminalLine}`}>
-            <span className={styles.loadingMessageIcon}>&gt;</span>
-            <span className={styles.loadingTerminalText}>{lines[idx]}</span>
-            {idx === visibleLines.length - 1 && idx !== lines.length - 1 && (
-              <span className={styles.spinner}>...</span>
-            )}
-            {idx !== visibleLines.length - 1 && (
-              <span className={styles.checkMark}> [OK]</span>
-            )}
-          </div>
-        ))}
-      </div>
-      
-      <div className={styles.loadingProgressBox}>
-        <div 
-          className={styles.loadingProgressBar} 
-          style={{ width: `${Math.min(100, (visibleLines.length / lines.length) * 100)}%` }} 
-        />
+    <main className={styles.loading}>
+      <div className={styles.loadingShell}>
+        <h1 className={styles.loadingTitle}>Auditing the site</h1>
+        <p className={styles.loadingSub}>
+          We read the live site, so this takes a few seconds. We go slowly on purpose: three
+          requests at a time, with a pause between them.
+        </p>
+
+        <div className={styles.loadingTrack}>
+          <div
+            className={styles.loadingFill}
+            style={{ width: `${Math.round(((done + 1) / steps.length) * 100)}%` }}
+          />
+        </div>
+
+        <ol className={styles.loadingList} role="status" aria-live="polite">
+          {steps.map((step, i) => (
+            <li
+              key={step}
+              className={`${styles.loadingLine} ${
+                i === done ? styles.loadingLineActive : ""
+              } ${i > done ? styles.loadingLinePending : ""}`}
+            >
+              <span
+                className={`${styles.loadingMark} ${i < done ? styles.loadingMarkDone : ""}`}
+                aria-hidden
+              >
+                {i < done ? "✓" : i === done ? "›" : "·"}
+              </span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
       </div>
     </main>
   );
