@@ -292,6 +292,11 @@ export default function InformeView({ initialReport }: Props) {
               <> What we could not read: {audit.notRead.join(", ")}.</>
             )}
           </p>
+          {audit.error && (
+            <p className={styles.partial} role="status">
+              {audit.error}
+            </p>
+          )}
 
           <div className={styles.heroRow}>
             <div>

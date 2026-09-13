@@ -30,60 +30,60 @@ export const CONSTANTES: Record<string, Constante> = {
   comisionAgregadorCompleto: {
     id: "comisionAgregadorCompleto",
     descripcion:
-      "Comision por pedido cuando la plataforma tambien gestiona el reparto",
+      "Commission per order when the platform also handles the delivery",
     valor: 25,
     minimo: 15,
     maximo: 35,
     unidad: "porcentaje",
-    fuente: "Qamarero, comparativa de comisiones de delivery en Espana",
+    fuente: "Qamarero, comparison of delivery platform commissions in Spain",
     url: "https://qamarero.com/blog/comisiones-delivery-cuanto-cobran-realmente-las-plataformas/",
     fecha: "2025-09-30",
     advertencia:
-      "Ninguna plataforma publica su tarifa en su propia web de partners; just-eat.es/restaurantes responde 403. La fuente es secundaria por necesidad y el informe debe decirlo.",
+      "No platform publishes its rate on its own partner site; just-eat.es/restaurantes answers 403. The source is secondary out of necessity, and the report says so.",
   },
   comisionAgregadorCaptacion: {
     id: "comisionAgregadorCaptacion",
     descripcion:
-      "Comision de Just Eat cuando el restaurante reparte con su propia flota",
+      "Just Eat commission when the restaurant delivers with its own fleet",
     valor: 13,
     minimo: 13,
     maximo: 13,
     unidad: "porcentaje",
-    fuente: "Qamarero, comparativa de comisiones de delivery en Espana",
+    fuente: "Qamarero, comparison of delivery platform commissions in Spain",
     url: "https://qamarero.com/blog/comisiones-delivery-cuanto-cobran-realmente-las-plataformas/",
     fecha: "2025-09-30",
   },
   ticketMedioRestauracion: {
     id: "ticketMedioRestauracion",
-    descripcion: "Ticket medio de restauracion en Espana por transaccion",
+    descripcion: "Average restaurant transaction in Spain",
     valor: 21,
     minimo: 16.5,
     maximo: 35,
     unidad: "euros",
-    fuente: "CaixaBank Research, Informe Sectorial Turismo 1S 2025",
+    fuente: "CaixaBank Research, Tourism Sector Report H1 2025",
     url: "https://caixabanklab-campus.com/cual-es-el-ticket-medio-restauracion-espana/",
     fecha: "2024-12-31",
     advertencia:
-      "Media nacional sobre datos de tarjeta. Se sustituye por la composicion real del catalogo cuando la Store API esta abierta.",
+      "National average from card data. Replaced by the real make-up of the catalogue when the Store API is open.",
   },
   pesoCanalDigital: {
     id: "pesoCanalDigital",
     descripcion:
-      "Parte del gasto en restauracion que se va por delivery y take away",
+      "Share of restaurant spending that goes through delivery and takeaway",
     valor: 20,
     minimo: 18,
     maximo: 22,
     unidad: "porcentaje",
-    fuente: "Anuario de la Hosteleria de Espana",
+    fuente: "Hosteleria de Espana (the Spanish hospitality federation), annual industry report",
     url: "https://hosteleriadeespana.es/publicaciones-hosteleria.html",
     fecha: "2025-12-01",
     advertencia:
-      "Media nacional, no el dato del negocio. Si el dueno da el suyo, manda el suyo.",
+      "National average, not this business's own figure. If the owner has theirs, theirs wins.",
   },
   preferenciaCanalDirecto: {
     id: "preferenciaCanalDirecto",
     descripcion:
-      "Consumidores que prefieren pedir por la web o la app del propio restaurante",
+      "Consumers who prefer to order from the restaurant's own site or app",
     valor: 58,
     minimo: 58,
     maximo: 70,
@@ -92,36 +92,36 @@ export const CONSTANTES: Record<string, Constante> = {
     url: "https://www.restaurantdive.com/news/majority-customers-prefer-ordering-delivery-direct-restaurant-ncr-voyix/738397/",
     fecha: "2024-11-30",
     advertencia:
-      "Encuesta a consumidores de Estados Unidos, margen de error 4 %. No hay equivalente espanol publicado y el informe lo dice. El 70 % que circula sale de proveedores de software de pedido propio, que son parte interesada.",
+      "Survey of United States consumers, 4% margin of error. There is no published Spanish equivalent and the report says so. The 70% figure that circulates comes from direct-ordering software vendors, who are an interested party.",
   },
   caidaConversionPorSegundo: {
     id: "caidaConversionPorSegundo",
     descripcion:
-      "Puntos de conversion que se pierden por cada segundo adicional de carga",
+      "Conversion points lost for every extra second of load time",
     valor: 0.3,
     minimo: 0.2,
     maximo: 0.4,
     unidad: "ratio",
-    fuente: "Portent, 100 M de paginas vistas en 20 sitios y 5,6 M de sesiones",
+    fuente: "Portent, 100M page views across 20 sites and 5.6M sessions",
     url: "https://portent.com/blog/analytics/research-site-speed-hurting-everyones-revenue.htm",
     fecha: "2022-01-01",
     advertencia:
-      "Se usa esta y no la de Deloitte para Google, que es mas vistosa pero mide una mejora de 0,1 s en marcas grandes. Aqui el caso real es un sitio pequeno y lento.",
+      "Used instead of the Deloitte-for-Google figure, which is flashier but measures a 0.1s improvement at large brands. The case here is a small, slow site.",
   },
   dependenciaAgregadorSector: {
     id: "dependenciaAgregadorSector",
     descripcion:
-      "Restaurantes espanoles con reparto que dependen de un agregador",
+      "Spanish restaurants with delivery that depend on an aggregator",
     valor: 76.4,
     minimo: 76.4,
     maximo: 76.4,
     unidad: "porcentaje",
     fuente:
-      "BCC Innovation y Delectatech, Informe de digitalizacion del sector Horeca en Espana, mas de 240.000 establecimientos",
+      "BCC Innovation and Delectatech, report on Horeca digitalisation in Spain, more than 240,000 venues",
     url: "https://www.infohoreca.com/noticias/20221129/informe-digitalizacion-sector-horeca-espana",
     fecha: "2022-11-29",
     advertencia:
-      "Datos de 2022. La foto habra mejorado desde entonces y se cita siempre con su fecha.",
+      "2022 data. The picture will have improved since, so it is always cited with its date.",
   },
 };
 
@@ -136,6 +136,6 @@ export const SOLO_CUALITATIVAS = [
 
 export function constante(id: string): Constante {
   const c = CONSTANTES[id];
-  if (!c) throw new Error(`Constante no calibrada: ${id}`);
+  if (!c) throw new Error(`Uncalibrated constant: ${id}`);
   return c;
 }

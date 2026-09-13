@@ -62,7 +62,7 @@ export function calculateLeaks(
       severity: "critica",
       annualLossEuros: commissionsYear,
       monthlyLossEuros: Math.round(commissionsYear / 12),
-      formula: `pedidosDia (${params.pedidosDia}) x ticketMedioRestauracion (${params.ticketMedio} EUR) x comisionAgregadorCompleto (${params.comisionAgregadorPct}%) x 365 = ${eur(commissionsYear)} EUR/year`,
+      formula: `orders a day (${params.pedidosDia}) × average ticket (${params.ticketMedio} EUR) × platform fee (${params.comisionAgregadorPct}%) × 365 days = ${eur(commissionsYear)} EUR a year`,
       calculationDetails: `On an estimated ${eur(deliveryGrossYear)} EUR of yearly delivery revenue, the platforms keep ${eur(commissionsYear)} EUR. Moving back the ${params.pctRecuperableCanalPropio}% of diners who would rather order direct puts +${eur(recoverableYear)} EUR/year back in the till.`,
       explanation: `Your site links straight to ${apps}. Every order from a regular or a neighbour who was already on your own page still pays the aggregator ${params.comisionAgregadorPct}% of the ticket, and the aggregator keeps the customer's data.`,
       assumptions: [
@@ -125,7 +125,7 @@ export function calculateLeaks(
       severity: audit.ttfb > 2.0 || audit.imgKb > 3500 ? "critica" : "alta",
       annualLossEuros: speedLossYear,
       monthlyLossEuros: Math.round(speedLossYear / 12),
-      formula: `${pointsLost.toFixed(2)} conversion points lost = (${extraSeconds.toFixed(1)}s + ${heavyPenaltySeconds}s) x caidaConversionPorSegundo (${CONVERSION_DROP_PER_SECOND.valor} pts/s); ${eur(speedLossYear)} EUR/year at ${params.ticketMedio} EUR ticket`,
+      formula: `(${extraSeconds.toFixed(1)}s over the 1.0s baseline + ${heavyPenaltySeconds}s image penalty) × ${CONVERSION_DROP_PER_SECOND.valor} conversion points lost per second = ${pointsLost.toFixed(2)} points; ${eur(speedLossYear)} EUR a year at a ${params.ticketMedio} EUR ticket`,
       calculationDetails: `About ${lostOrdersMonth} orders a month (${lostOrdersMonth * 12}/year) from people who arrived meaning to order and closed the tab while it loaded.`,
       explanation: `Your site has ${reasons.join(" and ")}. At 21:15 a hungry person on a phone does not wait: they go back to search results or open the aggregator app.`,
       assumptions: [
@@ -171,7 +171,7 @@ export function calculateLeaks(
       severity: "alta",
       annualLossEuros: forfeited,
       monthlyLossEuros: Math.round(forfeited / 12),
-      formula: `pedidosDia x ticketMedioRestauracion x 365 x pesoCanalDigital (${DIGITAL_CHANNEL_SHARE.valor}%) x 0.6 forfeited = ${eur(forfeited)} EUR/year`,
+      formula: `orders a day (${params.pedidosDia}) × average ticket (${params.ticketMedio} EUR) × 365 days × share ordered online (${DIGITAL_CHANNEL_SHARE.valor}%) × 0.6 given away = ${eur(forfeited)} EUR a year`,
       calculationDetails: `The restaurant already paid to build a WordPress + WooCommerce site with a catalogue, but checkout friction or aggregator buttons send buyers elsewhere.`,
       explanation: `Your site already has the WooCommerce store engine installed${audit.storeApi ? " with the Store API open and responding" : ""}. Either the buying flow is slow and confusing, or buttons hand customers to Glovo. The store is paid for; paying a middleman on top makes no sense.`,
       assumptions: [
@@ -209,7 +209,7 @@ export function calculateLeaks(
       severity: "media",
       annualLossEuros: whatsappLossYear,
       monthlyLossEuros: Math.round(whatsappLossYear / 12),
-      formula: `visitasMes (${params.visitasMes}) x 4% intent x 12 x ticketMedioRestauracion (${params.ticketMedio} EUR) = ${eur(whatsappLossYear)} EUR/year`,
+      formula: `visits a month (${params.visitasMes}) × 4% who mean to order × 12 months × average ticket (${params.ticketMedio} EUR) = ${eur(whatsappLossYear)} EUR a year`,
       calculationDetails: `About ${Math.round(lostOrdersYear / 12)} orders a month fall through because there is no direct enquiry or order button on the phone.`,
       explanation: `A local checking "do you have a table for six?" or "do you do gluten-free for collection?" will not fill in a WordPress contact form. With no WhatsApp in sight, they ring the restaurant next door.`,
       assumptions: [
@@ -237,7 +237,7 @@ export function calculateLeaks(
       severity: "media",
       annualLossEuros: reservationLossYear,
       monthlyLossEuros: Math.round(reservationLossYear / 12),
-      formula: `reservasMes (${params.reservasMes}) x 2.2 covers x ${params.comisionReservaPorCubierto.toFixed(2)} EUR/cover x 12 = ${eur(reservationLossYear)} EUR/year`,
+      formula: `bookings a month (${params.reservasMes}) × 2.2 covers each × ${params.comisionReservaPorCubierto.toFixed(2)} EUR a cover × 12 months = ${eur(reservationLossYear)} EUR a year`,
       calculationDetails: `Fees paid on covers that book through the external widget instead of a direct reservation.`,
       explanation: `Your site uses ${audit.reservaProvider || "a reservation middleman"}. Each table booked through that widget costs 1.50 to 3.00 EUR per cover. Steering regulars to a direct WhatsApp booking saves thousands in a busy restaurant.`,
       assumptions: [
@@ -272,7 +272,7 @@ export function calculateLeaks(
       severity: !audit.https || audit.eolPhp ? "alta" : "media",
       annualLossEuros: securityRiskYear,
       monthlyLossEuros: 100,
-      formula: `Flat estimate of downtime plus lost local ranking = 1,200 EUR/year`,
+      formula: `Flat estimate of downtime plus lost local ranking = 1,200 EUR a year`,
       calculationDetails: `Risk of malware, an active Chrome "Not secure" warning, and lost organic visibility on Google Maps.`,
       explanation: `Your server advertises an out-of-date setup (${reasons.join(", ")}). Beyond the hack risk, modern browsers demote the ranking and warn users in ways that break trust.`,
       assumptions: [
@@ -302,7 +302,7 @@ export function calculateLeaks(
       severity: "media",
       annualLossEuros: minLoss,
       monthlyLossEuros: Math.round(minLoss / 12),
-      formula: `visitasMes (${params.visitasMes}) x 3% friction loss x ticketMedioRestauracion (${params.ticketMedio} EUR) x 12 = ${eur(minLoss)} EUR/year`,
+      formula: `visits a month (${params.visitasMes}) × 3% lost to friction × average ticket (${params.ticketMedio} EUR) × 12 months = ${eur(minLoss)} EUR a year`,
       calculationDetails: `Margin not captured for want of a direct, interactive call to action for mobile orders.`,
       explanation: `The site is technically sound but has no direct interactive channel (0% commission) built for a phone to turn casual visits into repeat orders.`,
       assumptions: [
