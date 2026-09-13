@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import styles from "./pagina.module.css";
+import LiquidDrops from "@/components/LiquidDrops";
 
 const PER_SECOND = 4800 / (365.25 * 24 * 3600);
 
@@ -236,6 +237,7 @@ export default function Portada() {
       <div className={styles.grain} aria-hidden />
       <div className={styles.rail} aria-hidden />
       <canvas ref={canvasRef} className={styles.ambient} aria-hidden />
+      <LiquidDrops />
 
       <div className={styles.shell}>
         <span className={styles.mark}>Bleed</span>
