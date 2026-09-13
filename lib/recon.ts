@@ -211,24 +211,109 @@ function collectJsonLdPrices(node: unknown, out: number[], depth = 0): void {
   }
 }
 
-/** A euro amount next to a € sign, on either side, with optional thousands
-    grouping. Anchored to € so we don't harvest phone numbers or postcodes;
-    no nested quantifiers, so no catastrophic backtracking on a 2 MB page. */
-const EURO_AMOUNT_RE =
-  /€\s?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?)|(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?)\s?€/g;
+/* A business in Lisbon, Manchester or Monterrey is losing money the same way a
+   business in Malaga is. The crawler reads whatever currency the site prices
+   in and the report answers in it; the alternative is telling a shop in London
+   what it loses in euros, which is a translation nobody asked for. */
+const CURRENCY_SYMBOLS: Array<[string, string]> = [
+  ["€", "EUR"],
+  ["£", "GBP"],
+  ["₹", "INR"],
+  ["¥", "JPY"],
+  ["₩", "KRW"],
+  ["₽", "RUB"],
+  ["₺", "TRY"],
+  ["R$", "BRL"],
+  ["$", "USD"],
+];
 
-function collectTextPrices(visibleText: string, out: number[]): void {
-  EURO_AMOUNT_RE.lastIndex = 0;
+/** The dollar sign belongs to a dozen currencies; the domain says which one. */
+const DOLLAR_BY_TLD: Record<string, string> = {
+  ".mx": "MXN",
+  ".ca": "CAD",
+  ".au": "AUD",
+  ".nz": "NZD",
+  ".sg": "SGD",
+  ".hk": "HKD",
+  ".ar": "ARS",
+  ".cl": "CLP",
+  ".co": "COP",
+};
+
+/** One amount next to a currency symbol, on either side, with optional
+    thousands grouping. Anchored to the symbol so we do not harvest phone
+    numbers or postcodes; no nested quantifiers, so no catastrophic
+    backtracking on a 2 MB page. */
+const AMOUNT_RE =
+  /(R\$|[€£¥₹₩₽₺$])\s?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?)|(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?)\s?(R\$|[€£¥₹₩₽₺$])/g;
+
+function symbolToCode(symbol: string, domain: string): string {
+  if (symbol === "$") {
+    const tld = domain.slice(domain.lastIndexOf("."));
+    return DOLLAR_BY_TLD[tld] || "USD";
+  }
+  const hit = CURRENCY_SYMBOLS.find(([sym]) => sym === symbol);
+  return hit ? hit[1] : "EUR";
+}
+
+function collectTextPrices(visibleText: string, out: number[], seen: Map<string, number>, domain: string): void {
+  AMOUNT_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
-  while (out.length < PRICE_SIGNAL_CAP && (m = EURO_AMOUNT_RE.exec(visibleText))) {
-    const n = euroStringToNumber(m[1] ?? m[2]);
-    if (n !== undefined && n >= 1 && n <= 20000) out.push(n);
+  while (out.length < PRICE_SIGNAL_CAP && (m = AMOUNT_RE.exec(visibleText))) {
+    const n = euroStringToNumber(m[2] ?? m[3]);
+    if (n === undefined || n < 1 || n > 20000) continue;
+    out.push(n);
+    const code = symbolToCode(m[1] ?? m[4], domain);
+    seen.set(code, (seen.get(code) || 0) + 1);
   }
 }
 
 /** Strip tags down to plain text, the same way the SPA-detection check does —
     factored out so price-scanning can run it again on the final HTML (which,
     after a Chromium fallback, is not the HTML this function saw first). */
+/** HTML entities survive every regex we run and end up on screen: a bakery
+    called "GAIL&#39;s" is not a name anyone typed. Decoded for the handful of
+    entities that actually appear in titles and visible copy. */
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&(#\d+|#x[0-9a-fA-F]+|[a-zA-Z]+);/g, (whole, code: string) => {
+      if (code.startsWith("#x") || code.startsWith("#X")) {
+        const n = parseInt(code.slice(2), 16);
+        return Number.isFinite(n) ? String.fromCodePoint(n) : whole;
+      }
+      if (code.startsWith("#")) {
+        const n = parseInt(code.slice(1), 10);
+        return Number.isFinite(n) ? String.fromCodePoint(n) : whole;
+      }
+      const named: Record<string, string> = {
+        amp: "&",
+        lt: "<",
+        gt: ">",
+        quot: '"',
+        apos: "'",
+        nbsp: " ",
+        hellip: "…",
+        mdash: "—",
+        ndash: "–",
+        rsquo: "\u2019",
+        lsquo: "\u2018",
+        ldquo: "\u201c",
+        rdquo: "\u201d",
+        eacute: "é",
+        aacute: "á",
+        iacute: "í",
+        oacute: "ó",
+        uacute: "ú",
+        ntilde: "ñ",
+        euro: "€",
+        pound: "£",
+      };
+      return named[code] ?? whole;
+    })
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function extractVisibleText(html: string): string {
   return html
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
@@ -261,7 +346,11 @@ function extractSchemaTypes(html: string): string[] {
 /** Every price this page publishes, in euros: structured data first, then
     whatever the visible text shows. Capped and range-filtered — a stray "20"
     from a copyright year or a postcode is not a price. */
-function extractPriceSignals(html: string, visibleText: string): number[] {
+function extractPriceSignals(
+  html: string,
+  visibleText: string,
+  domain: string
+): { prices: number[]; currency?: string } {
   const prices: number[] = [];
   for (const jm of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     if (prices.length >= PRICE_SIGNAL_CAP) break;
@@ -271,8 +360,18 @@ function extractPriceSignals(html: string, visibleText: string): number[] {
       // skip, same as above
     }
   }
-  collectTextPrices(visibleText, prices);
-  return prices.slice(0, PRICE_SIGNAL_CAP);
+
+  const counts = new Map<string, number>();
+  collectTextPrices(visibleText, prices, counts, domain);
+
+  /* A declared priceCurrency is the site telling us outright; symbol counting
+     is the fallback, and the most frequent symbol wins (a euro page quoting one
+     dollar figure is still a euro page). */
+  const declared = /["']priceCurrency["']\s*:\s*["']([A-Z]{3})["']/.exec(html);
+  const mostSeen = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+  const currency = declared?.[1] || mostSeen?.[0];
+
+  return { prices: prices.slice(0, PRICE_SIGNAL_CAP), currency };
 }
 
 /** A <meta name="generator"> content string mapped to a platform name. Checked
@@ -744,7 +843,7 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
   let name = domain;
   const titleMatch = bodyText.match(/<title[^>]*>([^<]+)<\/title>/i);
   if (titleMatch) {
-    const rawTitle = titleMatch[1].split(/[|\-–•]/)[0].trim();
+    const rawTitle = decodeEntities(titleMatch[1]).split(/[|\-–•]/)[0].trim();
     if (rawTitle && rawTitle.length > 2 && rawTitle.length < 40) {
       name = rawTitle;
     }
@@ -761,7 +860,7 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
         const parsed = JSON.parse(jm[1].trim());
         const item = Array.isArray(parsed) ? parsed[0] : parsed;
         if (item && (item["@type"] === "Restaurant" || item["@type"] === "FoodEstablishment" || item["@type"] === "LocalBusiness")) {
-          if (item.name) name = item.name;
+          if (item.name) name = decodeEntities(String(item.name));
           if (item.servesCuisine) cuisine = Array.isArray(item.servesCuisine) ? item.servesCuisine.join(", ") : item.servesCuisine;
           if (item.telephone) telephone = item.telephone;
           if (item.address) {
@@ -781,10 +880,10 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
   const marketplaces = detectMarketplaces(bodyText, aggregatorLinks);
   const bookingProvider = detectBookingProvider(low);
   const contactChannels = detectContactChannels(bodyText, low, hasWhatsapp, Boolean(bookingProvider));
-  const priceSignals = extractPriceSignals(bodyText, visibleText);
+  const { prices: priceSignals, currency } = extractPriceSignals(bodyText, visibleText, domain);
   /* Enough of the page for the classifier to recognise a trade by how it
      talks, and no more: this travels in every report we render. */
-  const textSample = visibleText.slice(0, 3000);
+  const textSample = decodeEntities(visibleText.slice(0, 3000));
 
   // Image weight check
   const imgMatches = Array.from(bodyText.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)).slice(0, 15);
@@ -933,6 +1032,7 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     contactChannels,
     priceSignals,
     textSample,
+    currency,
     source: "live",
     auditedAt: new Date().toISOString(),
   };

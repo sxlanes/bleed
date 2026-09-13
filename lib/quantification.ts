@@ -147,16 +147,24 @@ export function calculateLeaks(
   const measuredTicket = medianPriceSignal(audit.priceSignals);
   const usingMeasuredTicket = measuredTicket !== undefined;
   const effectiveTicket = usingMeasuredTicket ? measuredTicket! : params.ticketMedio;
+
+  /* The report answers in the currency it measured. When the value of a
+     transaction came from the site's own prices, every figure below is that
+     currency by construction — the rest of the inputs are counts and
+     percentages. When we had to fall back on a calibrated average, the figure
+     is a European one and the report stays in euros rather than pretending to
+     convert at a rate we never looked up. */
+  const currency = usingMeasuredTicket && audit.currency ? audit.currency : "EUR";
   const ticketAssumption = (): LeakAssumption =>
     usingMeasuredTicket
       ? {
           label: words.valueLabel,
-          value: `${effectiveTicket.toFixed(2)} EUR`,
+          value: `${effectiveTicket.toFixed(2)} ${currency}`,
           citation: `Measured from the prices published on your own site (median of ${audit.priceSignals!.length} price${
             audit.priceSignals!.length === 1 ? "" : "s"
           } found). A figure measured from this business's own catalogue beats any national average.`,
         }
-      : assumptionFromConstant(words.valueLabel, `${effectiveTicket} EUR`, econ.valorTransaccion);
+      : assumptionFromConstant(words.valueLabel, `${effectiveTicket} ${currency}`, econ.valorTransaccion);
 
   const leaks: Leak[] = [];
   const eur = (n: number) => Math.round(n).toLocaleString("en-IE");
@@ -194,12 +202,12 @@ export function calculateLeaks(
       monthlyLossEuros: Math.round(commissionsYear / 12),
       formula: `${words.transactions} per ${v.definition.ratePeriod} (${params.pedidosDia}) × ${words.valueLabel.toLowerCase()} (${effectiveTicket.toFixed(
         2
-      )} EUR) × platform fee (${params.comisionAgregadorPct}%) × ${periodsPerYear} ${v.definition.ratePeriod}s a year = ${eur(commissionsYear)} EUR a year`,
-      calculationDetails: `On an estimated ${eur(grossPerYear)} EUR a year through ${platforms}, the platform keeps ${eur(
+      )} ${currency}) × platform fee (${params.comisionAgregadorPct}%) × ${periodsPerYear} ${v.definition.ratePeriod}s a year = ${eur(commissionsYear)} ${currency} a year`,
+      calculationDetails: `On an estimated ${eur(grossPerYear)} ${currency} a year through ${platforms}, the platform keeps ${eur(
         commissionsYear
-      )} EUR. Moving back the ${params.pctRecuperableCanalPropio}% of ${words.customers} who would rather ${words.verb} direct puts +${eur(
+      )} ${currency}. Moving back the ${params.pctRecuperableCanalPropio}% of ${words.customers} who would rather ${words.verb} direct puts +${eur(
         recoverableYear
-      )} EUR/year back in the ${words.place}.`,
+      )} ${currency}/year back in the ${words.place}.`,
       explanation: `Your site links straight to ${platforms}. Every ${words.transaction} from a regular ${words.customer} who was already on your own page still pays ${platforms} ${params.comisionAgregadorPct}% of the ${words.transaction}, and the platform keeps the ${words.customer}'s data.`,
       assumptions: [
         ticketAssumption(),
@@ -258,7 +266,7 @@ export function calculateLeaks(
       monthlyLossEuros: Math.round(speedLossYear / 12),
       formula: `(${extraSeconds.toFixed(1)}s over the 1.0s baseline + ${heavyPenaltySeconds}s image penalty) × ${CONVERSION_DROP_PER_SECOND.valor} conversion points lost per second = ${pointsLost.toFixed(
         2
-      )} points; ${eur(speedLossYear)} EUR a year at a ${effectiveTicket.toFixed(2)} EUR ${words.transaction}`,
+      )} points; ${eur(speedLossYear)} ${currency} a year at a ${effectiveTicket.toFixed(2)} ${currency} ${words.transaction}`,
       calculationDetails: `About ${lostTransactionsMonth} ${words.transactions} a month (${
         lostTransactionsMonth * 12
       }/year) from people who arrived meaning to ${words.verb} and closed the tab while it loaded.`,
@@ -334,9 +342,9 @@ export function calculateLeaks(
       monthlyLossEuros: Math.round(forfeited / 12),
       formula: `${words.transactions} per ${v.definition.ratePeriod} (${params.pedidosDia}) × ${words.valueLabel.toLowerCase()} (${effectiveTicket.toFixed(
         2
-      )} EUR) × ${periodsPerYear} ${v.definition.ratePeriod}s × share that prefers direct (${params.pctRecuperableCanalPropio}%) × 0.6 given away = ${eur(
+      )} ${currency}) × ${periodsPerYear} ${v.definition.ratePeriod}s × share that prefers direct (${params.pctRecuperableCanalPropio}%) × 0.6 given away = ${eur(
         forfeited
-      )} EUR a year`,
+      )} ${currency} a year`,
       calculationDetails: `The business already paid to build a ${channelName}, but friction or marketplace links send ${words.customers} elsewhere.`,
       explanation: `Your site already has a ${channelName} installed${
         audit.storeApi ? ", with the store API open and responding" : ""
@@ -376,7 +384,7 @@ export function calculateLeaks(
       monthlyLossEuros: Math.round(lossYear / 12),
       formula: `visits a month (${params.visitasMes}) × ${intentShare * 100}% who mean to ${words.verb} × 12 months × ${words.valueLabel.toLowerCase()} (${effectiveTicket.toFixed(
         2
-      )} EUR) = ${eur(lossYear)} EUR a year`,
+      )} ${currency}) = ${eur(lossYear)} ${currency} a year`,
       calculationDetails: `About ${Math.round(lostTransactionsYear / 12)} ${words.transactions} a month fall through because there is no quick way to reach or ${words.verb} on a phone.`,
       explanation: `A ${words.customer} with a quick question will not fill in a contact form. With no phone link, WhatsApp or booking button in sight, they go to the next ${words.place} on the search results page.`,
       assumptions: [
@@ -410,13 +418,13 @@ export function calculateLeaks(
       monthlyLossEuros: Math.round(reservationLossYear / 12),
       formula: `${words.transactions} a month (${params.reservasMes}) × 2.2 participants each × ${params.comisionReservaPorCubierto.toFixed(
         2
-      )} EUR × 12 months = ${eur(reservationLossYear)} EUR a year`,
+      )} ${currency} × 12 months = ${eur(reservationLossYear)} ${currency} a year`,
       calculationDetails: `Fees paid on ${words.transactions} that go through the external widget instead of a direct one.`,
       explanation: `Your site uses ${providerName}. Each ${words.transaction} booked through that widget costs a per-unit fee. Steering repeat ${words.customers} to a direct booking saves real money over a year.`,
       assumptions: [
         {
           label: `Fee per ${words.transaction}`,
-          value: `${params.comisionReservaPorCubierto.toFixed(2)} EUR`,
+          value: `${params.comisionReservaPorCubierto.toFixed(2)} ${currency}`,
           citation: "Team estimate from typical third-party booking-widget per-transaction fees. No single published rate across trades; adjustable in the simulator.",
         },
         {
@@ -447,7 +455,7 @@ export function calculateLeaks(
       severity: !audit.https || audit.eolPhp ? "alta" : "media",
       annualLossEuros: securityRiskYear,
       monthlyLossEuros: 100,
-      formula: `Flat estimate of downtime plus lost local ranking = 1,200 EUR a year`,
+      formula: `Flat estimate of downtime plus lost local ranking = 1,200 ${currency} a year`,
       calculationDetails: `Risk of malware, an active browser "Not secure" warning, and lost visibility on local search and maps.`,
       explanation: `Your server advertises an out-of-date setup (${reasons.join(", ")}). Beyond the hack risk, modern browsers demote the ranking and warn ${words.customers} in ways that break trust.`,
       assumptions: [
@@ -458,7 +466,7 @@ export function calculateLeaks(
         },
         {
           label: "Annual risk figure",
-          value: "1,200 EUR",
+          value: `1,200 ${currency}`,
           citation: "Team estimate. Flat placeholder for downtime and ranking loss; no per-site source.",
         },
       ],
@@ -486,7 +494,7 @@ export function calculateLeaks(
       monthlyLossEuros: Math.round(lossYear / 12),
       formula: `visits a month (${params.visitasMes}) × ${missShare * 100}% of local searches that never arrive × 12 months × ${words.valueLabel.toLowerCase()} (${effectiveTicket.toFixed(
         2
-      )} EUR) = ${eur(lossYear)} EUR a year`,
+      )} ${currency}) = ${eur(lossYear)} ${currency} a year`,
       calculationDetails: `No street address, no phone number and no local-business structured data were found on the page, so a map search or a "near me" query has nothing to place on a map.`,
       explanation: `Search engines and maps place a ${words.place} using its address, phone and schema.org markup. With none of the three, a ${words.customer} searching nearby finds a competitor instead.`,
       assumptions: [
@@ -518,7 +526,7 @@ export function calculateLeaks(
       monthlyLossEuros: Math.round(minLoss / 12),
       formula: `visits a month (${params.visitasMes}) × 3% lost to friction × ${words.valueLabel.toLowerCase()} (${effectiveTicket.toFixed(
         2
-      )} EUR) × 12 months = ${eur(minLoss)} EUR a year`,
+      )} ${currency}) × 12 months = ${eur(minLoss)} ${currency} a year`,
       calculationDetails: `Margin not captured for want of a direct, interactive call to action that turns a casual visit into a ${words.transaction}.`,
       explanation: `The site is technically sound but has no direct, interactive channel (0% commission) built to turn casual visits into repeat ${words.transactions}.`,
       assumptions: [
@@ -600,6 +608,7 @@ export function calculateLeaks(
     leaks: finalLeaks,
     totalAnnualLossEuros,
     recoverableAnnualEuros,
+    currency,
     generatedAt: new Date().toISOString(),
     triage,
     pipeline,

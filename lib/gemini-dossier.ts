@@ -11,7 +11,12 @@ export interface DossierResult {
 export function generateDeterministicDossier(report: FullAuditReport): string {
   const { audit, leaks, totalAnnualLossEuros, recoverableAnnualEuros, params } = report;
   const name = audit.name || audit.domain;
-  const eur = (n: number) => Math.round(n).toLocaleString("en-IE");
+  /* Same rule as the report: the dossier speaks the currency the audit
+     measured, and only falls back to euros when a European average stood in. */
+  const cur = report.currency || "EUR";
+  const eur = (n: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: cur, maximumFractionDigits: 0 })
+      .format(Math.round(n));
 
   /* The dossier is read by the owner, so it speaks the trade's own words: a
      restaurant's order is a clinic's appointment and a hotel's booking. */
@@ -27,7 +32,7 @@ export function generateDeterministicDossier(report: FullAuditReport): string {
     .slice(0, 3)
     .map(
       (l, idx) =>
-        `### ${idx + 1}. ${l.title} — Loss: **-${eur(l.annualLossEuros)} EUR a year**\n` +
+        `### ${idx + 1}. ${l.title} — Loss: **-${eur(l.annualLossEuros)} a year**\n` +
         `- **Why it happens:** ${l.explanation}\n` +
         `- **The maths:** \`${l.formula}\`\n` +
         `- **The fix (${l.remedyHours} h):** ${l.remedy}`
@@ -55,12 +60,12 @@ export function generateDeterministicDossier(report: FullAuditReport): string {
 
 ${verdict.evidence} After a close look at the digital presence of **${name}** (\`${audit.domain}\`), the current setup is losing roughly:
 
-> ### **-${eur(totalAnnualLossEuros)} EUR a year**
-> *(about **${eur(totalAnnualLossEuros / 12)} EUR a month** in avoidable fees and ${w.transactions} never captured).*
+> ### **-${eur(totalAnnualLossEuros)} a year**
+> *(about **${eur(totalAnnualLossEuros / 12)} a month** in avoidable fees and ${w.transactions} never captured).*
 
 ${techNote}
 
-With a direct fix on your own channel, the business can recover an estimated **+${eur(recoverableAnnualEuros)} EUR net a year** in cash, with no extra advertising and no extra staff.
+With a direct fix on your own channel, the business can recover an estimated **+${eur(recoverableAnnualEuros)} net a year** in cash, with no extra advertising and no extra staff.
 
 ---
 
@@ -80,7 +85,7 @@ ${planSteps}
 
 ${platforms} are useful for a ${w.customer} who has never heard of you. They are an expensive way to serve the ones who already have, at ${params.comisionAgregadorPct}% of every ${w.transaction}.
 
-Moving ${params.pctRecuperableCanalPropio}% of your repeat ${w.transactions} to your own channel means **+${eur(recoverableAnnualEuros)} EUR more this year**.
+Moving ${params.pctRecuperableCanalPropio}% of your repeat ${w.transactions} to your own channel means **+${eur(recoverableAnnualEuros)} more this year**.
 `.trim();
 }
 
@@ -99,7 +104,10 @@ export async function generateGeminiDossier(
   try {
     const ai = new GoogleGenAI({ apiKey });
     const { audit, leaks, totalAnnualLossEuros, recoverableAnnualEuros, params, triage } = report;
-    const eur = (n: number) => Math.round(n).toLocaleString("en-IE");
+    const cur = report.currency || "EUR";
+    const eur = (n: number) =>
+      new Intl.NumberFormat("en-US", { style: "currency", currency: cur, maximumFractionDigits: 0 })
+        .format(Math.round(n));
     
     /* The classifier decides the trade from the site's own structured data and
        the platforms it links to. The model's free-text read is the fallback,
@@ -122,6 +130,7 @@ Crucially, you must adapt your entire language, examples, and metrics to this sp
 
 Use a highly professional, direct, and rigorous tone, "owner to owner" (we are talking margin and cash flow, not code).
 Write exclusively in clear British English.
+Every figure in this report is in ${cur}. Use that currency and no other; never convert.
 
 REAL AUDITED DATA:
 - Name: ${audit.name}
@@ -130,13 +139,13 @@ REAL AUDITED DATA:
 - CMS/Tech: WordPress: ${audit.wordpress} | WooCommerce: ${audit.woocommerce}
 - Time to first byte (TTFB): ${audit.ttfb} s
 - Homepage image weight: ${audit.imgKb} KB
-- Total annual leak calculated: ${eur(totalAnnualLossEuros)} EUR/year
-- Estimated recoverable margin: +${eur(recoverableAnnualEuros)} EUR/year
-- Assumptions: ${params.pedidosDia} ${w.transactions} per ${verdict.definition.ratePeriod}, ${w.valueLabel.toLowerCase()} ${params.ticketMedio} EUR, platform fee ${params.comisionAgregadorPct}%.
+- Total annual leak calculated: ${eur(totalAnnualLossEuros)} a year
+- Estimated recoverable margin: +${eur(recoverableAnnualEuros)} a year
+- Assumptions: ${params.pedidosDia} ${w.transactions} per ${verdict.definition.ratePeriod}, ${w.valueLabel.toLowerCase()} ${params.ticketMedio} ${cur}, platform fee ${params.comisionAgregadorPct}%.
 - The words this owner uses: one transaction is a "${w.transaction}", a customer is a "${w.customer}", what they list is their "${w.catalogue}". Use them.
 
 CONCRETE LEAKS DETECTED:
-${leaks.map((l) => `- ${l.title}: -${eur(l.annualLossEuros)} EUR/year. Explanation: ${l.explanation}. Fix: ${l.remedy}`).join("\n")}
+${leaks.map((l) => `- ${l.title}: -${eur(l.annualLossEuros)} a year. Explanation: ${l.explanation}. Fix: ${l.remedy}`).join("\n")}
 
 REQUIRED DOSSIER STRUCTURE (You must include Markdown tables):
 1. **Headline**: A hard-hitting headline with the business name and the exact figure it loses per year.

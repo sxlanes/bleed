@@ -97,6 +97,9 @@ export interface AuditResult {
   /** Prices read from the page or its structured data, in euros. The best
       estimate of what one transaction is worth here is the site's own prices. */
   priceSignals?: number[];
+  /** ISO code of the currency this site prices in, when it says so or its
+      prices carry a symbol. The report answers in it rather than converting. */
+  currency?: string;
   /** The opening of the page's visible text. The classifier reads it: a title
       alone is too thin to tell a dental clinic from a car park. */
   textSample?: string;
@@ -153,6 +156,10 @@ export interface FullAuditReport {
   leaks: Leak[];
   totalAnnualLossEuros: number;
   recoverableAnnualEuros: number;
+  /** ISO code every figure in this report is denominated in. The site's own
+      currency when its prices were read, euros when a European average had to
+      stand in — never a conversion we did not look up. */
+  currency?: string;
   generatedAt: string;
   triage?: TriageResult;
   pipeline?: PipelineStage[];

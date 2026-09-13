@@ -1,6 +1,6 @@
 # Bleed
 
-**Paste the URL of a local business. Get back how much money its website is losing, in euros, and the dossier to sell them the fix.**
+**Paste the URL of any business, anywhere. Get back how much money its website is losing, in its own currency, and the dossier to sell them the fix.**
 
 Built for the AI Builders Hackathon 2026, inside the 21 Aug to 15 Sep build window.
 
@@ -16,6 +16,10 @@ Doctoralia for a dentist and Amazon for a shop. A page that takes four seconds t
 the customer whatever it sells. So Bleed prices the same leaks for any trade, and the trade
 decides three things only: the words on screen, what one transaction is worth, and which
 platforms to look for.
+
+The audit reads whatever currency a site prices in — a bakery in London is told what it
+loses in pounds — and falls back to euros only when it had to borrow a European average
+instead of reading the business's own prices. It never converts at a rate it did not look up.
 
 Every figure this project produces is traceable to a cited source. The calibration constants,
 their ranges, their provenance and the warnings on the weak ones live in `lib/calibracion.ts`
@@ -47,8 +51,11 @@ in `investigacion/calibracion-verticales.md`. Numbers with no published source a
 
 ## Field study
 
-The quantification is calibrated against real businesses, not assumptions. 163 restaurant
-websites in Málaga were sampled from OpenStreetMap and 132 audited one by one.
+The quantification is calibrated against real businesses, not assumptions. The first sample
+was local because that is what could be audited by hand in the build window: 163 restaurant
+websites in Málaga were pulled from OpenStreetMap and 132 audited one by one. The engine is
+not bound to that city or that trade — the sample is where the restaurant constants come
+from, and the report says so on the line where each one is used.
 
 | Finding | Result |
 |---|---|

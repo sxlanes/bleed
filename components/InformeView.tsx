@@ -74,7 +74,31 @@ function stepperRange(min: number, max: number, current: number) {
   return { low, high, step };
 }
 
-const eur = (n: number) => `${Math.round(n).toLocaleString("en-US")} €`;
+/* The audit reads whatever currency the site prices in, so the report cannot
+   hardcode a euro sign. When the figure came from a European average instead
+   of the site's own prices, the currency is EUR and nothing changes. */
+function currencyTools(currency: string) {
+  const whole = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  });
+  const exact = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const symbol =
+    whole.formatToParts(1).find((part) => part.type === "currency")?.value ?? currency;
+  return {
+    money: (n: number) => whole.format(Math.round(n)),
+    exact: (n: number) => exact.format(n),
+    symbol,
+    /** The hero sets the symbol in its own type size, so it needs the pieces. */
+    heroNumber: (n: number) => new Intl.NumberFormat("en-US").format(Math.round(n)),
+  };
+}
 
 /* Leak titles carry their measurement in parentheses — right for a headline,
    too long for an axis label. The chart keeps the claim, the row keeps the proof. */
@@ -258,12 +282,6 @@ export default function InformeView({ initialReport }: Props) {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(
-    `Bleed audit for ${audit.name}: the site is losing ${eur(totalLoss)} a year. Report: ${
-      typeof window !== "undefined" ? window.location.href : ""
-    }`
-  )}`;
-
   const auditedOn = new Date(audit.auditedAt).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
@@ -284,6 +302,14 @@ export default function InformeView({ initialReport }: Props) {
     return Array.from(new Set([...fromLinks, ...(audit.aggregators || [])]));
   }, [audit.marketplaces, audit.aggregators]);
   const platforms = listNames(marketplaceNames);
+  const { money: eur, exact: money2, symbol: sym, heroNumber } = currencyTools(
+    currentReport.currency || "EUR"
+  );
+  const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(
+    `Bleed audit for ${audit.name}: the site is losing ${eur(totalLoss)} a year. Report: ${
+      typeof window !== "undefined" ? window.location.href : ""
+    }`
+  )}`;
   const causes = plainCauseFor(w, w.marketplaceLabel);
   const econ = ECONOMIA_VERTICAL[verdict.id];
   const valueRange = stepperRange(
@@ -358,8 +384,8 @@ export default function InformeView({ initialReport }: Props) {
             <div>
               <p className={styles.heroLead}>This site is losing</p>
               <p className={styles.heroFigure}>
-                {heroValue.toLocaleString("en-US")}
-                <span className={styles.heroUnit}>€</span>
+                <span className={styles.heroUnit}>{sym}</span>
+                {heroNumber(heroValue)}
                 <span className={styles.heroPer}>a year</span>
               </p>
             </div>
@@ -383,9 +409,9 @@ export default function InformeView({ initialReport }: Props) {
             </div>
             <div className={styles.ledgerCell}>
               <div className={styles.ledgerLabel}>
-                Saved on a {params.ticketMedio.toFixed(2)} € {w.transaction}
+                Saved on a {money2(params.ticketMedio)} {w.transaction}
               </div>
-              <div className={`${styles.ledgerValue} ${styles.ledgerKeep}`}>+{feePerOrder.toFixed(2)} €</div>
+              <div className={`${styles.ledgerValue} ${styles.ledgerKeep}`}>+{money2(feePerOrder)}</div>
               <div className={styles.ledgerNote}>the platform&rsquo;s cut</div>
             </div>
             <div className={styles.ledgerCell}>
@@ -520,7 +546,7 @@ export default function InformeView({ initialReport }: Props) {
                     ))}
                   </div>
                   <div className={styles.axis}>
-                    <span>0 €</span>
+                    <span>{eur(0)}</span>
                     <span>{eur(maxLoss)} a year</span>
                   </div>
                 </>
@@ -536,7 +562,7 @@ export default function InformeView({ initialReport }: Props) {
               >
                 <span>Assumptions behind these figures</span>
                 <span className={styles.assumeHint}>
-                  {params.ticketMedio.toFixed(2)} € a {w.transaction}, {params.pedidosDia}{" "}
+                  {money2(params.ticketMedio)} a {w.transaction}, {params.pedidosDia}{" "}
                   {w.rateLabel.toLowerCase()}, {params.visitasMes.toLocaleString("en-US")} visits a
                   month, {params.comisionAgregadorPct}% fee
                   <span
@@ -591,7 +617,7 @@ export default function InformeView({ initialReport }: Props) {
                         >
                           −
                         </button>
-                        <span className={styles.stepperValue}>{params.ticketMedio.toFixed(2)} €</span>
+                        <span className={styles.stepperValue}>{money2(params.ticketMedio)}</span>
                         <button
                           type="button"
                           aria-label={`Raise the ${w.valueLabel.toLowerCase()}`}
@@ -926,7 +952,7 @@ export default function InformeView({ initialReport }: Props) {
                         <div>
                           <div className={styles.productName}>{prod.name}</div>
                           <div className={styles.productPrice}>
-                            {typeof prod.price === "number" ? prod.price.toFixed(2) : prod.price} €
+                            {typeof prod.price === "number" ? money2(prod.price) : `${prod.price} ${sym}`}
                           </div>
                         </div>
                         <button
@@ -952,7 +978,7 @@ export default function InformeView({ initialReport }: Props) {
                       {w.transaction[0].toUpperCase() + w.transaction.slice(1)} total ({cart.length}{" "}
                       {cart.length === 1 ? "item" : "items"})
                     </span>
-                    <strong>{cartTotal.toFixed(2)} €</strong>
+                    <strong>{money2(cartTotal)}</strong>
                   </div>
                   <button
                     type="button"
@@ -960,10 +986,9 @@ export default function InformeView({ initialReport }: Props) {
                       setOrderNotice(
                         cart.length === 0
                           ? `Add something from the ${w.catalogue} first.`
-                          : `A ${cartTotal.toFixed(2)} € ${w.transaction} goes straight to the business. Fee paid: 0.00 €. Kept: ${(
-                              cartTotal *
-                              (feePct / 100)
-                            ).toFixed(2)} € a platform would have taken.`
+                          : `A ${money2(cartTotal)} ${w.transaction} goes straight to the business. Fee paid: ${money2(0)}. Kept: ${money2(
+                              cartTotal * (feePct / 100)
+                            )} a platform would have taken.`
                       );
                       setTimeout(() => setOrderNotice(null), 6000);
                     }}
@@ -976,25 +1001,25 @@ export default function InformeView({ initialReport }: Props) {
 
               <div className={styles.compareCard}>
                 <h2 className={styles.sectionTitle}>
-                  Where a {params.ticketMedio.toFixed(2)} € {w.transaction} goes
+                  Where a {money2(params.ticketMedio)} {w.transaction} goes
                 </h2>
                 <p className={styles.sectionSub}>
                   The same {w.transaction} through a platform and through your own channel, at the
                   published rate of {feePct}%.
                 </p>
 
-                <div className={styles.split} role="img" aria-label={`Of every ${params.ticketMedio.toFixed(2)} € ${w.transaction}, ${feePerOrder.toFixed(2)} € goes to the platform and ${keptPerOrder.toFixed(2)} € stays with the business`}>
+                <div className={styles.split} role="img" aria-label={`Of every ${money2(params.ticketMedio)} ${w.transaction}, ${money2(feePerOrder)} goes to the platform and ${money2(keptPerOrder)} stays with the business`}>
                   <div className={styles.splitFee} style={{ ["--w" as string]: `${feePct}%` }} />
                   <div className={styles.splitKeep} />
                 </div>
                 <div className={styles.legend}>
                   <span className={styles.legendItem}>
                     <span className={`${styles.legendKey} ${styles.legendFee}`} aria-hidden />
-                    Platform fee {feePerOrder.toFixed(2)} €
+                    Platform fee {money2(feePerOrder)}
                   </span>
                   <span className={styles.legendItem}>
                     <span className={`${styles.legendKey} ${styles.legendKeep}`} aria-hidden />
-                    Stays with you {keptPerOrder.toFixed(2)} €
+                    Stays with you {money2(keptPerOrder)}
                   </span>
                 </div>
 
@@ -1008,8 +1033,8 @@ export default function InformeView({ initialReport }: Props) {
                         <strong>Fee</strong> {feePct}% of every {w.transaction}
                       </li>
                       <li>
-                        <strong>You keep</strong> {keptPerOrder.toFixed(2)} € of{" "}
-                        {params.ticketMedio.toFixed(2)} €
+                        <strong>You keep</strong> {money2(keptPerOrder)} of{" "}
+                        {money2(params.ticketMedio)}
                       </li>
                       <li>
                         <strong>The {w.customer}</strong> belongs to the platform
@@ -1030,8 +1055,8 @@ export default function InformeView({ initialReport }: Props) {
                         <strong>Fee</strong> none
                       </li>
                       <li>
-                        <strong>You keep</strong> {params.ticketMedio.toFixed(2)} € of{" "}
-                        {params.ticketMedio.toFixed(2)} €
+                        <strong>You keep</strong> {money2(params.ticketMedio)} of{" "}
+                        {money2(params.ticketMedio)}
                       </li>
                       <li>
                         <strong>The {w.customer}</strong> leaves you their phone number
@@ -1051,7 +1076,7 @@ export default function InformeView({ initialReport }: Props) {
                     Over 100 {w.transactions} moved to your own channel
                   </div>
                   <div className={styles.compareFootValue}>
-                    +{(100 * feePerOrder).toFixed(2)} € kept
+                    +{money2(100 * feePerOrder)} kept
                   </div>
                 </div>
               </div>
@@ -1135,7 +1160,9 @@ export default function InformeView({ initialReport }: Props) {
         )}
 
         <footer className={styles.footer}>
-          <span>Calibrated on a study of 132 restaurants in Málaga.</span>
+          <span>
+            Any business with a website, anywhere. Every figure names the source it came from.
+          </span>
           <span>Built for the AI Builders Hackathon 2026.</span>
         </footer>
       </div>

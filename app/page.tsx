@@ -295,7 +295,7 @@ export default function Portada() {
           </div>
         </main>
 
-        <footer className={styles.foot}>leak audit · Málaga</footer>
+        <footer className={styles.foot}>leak audit</footer>
       </div>
     </div>
   );
