@@ -39,6 +39,22 @@ const TACTICS: Record<Leak["category"], string> = {
   tecnico: "Set the update to run itself, so the same hole does not reopen in six months.",
 };
 
+/* The owner is not going to read a formula. Each leak gets one plain phrase,
+   so the summary can name what is happening without a single technical word. */
+const PLAIN_CAUSE: Record<Leak["category"], string> = {
+  agregadores: "the cut the delivery apps take on every order",
+  canal_propio: "an ordering system you already pay for and nobody uses",
+  velocidad: "pages so slow and heavy that hungry people give up before the menu loads",
+  movil: "having no quick way for a customer to reach you from their phone",
+  reservas: "a fee on every table someone else books for you",
+  tecnico: "software old enough that Google and browsers push you down the page",
+};
+
+const listNames = (names: string[]) =>
+  names.length <= 1
+    ? names[0] || ""
+    : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+
 const eur = (n: number) => `${Math.round(n).toLocaleString("en-US")} €`;
 
 /* Leak titles carry their measurement in parentheses — right for a headline,
@@ -90,6 +106,7 @@ export default function InformeView({ initialReport }: Props) {
   const [expandedLeakId, setExpandedLeakId] = useState<string | null>(null);
   const [showAssumptions, setShowAssumptions] = useState(false);
   const [showTable, setShowTable] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [cart, setCart] = useState<AuditProduct[]>([]);
   const [orderNotice, setOrderNotice] = useState<string | null>(null);
   const [dossierMarkdown, setDossierMarkdown] = useState<string>(() =>
@@ -160,7 +177,20 @@ export default function InformeView({ initialReport }: Props) {
     }
   };
 
+  /* Switching tab from up in the summary moves content the reader cannot see,
+     so bring the tab bar to the top of the screen with it. */
+  const goToTab = (id: TabId) => {
+    setActiveTab(id);
+    requestAnimationFrame(() => {
+      document.getElementById("report-tabs")?.scrollIntoView({
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+  };
+
   const openLeak = (id: string) => {
+    setShowDetails(true);
     setExpandedLeakId(id);
     requestAnimationFrame(() => {
       document.getElementById(`leak-${id}`)?.scrollIntoView({
@@ -222,6 +252,18 @@ export default function InformeView({ initialReport }: Props) {
   });
 
   const feePct = params.comisionAgregadorPct;
+
+  /* Four sentences, all built from what was measured: what is happening, what
+     it costs, what it takes to stop it, and why the figures can be trusted. */
+  const topLeak = ranked[0];
+  const apps = listNames(audit.aggregators);
+  const opening = apps
+    ? audit.ownOrder
+      ? `Your site can already take an order, but it also hands customers to ${apps}, who keep ${feePct}% of every ticket.`
+      : `Your site sends hungry customers to ${apps}, and they charge you ${feePct}% of the ticket for the introduction.`
+    : audit.ownOrder
+    ? "Your site can already take an order. What it loses, it loses on the way there."
+    : "Your site has no way to take an order, so every customer has to go and find another one.";
   const keptPerOrder = params.ticketMedio * (1 - feePct / 100);
   const feePerOrder = params.ticketMedio - keptPerOrder;
 
@@ -295,7 +337,37 @@ export default function InformeView({ initialReport }: Props) {
           </div>
         </section>
 
-        <nav className={styles.tabs} aria-label="Report sections" role="tablist">
+        <section className={styles.summary} aria-label="Summary">
+          <div className={styles.summaryText}>
+            <h2 className={styles.summaryTitle}>In plain words</h2>
+            <p>{opening}</p>
+            {topLeak && (
+              <p>
+                Across {leaks.length} {leaks.length === 1 ? "finding" : "findings"} that comes to{" "}
+                {eur(totalLoss)} a year. The biggest single one is {PLAIN_CAUSE[topLeak.category]}:{" "}
+                {eur(topLeak.annualLossEuros)} a year on its own.
+              </p>
+            )}
+            <p>
+              None of this needs a new website. About {repairHours} hours of work on the one you
+              have would keep roughly {eur(recoverable)} a year in your kitchen instead.
+            </p>
+            <p className={styles.summaryFine}>
+              Every figure below shows how it was measured and where the rate was published. If one
+              does not match your business, change it and the whole page recalculates.
+            </p>
+          </div>
+
+          <aside className={styles.next}>
+            <div className={styles.nextLabel}>Start here</div>
+            {topLeak && <p className={styles.nextText}>{topLeak.remedy}</p>}
+            <button type="button" className={styles.nextButton} onClick={() => goToTab("plan")}>
+              See the {repairHours}-hour plan
+            </button>
+          </aside>
+        </section>
+
+        <nav className={styles.tabs} id="report-tabs" aria-label="Report sections" role="tablist">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -549,7 +621,39 @@ export default function InformeView({ initialReport }: Props) {
               )}
             </section>
 
-            <section className={styles.leaks}>
+            <section className={styles.details}>
+              <button
+                type="button"
+                className={styles.detailsToggle}
+                onClick={() => setShowDetails((v) => !v)}
+                aria-expanded={showDetails}
+                aria-controls="leak-details"
+              >
+                <span className={styles.detailsTitle}>
+                  Leak by leak, with the measurement and the source
+                </span>
+                <span className={styles.assumeHint}>
+                  {showDetails ? "Hide" : "Show"} {leaks.length}{" "}
+                  {leaks.length === 1 ? "finding" : "findings"}
+                  <span
+                    className={`${styles.chevron} ${showDetails ? styles.chevronOpen : ""}`}
+                    aria-hidden
+                  >
+                    <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                      <path
+                        d="M1 1.5 6 6.5l5-5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                </span>
+              </button>
+            </section>
+
+            <section className={styles.leaks} id="leak-details" hidden={!showDetails}>
               {leaks.map((leak) => {
                 const isExpanded = expandedLeakId === leak.id;
                 const sevClass =

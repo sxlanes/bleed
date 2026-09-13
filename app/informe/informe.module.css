@@ -3,6 +3,9 @@
    so the surface gets out of the way and the figures carry the weight. */
 
 .page {
+  scroll-behavior: smooth;
+  scroll-padding-top: 1rem;
+
   /* surfaces */
   --paper: #f5f4f1;
   --card: #ffffff;
@@ -246,6 +249,85 @@
   font-size: 0.75rem;
   color: var(--ink-3);
 }
+
+/* ─── the summary: the report in four sentences ───────────── */
+
+.summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(15rem, 0.55fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: start;
+  margin-top: clamp(2rem, 5vw, 3rem);
+}
+
+.summaryTitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+
+.summaryText {
+  max-width: 42rem;
+}
+
+.summaryText p {
+  margin: 0 0 0.875rem;
+  color: var(--ink-2);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.summaryText p:first-of-type {
+  font-size: 1.1875rem;
+  line-height: 1.55;
+  letter-spacing: -0.011em;
+  color: var(--ink);
+}
+
+.summaryText p:last-child { margin-bottom: 0; }
+
+.summaryFine {
+  font-size: 0.875rem !important;
+  color: var(--ink-3) !important;
+}
+
+.next {
+  padding: 1.125rem 1.25rem 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+
+.nextLabel {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  margin-bottom: 0.4rem;
+}
+
+.nextText {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.nextButton {
+  appearance: none;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: var(--ink);
+  color: var(--card);
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.nextButton:hover { background: #000; }
 
 /* ─── tabs ────────────────────────────────────────────────── */
 
@@ -589,11 +671,42 @@
   color: var(--ink-3);
 }
 
+/* ─── the line between the summary and the evidence ───────── */
+
+.details {
+  margin-top: 1.75rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.detailsToggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0.25rem;
+  background: none;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+
+.detailsToggle:hover { opacity: 0.7; }
+
+.detailsTitle {
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
 /* ─── leak rows ───────────────────────────────────────────── */
 
 .leaks {
-  margin-top: 1.75rem;
-  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  animation: unfold 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .leak {
@@ -1384,6 +1497,7 @@
   .recoverFill,
   .assumeBody,
   .leakBody,
+  .leaks,
   .notice,
   .loadingLine {
     animation: none;
@@ -1402,6 +1516,7 @@
 
 @media (max-width: 62rem) {
   .heroRow { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .summary { grid-template-columns: minmax(0, 1fr); }
   .leakBody { grid-template-columns: minmax(0, 1fr); }
   .proofGrid { grid-template-columns: minmax(0, 1fr); }
 }
