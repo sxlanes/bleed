@@ -1,3 +1,5 @@
+import type { VerticalVerdict } from "./vertical";
+
 export interface AuditProduct {
   id: number | string;
   name: string;
@@ -19,6 +21,26 @@ export interface AggregatorLink {
   platform: string; // "Glovo" | "JustEat" | "UberEats" | "Deliveroo"
   url: string;
 }
+
+/** A platform that stands between this business and its customer and charges
+    for the introduction. Food aggregators are one case of a general shape:
+    Booking.com for a hotel, Doctoralia for a clinic, Amazon for a shop. */
+export interface MarketplaceLink {
+  platform: string;
+  url: string;
+  /** The kind of business this platform serves, for classification. */
+  vertical: string;
+}
+
+/** Every way this site offers to start a conversation or a sale. */
+export type ContactChannel =
+  | "phone"
+  | "whatsapp"
+  | "email"
+  | "form"
+  | "chat"
+  | "booking"
+  | "checkout";
 
 export interface AuditResult {
   url: string;
@@ -58,6 +80,26 @@ export interface AuditResult {
   needsJavaScript?: boolean;
   source: "live" | "benchmark" | "fallback" | "cache";
   auditedAt: string;
+
+  /* ── Signals that say what kind of business this is. Optional because a
+        benchmark fixture or a degraded crawl may not carry them. ── */
+
+  /** schema.org @type values declared by the site (Restaurant, Dentist, Hotel…). */
+  schemaTypes?: string[];
+  /** The CMS or shop platform behind it: WordPress, Shopify, Wix, PrestaShop… */
+  platform?: string;
+  /** Platforms this site links out to that take a cut of the transaction. */
+  marketplaces?: MarketplaceLink[];
+  /** Booking, appointment or reservation system detected, whatever the trade. */
+  bookingProvider?: string;
+  /** Ways a customer can reach or buy, in the order they appear on the page. */
+  contactChannels?: ContactChannel[];
+  /** Prices read from the page or its structured data, in euros. The best
+      estimate of what one transaction is worth here is the site's own prices. */
+  priceSignals?: number[];
+  /** The opening of the page's visible text. The classifier reads it: a title
+      alone is too thin to tell a dental clinic from a car park. */
+  textSample?: string;
 }
 
 export type LeakCategory =
@@ -103,6 +145,9 @@ export interface AuditSimulationParams {
 }
 
 export interface FullAuditReport {
+  /** What kind of business the engine decided this is, and why. Optional only
+      so older fixtures keep compiling; the engine always fills it. */
+  vertical?: VerticalVerdict;
   audit: AuditResult;
   params: AuditSimulationParams;
   leaks: Leak[];
@@ -123,6 +168,9 @@ export interface TriageVerdict {
 export interface TriageResult {
   verdicts: TriageVerdict[];
   businessRead: string;       // que tipo de negocio cree que es y por que
+  /** The trade the model picked, when the deterministic classifier was blind.
+      One of VerticalId; validated before it is trusted. */
+  vertical?: string;
   source: "gemini" | "deterministic";
   modelUsed?: string;
   ms: number;

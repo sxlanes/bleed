@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResult, TriageResult } from "./types";
+import { VERTICAL_IDS } from "./vertical";
 
 export async function triageLeaks(audit: AuditResult): Promise<TriageResult> {
   const t0 = performance.now();
@@ -24,30 +25,57 @@ export async function triageLeaks(audit: AuditResult): Promise<TriageResult> {
       "fuga-sin-whatsapp",
       "fuga-reservas-externas",
       "fuga-seguridad-tecnica",
+      "fuga-descubrimiento-local",
       "fuga-potencial-directo",
     ];
 
+    const marketplacesSeen = Array.from(
+      new Set([...(audit.marketplaces || []).map((m) => m.platform), ...audit.aggregators])
+    );
+    const contactChannels =
+      audit.contactChannels && audit.contactChannels.length > 0
+        ? audit.contactChannels.join(", ")
+        : audit.whatsapp
+        ? "whatsapp"
+        : "none detected";
+
     const prompt = `
-You are a triage system. Analyze the following facts about a business and determine which leaks apply to them.
+You are a triage system for a site-audit tool that prices what a LOCAL BUSINESS OF ANY TRADE is losing online —
+a restaurant, a shop, a clinic, a hotel, a tradesperson, a professional practice, or anything else with a
+website. Analyze the following facts and determine which leaks apply to THIS business.
 Order them by expected impact (1 = most important).
 DO NOT return ANY monetary values or euros. You judge only what matters.
 You can ONLY select from the following valid leak IDs: ${validLeakIds.join(", ")}.
 If there is no evidence in the facts for a leak, do not select it.
 
+Also name the trade. Pick exactly one of: ${VERTICAL_IDS.join(", ")}.
+restaurant = food service; retail = sells goods; lodging = hotel or holiday rental;
+appointment = books time slots (clinic, salon, gym); trade = works on site (plumber,
+electrician, builder); professional = a practice selling expertise (lawyer, accountant,
+agency); generic = you genuinely cannot tell. Answer "generic" rather than guess: a wrong
+trade prices this business with somebody else's numbers.
+
 FACTS:
 - Name: ${audit.name}
 - Domain: ${audit.domain}
 - URL: ${audit.finalUrl}
-- Has WordPress: ${audit.wordpress}
-- Has WooCommerce: ${audit.woocommerce}
+- Platform/CMS: ${audit.platform || (audit.wordpress ? "WordPress" : "unknown")}
+- Has its own shop or booking engine (WooCommerce, a store API, a booking provider): ${
+      audit.woocommerce || !!audit.storeApi || !!audit.bookingProvider
+    }
 - Time to first byte: ${audit.ttfb}s
 - Homepage image weight: ${audit.imgKb}KB
-- Aggregators detected: ${audit.aggregators.join(", ")}
-- Has own order system: ${audit.ownOrder}
-- Has WhatsApp: ${audit.whatsapp}
-- Has Reservation system: ${audit.reserva}
+- Marketplaces or platforms linked to (delivery apps, booking sites, directories, lead marketplaces...): ${
+      marketplacesSeen.join(", ") || "none detected"
+    }
+- Has its own order/checkout path: ${audit.ownOrder}
+- Direct contact channels found on the site: ${contactChannels}
+- Uses a third-party booking/reservation widget: ${audit.reserva || !!audit.bookingProvider}
 - PHP EOL: ${audit.eolPhp}
 - HTTPS: ${audit.https}
+- Declared structured-data type(s): ${(audit.schemaTypes || []).join(", ") || "none declared"}
+- Street address on file: ${!!audit.address}
+- Phone number on file: ${!!audit.telephone}
 `.trim();
 
     const genPromise = ai.models.generateContent({
@@ -61,6 +89,10 @@ FACTS:
             businessRead: {
               type: Type.STRING,
               description: "What kind of business you believe this is and why.",
+            },
+            vertical: {
+              type: Type.STRING,
+              description: `One of: ${VERTICAL_IDS.join(", ")}. Use generic when unsure.`,
             },
             verdicts: {
               type: Type.ARRAY,
@@ -88,7 +120,7 @@ FACTS:
               },
             },
           },
-          required: ["businessRead", "verdicts"],
+          required: ["businessRead", "vertical", "verdicts"],
         },
       },
     });
@@ -110,6 +142,7 @@ FACTS:
     return {
       verdicts,
       businessRead: parsed.businessRead || "",
+      vertical: VERTICAL_IDS.includes(parsed.vertical) ? parsed.vertical : undefined,
       source: "gemini",
       modelUsed: "gemini-3.6-flash",
       ms: Math.round(performance.now() - t0),

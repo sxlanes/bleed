@@ -259,7 +259,7 @@ export default function Portada() {
                 htmlFor="url"
                 style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}
               >
-                Restaurant website
+                Business website
               </label>
               <input
                 id="url"
@@ -285,7 +285,7 @@ export default function Portada() {
               </div>
             )}
             <div id="url-hint" className={styles.hint}>
-              e.g. https://your-restaurant.com
+              A restaurant, a shop, a clinic, a hotel, a tradesman. Any business with a site.
             </div>
             <p className={styles.tally}>
               <span className={styles.lab}>Session loss</span>

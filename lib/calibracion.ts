@@ -24,6 +24,9 @@ export interface Constante {
   fecha: string;
   /** Dicho en voz alta cuando la fuente es debil o no aplica del todo. */
   advertencia?: string;
+  /** true cuando no hay fuente publicada y la cifra es nuestra. La pantalla lo
+      dice con estas mismas palabras: nadie se entera por la letra pequena. */
+  estimacionPropia?: boolean;
 }
 
 export const CONSTANTES: Record<string, Constante> = {

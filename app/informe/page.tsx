@@ -4,6 +4,7 @@ import { calculateLeaks } from "@/lib/quantification";
 import { triageLeaks } from "@/lib/triage";
 import { findBenchmark, DEMOS_ENABLED } from "@/lib/benchmarks";
 import InformeView from "@/components/InformeView";
+import { classifyVertical, verdictFromModel } from "@/lib/vertical";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -40,7 +41,15 @@ export default async function InformePage({ searchParams }: PageProps) {
     // If triage entirely throws, proceed without it
   }
 
-  const report = calculateLeaks(audit, undefined, triageResult);
+  /* Evidence first: what the site declares about itself decides the trade.
+     Only when it declares nothing does the model's read get to fill the gap,
+     and the report says which of the two answered. */
+  const deterministic = classifyVertical(audit);
+  const vertical = triageResult?.vertical
+    ? verdictFromModel(triageResult.vertical, deterministic, triageResult.businessRead)
+    : deterministic;
+
+  const report = calculateLeaks(audit, undefined, triageResult, vertical);
 
   return <InformeView initialReport={report} />;
 }

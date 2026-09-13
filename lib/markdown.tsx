@@ -31,6 +31,7 @@ export function renderMarkdown(source: string): ReactNode[] {
   let list: { ordered: boolean; items: string[] } | null = null;
   let paragraph: string[] = [];
   let quote: string[] = [];
+  let blankRun = false;
 
   /* A hard line break inside a paragraph is intentional here — the dossier
      writes "For: / Date: / Prepared by:" as three lines, not one sentence. */
@@ -85,7 +86,12 @@ export function renderMarkdown(source: string): ReactNode[] {
     const trimmed = line.trim();
 
     if (!trimmed) {
-      flushAll();
+      /* A blank line between two items is a loose list, not the end of one.
+         Flushing here split "1. / 2. / 3." into three lists of one item each,
+         and every step came out numbered 1. */
+      flushParagraph();
+      flushQuote();
+      blankRun = true;
       continue;
     }
 
@@ -119,6 +125,7 @@ export function renderMarkdown(source: string): ReactNode[] {
     const bullet = /^[-*]\s+(.*)$/.exec(trimmed);
     if (ordered || bullet) {
       flushParagraph();
+      blankRun = false;
       const isOrdered = Boolean(ordered);
       const item = (ordered ? ordered[2] : bullet![1]).trim();
       if (list && list.ordered !== isOrdered) flushList();
@@ -128,12 +135,13 @@ export function renderMarkdown(source: string): ReactNode[] {
     }
 
     // a wrapped continuation of the list item above, indented by the writer
-    if (list && /^\s/.test(raw)) {
+    if (list && !blankRun && /^\s/.test(raw)) {
       list.items[list.items.length - 1] += ` ${trimmed}`;
       continue;
     }
 
     flushList();
+    blankRun = false;
     paragraph.push(trimmed);
   }
 

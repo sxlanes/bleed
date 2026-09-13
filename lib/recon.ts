@@ -1,7 +1,8 @@
 import fs from "fs";
 import path from "path";
-import { AuditProduct, AuditResult, HeavyImage, AggregatorLink } from "./types";
+import { AuditProduct, AuditResult, HeavyImage, AggregatorLink, MarketplaceLink, ContactChannel } from "./types";
 import { BENCHMARK_CASES, findBenchmark } from "./benchmarks";
+import { ALL_MARKETPLACES, ALL_BOOKING_PROVIDERS } from "./vertical";
 
 /**
  * We say who we are. Auditing someone's site behind a spoofed Chrome string
@@ -132,6 +133,253 @@ export function normalizeUrl(raw: string): { normalized: string; domain: string 
   }
 }
 
+/* ── Business-signal extraction. Everything below reads HTML we already
+      fetched — no extra requests, just parsing what is on the page. These
+      feed classifyVertical() in lib/vertical.ts. ── */
+
+/** Cap on lib/types.ts's priceSignals — a menu or catalogue can repeat a price
+    dozens of times, and 60 is plenty to read a distribution from. */
+const PRICE_SIGNAL_CAP = 60;
+
+const SCHEMA_ORG_PREFIX = /^https?:\/\/schema\.org\//i;
+
+/** Recursively pull every "@type" out of a parsed JSON-LD node, following
+    @graph and any nested object — an offer, an address, a menu item can each
+    declare their own type. Depth-capped: real JSON-LD is shallow, so this
+    only guards against a hostile or generated document. */
+function collectSchemaTypes(node: unknown, out: Set<string>, depth = 0): void {
+  if (depth > 6 || node == null) return;
+  if (Array.isArray(node)) {
+    for (const item of node) collectSchemaTypes(item, out, depth + 1);
+    return;
+  }
+  if (typeof node !== "object") return;
+  const obj = node as Record<string, unknown>;
+  const t = obj["@type"];
+  if (typeof t === "string") out.add(t.replace(SCHEMA_ORG_PREFIX, ""));
+  else if (Array.isArray(t)) {
+    for (const x of t) if (typeof x === "string") out.add(x.replace(SCHEMA_ORG_PREFIX, ""));
+  }
+  for (const key of Object.keys(obj)) {
+    if (key === "@type") continue;
+    const v = obj[key];
+    if (v && typeof v === "object") collectSchemaTypes(v, out, depth + 1);
+  }
+}
+
+/** Turn "1.250,00", "19,90" or "19.90" into a number. Rule: whichever
+    separator sits last, with one or two trailing digits, is the decimal mark
+    — everything before it is thousands grouping. Handles Spanish notation
+    (dot-thousands, comma-decimal) and plain dot-decimal alike. */
+function euroStringToNumber(raw: string): number | undefined {
+  const s = raw.trim();
+  if (!s) return undefined;
+  const lastSep = Math.max(s.lastIndexOf(","), s.lastIndexOf("."));
+  if (lastSep === -1) {
+    const n = parseInt(s, 10);
+    return Number.isFinite(n) ? n : undefined;
+  }
+  const trailingDigits = s.length - lastSep - 1;
+  const isDecimal = trailingDigits >= 1 && trailingDigits <= 2;
+  const intPart = (isDecimal ? s.slice(0, lastSep) : s).replace(/[.,]/g, "");
+  const decPart = isDecimal ? s.slice(lastSep + 1) : "";
+  const n = parseFloat(decPart ? `${intPart}.${decPart}` : intPart);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/** Same walk as collectSchemaTypes, but for prices: any "price", "lowPrice"
+    or "highPrice" field, wherever it sits — an offer, a priceSpecification,
+    an aggregate offer. */
+function collectJsonLdPrices(node: unknown, out: number[], depth = 0): void {
+  if (depth > 6 || node == null || out.length >= PRICE_SIGNAL_CAP) return;
+  if (Array.isArray(node)) {
+    for (const item of node) collectJsonLdPrices(item, out, depth + 1);
+    return;
+  }
+  if (typeof node !== "object") return;
+  const obj = node as Record<string, unknown>;
+  for (const key of ["price", "lowPrice", "highPrice"]) {
+    const v = obj[key];
+    let n: number | undefined;
+    if (typeof v === "number") n = v;
+    else if (typeof v === "string") n = euroStringToNumber(v);
+    if (n !== undefined && n >= 1 && n <= 20000) out.push(n);
+  }
+  for (const key of Object.keys(obj)) {
+    const v = obj[key];
+    if (v && typeof v === "object") collectJsonLdPrices(v, out, depth + 1);
+  }
+}
+
+/** A euro amount next to a € sign, on either side, with optional thousands
+    grouping. Anchored to € so we don't harvest phone numbers or postcodes;
+    no nested quantifiers, so no catastrophic backtracking on a 2 MB page. */
+const EURO_AMOUNT_RE =
+  /€\s?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?)|(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?)\s?€/g;
+
+function collectTextPrices(visibleText: string, out: number[]): void {
+  EURO_AMOUNT_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while (out.length < PRICE_SIGNAL_CAP && (m = EURO_AMOUNT_RE.exec(visibleText))) {
+    const n = euroStringToNumber(m[1] ?? m[2]);
+    if (n !== undefined && n >= 1 && n <= 20000) out.push(n);
+  }
+}
+
+/** Strip tags down to plain text, the same way the SPA-detection check does —
+    factored out so price-scanning can run it again on the final HTML (which,
+    after a Chromium fallback, is not the HTML this function saw first). */
+function extractVisibleText(html: string): string {
+  return html
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, "")
+    .replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Every schema.org @type the page declares, from JSON-LD (including @graph
+    documents) and from microdata itemtype attributes. A malformed JSON-LD
+    block is skipped, not fatal — real sites ship broken structured data. */
+function extractSchemaTypes(html: string): string[] {
+  const types = new Set<string>();
+  for (const jm of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      collectSchemaTypes(JSON.parse(jm[1].trim()), types);
+    } catch {
+      // one broken block does not sink the rest of the page
+    }
+  }
+  for (const mm of html.matchAll(/itemtype=["']https?:\/\/schema\.org\/([A-Za-z]+)["']/gi)) {
+    types.add(mm[1]);
+  }
+  return Array.from(types);
+}
+
+/** Every price this page publishes, in euros: structured data first, then
+    whatever the visible text shows. Capped and range-filtered — a stray "20"
+    from a copyright year or a postcode is not a price. */
+function extractPriceSignals(html: string, visibleText: string): number[] {
+  const prices: number[] = [];
+  for (const jm of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    if (prices.length >= PRICE_SIGNAL_CAP) break;
+    try {
+      collectJsonLdPrices(JSON.parse(jm[1].trim()), prices);
+    } catch {
+      // skip, same as above
+    }
+  }
+  collectTextPrices(visibleText, prices);
+  return prices.slice(0, PRICE_SIGNAL_CAP);
+}
+
+/** A <meta name="generator"> content string mapped to a platform name. Checked
+    before any asset-path heuristic because it is the platform naming itself. */
+const PLATFORM_GENERATOR_PATTERNS: Array<[RegExp, string]> = [
+  [/wordpress/i, "WordPress"],
+  [/wix\.com/i, "Wix"],
+  [/squarespace/i, "Squarespace"],
+  [/shopify/i, "Shopify"],
+  [/prestashop/i, "PrestaShop"],
+  [/joomla/i, "Joomla"],
+  [/drupal/i, "Drupal"],
+  [/webflow/i, "Webflow"],
+  [/magento/i, "Magento"],
+];
+
+/** The CMS or shop engine behind the site. A generator meta tag wins outright;
+    otherwise we fall back to the asset paths and inline globals each platform
+    leaves behind, most specific first — a WooCommerce shop is worth reporting
+    as such, not just "WordPress". */
+function detectPlatform(html: string, low: string, isWordpress: boolean, isWoocommerce: boolean): string | undefined {
+  for (const tag of html.matchAll(/<meta\b[^>]*>/gi)) {
+    if (!/name=["']generator["']/i.test(tag[0])) continue;
+    const content = tag[0].match(/content=["']([^"']*)["']/i)?.[1] || "";
+    for (const [re, platform] of PLATFORM_GENERATOR_PATTERNS) {
+      if (re.test(content)) return platform;
+    }
+  }
+
+  if (low.includes("cdn.shopify.com") || low.includes("myshopify.com")) return "Shopify";
+  if (low.includes("static.parastorage.com") || low.includes("wixstatic.com")) return "Wix";
+  if (low.includes("squarespace-cdn.com") || low.includes("static1.squarespace.com")) return "Squarespace";
+  if (html.includes("data-wf-page") || html.includes("data-wf-site")) return "Webflow";
+  if (low.includes("mage/cookies") || low.includes("/skin/frontend/")) return "Magento";
+  if (low.includes("prestashop") || low.includes("/modules/ps_")) return "PrestaShop";
+  if (low.includes("/media/jui/") || low.includes("com_content")) return "Joomla";
+  if (low.includes("sites/default/files") || html.includes("Drupal.settings")) return "Drupal";
+  if (isWoocommerce) return "WooCommerce";
+  if (isWordpress) return "WordPress";
+  return undefined;
+}
+
+/** Every marketplace this page links out to, deduped by URL. Existing food
+    aggregator hits are folded in so a restaurant with a Glovo link shows up
+    here too, not just in the legacy `aggregators` field. */
+function detectMarketplaces(html: string, aggregatorLinks: AggregatorLink[]): MarketplaceLink[] {
+  const links = new Map<string, MarketplaceLink>();
+  for (const al of aggregatorLinks) {
+    links.set(al.url, { platform: al.platform, url: al.url, vertical: "restaurant" });
+  }
+  for (const hm of html.matchAll(/href=["']([^"']+)["']/gi)) {
+    const href = hm[1];
+    if (links.has(href)) continue;
+    const hrefLow = href.toLowerCase();
+    const def = ALL_MARKETPLACES.find((d) => d.match.some((s) => hrefLow.includes(s)));
+    if (def) links.set(href, { platform: def.name, url: href, vertical: def.vertical });
+  }
+  return Array.from(links.values());
+}
+
+/** Booking/appointment system, whatever the trade — CoverManager for a
+    restaurant, Mirai for a hotel, Calendly for anyone. */
+function detectBookingProvider(low: string): string | undefined {
+  return ALL_BOOKING_PROVIDERS.find((p) => low.includes(p));
+}
+
+const CHAT_WIDGETS = ["tawk.to", "crisp", "intercom", "tidio", "zendesk", "hubspot"];
+
+/** A <form> that asks for more than a site-search query — the common case to
+    exclude is a single "s" or "q" input wired to a built-in search widget. */
+function hasRealForm(html: string): boolean {
+  for (const fm of html.matchAll(/<form\b[^>]*>([\s\S]*?)<\/form>/gi)) {
+    // A hidden field (a lang code, a CSRF token) says nothing about what the
+    // *user* is asked for, so it must not count against "search box only".
+    const inputs = Array.from(fm[1].matchAll(/<input\b[^>]*>/gi))
+      .map((x) => x[0])
+      .filter((inp) => !/type=["']hidden["']/i.test(inp));
+    if (inputs.length === 0) continue;
+    const onlySearch = inputs.every(
+      (inp) => /type=["']search["']/i.test(inp) || /name=["'](?:s|q|search)["']/i.test(inp)
+    );
+    if (!onlySearch) return true;
+  }
+  return false;
+}
+
+/** Every way this page invites a customer to act, in the fixed order the
+    ContactChannel type declares them. */
+function detectContactChannels(
+  html: string,
+  low: string,
+  hasWhatsapp: boolean,
+  hasBooking: boolean
+): ContactChannel[] {
+  const channels: ContactChannel[] = [];
+  if (/href=["']tel:/i.test(html)) channels.push("phone");
+  if (hasWhatsapp) channels.push("whatsapp");
+  if (/href=["']mailto:/i.test(html)) channels.push("email");
+  if (hasRealForm(html)) channels.push("form");
+  if (CHAT_WIDGETS.some((w) => low.includes(w))) channels.push("chat");
+  if (hasBooking) channels.push("booking");
+  if (low.includes("/carrito") || low.includes("/cart") || low.includes("checkout") || low.includes("finalizar-compra")) {
+    channels.push("checkout");
+  }
+  return channels;
+}
+
 function tryReadOfflineAudit(domain: string): AuditResult | null {
   try {
     const filePath = path.join(process.cwd(), "investigacion", "datos", "audit_malaga.json");
@@ -198,6 +446,10 @@ function tryReadOfflineAudit(domain: string): AuditResult | null {
       reserva: matched.reserva ?? false,
       imgKb: matched.img_kb || 800,
       heavyImgs: heavy,
+      schemaTypes: [],
+      marketplaces: [],
+      contactChannels: [],
+      priceSignals: [],
       source: "benchmark",
       auditedAt: new Date().toISOString(),
     };
@@ -239,6 +491,10 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
       reserva: false,
       imgKb: 0,
       heavyImgs: [],
+      schemaTypes: [],
+      marketplaces: [],
+      contactChannels: [],
+      priceSignals: [],
       error: `Not audited: ${permission.reason}. We do not read a site that asks us not to.`,
       source: "fallback",
       auditedAt: new Date().toISOString(),
@@ -295,6 +551,10 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
       reserva: false,
       imgKb: 0,
       heavyImgs: [],
+      schemaTypes: [],
+      marketplaces: [],
+      contactChannels: [],
+      priceSignals: [],
       error: `Error de conexión al auditar ${domain}: ${errMsg}`,
       source: "fallback",
       auditedAt: new Date().toISOString(),
@@ -365,6 +625,32 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
       if (notRead) {
         notRead.push("Failed to render with headless browser: " + (err instanceof Error ? err.message : String(err)));
       }
+    }
+  }
+
+  /* A second, narrower reason to spend a browser pass: the static HTML told us
+     nothing about what this business IS. Plenty of sites — hotel templates are
+     the worst offenders — inject their structured data, their tel: link and
+     their booking widget from JavaScript after load. A human sees them at once;
+     we saw an anonymous page and would have priced it as "some business".
+     One render, only when the cheap read left us blind. */
+  const identitySignals = (html: string) =>
+    extractSchemaTypes(html).length > 0 ||
+    detectMarketplaces(html, []).length > 0 ||
+    /href=["']tel:/i.test(html);
+
+  if (!needsJavaScript && !identitySignals(bodyText)) {
+    try {
+      const rendered = await auditUrlWithBrowser(finalUrl);
+      if (rendered.html && identitySignals(rendered.html)) {
+        bodyText = rendered.html;
+        finalUrl = rendered.url || finalUrl;
+        low = bodyText.toLowerCase();
+        htmlKb = Math.round(bodyText.length / 1024);
+      }
+    } catch {
+      /* The static read stands. The report will say it could not tell what
+         trade this is, which is the truth and costs the reader nothing. */
     }
   }
 
@@ -485,6 +771,20 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
       } catch {}
     }
   } catch {}
+
+  // General business signals: schema.org types, platform, marketplaces,
+  // booking provider, contact channels and prices. Feeds classifyVertical()
+  // and the universal leak pricing in lib/vertical.ts.
+  const visibleText = extractVisibleText(bodyText);
+  const schemaTypes = extractSchemaTypes(bodyText);
+  const platform = detectPlatform(bodyText, low, wordpress, woocommerce);
+  const marketplaces = detectMarketplaces(bodyText, aggregatorLinks);
+  const bookingProvider = detectBookingProvider(low);
+  const contactChannels = detectContactChannels(bodyText, low, hasWhatsapp, Boolean(bookingProvider));
+  const priceSignals = extractPriceSignals(bodyText, visibleText);
+  /* Enough of the page for the classifier to recognise a trade by how it
+     talks, and no more: this travels in every report we render. */
+  const textSample = visibleText.slice(0, 3000);
 
   // Image weight check
   const imgMatches = Array.from(bodyText.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)).slice(0, 15);
@@ -626,6 +926,13 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     needsJavaScript,
     notRead,
     error: fallbackError,
+    schemaTypes,
+    platform,
+    marketplaces,
+    bookingProvider,
+    contactChannels,
+    priceSignals,
+    textSample,
     source: "live",
     auditedAt: new Date().toISOString(),
   };

@@ -10,20 +10,40 @@ Three out of four Spanish restaurants that deliver do it through an aggregator t
 between 13% and 35% of every order. Most of them already have their own ordering channel,
 already paid for, sitting unused. Nobody has ever put a number on what that costs them.
 
+That shape is not about food. A platform standing between a business and its customer and
+charging for the introduction is Glovo for a pizzeria, Booking.com for a guesthouse,
+Doctoralia for a dentist and Amazon for a shop. A page that takes four seconds to load loses
+the customer whatever it sells. So Bleed prices the same leaks for any trade, and the trade
+decides three things only: the words on screen, what one transaction is worth, and which
+platforms to look for.
+
 Every figure this project produces is traceable to a cited source. The calibration constants,
-their ranges, their provenance and the warnings on the weak ones live in `lib/calibracion.ts`.
-Numbers with no published source are labelled `team estimate` on screen rather than dressed up.
+their ranges, their provenance and the warnings on the weak ones live in `lib/calibracion.ts`
+(restaurants) and `lib/calibracion-verticales.ts` (every other trade), with the research trail
+in `investigacion/calibracion-verticales.md`. Numbers with no published source are labelled
+`team estimate` on screen, next to the figure, rather than dressed up.
 
 ## What it does
 
-1. **Recon.** Crawls the site, identifies the stack, finds the ordering path, detects plugins,
-   reads the store catalogue when the API is open, extracts hours, delivery links and contact.
-2. **Detection.** Turns what it sees into concrete leaks and ranks them by what they cost.
-   Calibrated for restaurants with delivery; other trades are on the roadmap, not in the build.
-3. **Quantification.** Each leak becomes euros per year **with its assumption on screen**.
-   When the owner's data is missing, it says so instead of inventing a number.
-4. **Dossier.** Writes the case for that specific owner, who is not technical, in their language.
-5. **Proof.** One mockup screen of the fix, built from their real catalogue when available.
+1. **Recon.** Crawls the site, identifies the stack, finds the path to a sale, detects plugins,
+   reads the catalogue when the API is open, extracts the structured data the site declares
+   about itself, the platforms it links out to, every way it can be contacted, and the prices
+   it publishes.
+2. **Reading the trade.** Decides what kind of business this is from its own schema.org types,
+   the platforms it links to and how it writes — and shows the evidence on screen. When the
+   site declares nothing, the model that already reads it for triage may name the trade, and
+   the report says which of the two answered. When neither can tell, it says so and prices
+   only the leaks that hold for any business. Guessing a trade to unlock a bigger number
+   would be the same sin as inventing the number.
+3. **Detection.** Turns what it sees into concrete leaks and ranks them by what they cost.
+   Seven trades are calibrated: food service, retail, lodging, appointment practices, on-site
+   trades, professional practices, and an honest fallback for anything else.
+4. **Quantification.** Each leak becomes euros per year **with its assumption on screen**.
+   When the owner's data is missing, it says so instead of inventing a number. When the site
+   publishes its own prices, the median of those beats any national average, and the report
+   says it was measured rather than assumed.
+5. **Dossier.** Writes the case for that specific owner, who is not technical, in their language.
+6. **Proof.** One mockup screen of the fix, built from their real catalogue when available.
 
 ## Field study
 
@@ -39,6 +59,14 @@ websites in Málaga were sampled from OpenStreetMap and 132 audited one by one.
 
 The engine is public. The raw harvest is not: those are real businesses with their faults
 listed, and publishing that list would be a different product than this one.
+
+The restaurant constants come from that study and from published sector figures. The other
+six trades were calibrated afterwards from public sources — INE for hotel rates, Amazon's and
+Treatwell's own published fees, Habitissimo's quote data — and where no published figure
+exists, the constant is marked as ours and the report says so on screen. Fifteen of the
+twenty-eight calibration constants are team estimates today, and every one of them names
+itself as such next to the euros it produces. The generic fallback is four estimates out of
+four, by construction: there is no publishable average for "some business".
 
 ## How it crawls
 

@@ -269,3 +269,13 @@
   outline: 2px solid var(--white);
   outline-offset: 3px;
 }
+
+/* On a phone the left indent is wider than the gutter it leaves, and the grid
+   column cannot shrink under the display type, so the field ran off the edge.
+   Symmetric gutters below 30rem, and the tally wraps instead of pushing. */
+@media (max-width: 30rem) {
+  .wrap { --pad: 1.5rem; }
+  .shell, .mid, .field { min-width: 0; }
+  .tally { flex-wrap: wrap; row-gap: 0.35rem; }
+  .rate { margin-left: 0; flex-basis: 100%; }
+}

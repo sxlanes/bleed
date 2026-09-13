@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { FullAuditReport } from "./types";
+import { classifyVertical } from "./vertical";
 
 export interface DossierResult {
   markdown: string;
@@ -12,20 +13,35 @@ export function generateDeterministicDossier(report: FullAuditReport): string {
   const name = audit.name || audit.domain;
   const eur = (n: number) => Math.round(n).toLocaleString("en-IE");
 
+  /* The dossier is read by the owner, so it speaks the trade's own words: a
+     restaurant's order is a clinic's appointment and a hotel's booking. */
+  const verdict = report.vertical ?? classifyVertical(audit);
+  const w = verdict.definition.words;
+  const platformNames = Array.from(
+    new Set([...(audit.marketplaces || []).map((m) => m.platform), ...(audit.aggregators || [])])
+  );
+  const platforms = platformNames.length ? platformNames.join(", ") : w.marketplaceLabel;
+  const repairHours = leaks.reduce((acc, l) => acc + l.remedyHours, 0);
+
   const topLeaksText = leaks
     .slice(0, 3)
     .map(
       (l, idx) =>
-        `### ${idx + 1}. ${l.title} — Loss: **-${eur(l.annualLossEuros)} EUR/year**\n` +
+        `### ${idx + 1}. ${l.title} — Loss: **-${eur(l.annualLossEuros)} EUR a year**\n` +
         `- **Why it happens:** ${l.explanation}\n` +
         `- **The maths:** \`${l.formula}\`\n` +
-        `- **Fix in 48h:** ${l.remedy}`
+        `- **The fix (${l.remedyHours} h):** ${l.remedy}`
     )
+    .join("\n\n");
+
+  const planSteps = leaks
+    .slice(0, 3)
+    .map((l, idx) => `${idx + 1}. **${l.title}** (${l.remedyHours} h)\n   ${l.remedy}`)
     .join("\n\n");
 
   const techNote = audit.wordpress
     ? `Your site runs on **WordPress**${audit.woocommerce ? " with **WooCommerce**" : ""}. The technical infrastructure is already paid for, which means fixing this does not mean starting from scratch, only switching on the channel you left off.`
-    : `Your site is reachable at \`${audit.finalUrl}\`, but load friction and reliance on third parties keep repeat customers away.`;
+    : `Your site is reachable at \`${audit.finalUrl}\`, but load friction and reliance on third parties keep repeat ${w.customers} away.`;
 
   return `
 # Margin Recovery Diagnostic
@@ -37,10 +53,10 @@ export function generateDeterministicDossier(report: FullAuditReport): string {
 
 ## 1. Executive diagnosis: the leak in figures
 
-After a close look at the digital presence of **${name}** (\`${audit.domain}\`), the current setup is losing roughly:
+${verdict.evidence} After a close look at the digital presence of **${name}** (\`${audit.domain}\`), the current setup is losing roughly:
 
 > ### **-${eur(totalAnnualLossEuros)} EUR a year**
-> *(about **${eur(totalAnnualLossEuros / 12)} EUR a month** in avoidable commission and orders not captured).*
+> *(about **${eur(totalAnnualLossEuros / 12)} EUR a month** in avoidable fees and ${w.transactions} never captured).*
 
 ${techNote}
 
@@ -54,26 +70,17 @@ ${topLeaksText}
 
 ---
 
-## 3. 48-hour action plan: how to stop the bleed
+## 3. Action plan: ${repairHours} hours of work, biggest leak first
 
-To close this without touching your kitchen or changing your till:
-
-1. **Step 1: switch on the direct channel (day 1)**
-   Stand up a fast direct-order path that lets a customer order from their phone in two taps, or send the order straight to your WhatsApp/till with the ticket itemised. **Commission: 0%.**
-
-2. **Step 2: keep the local customer (day 1-2)**
-   Put a card in every delivery bag: *"Order direct on our site and keep 10% for good. Code: LOCAL"*. Neighbours will back you directly if the process is fast and cheaper.
-
-3. **Step 3: fix load speed and photos (day 2)**
-   Compress the heavy image files to modern formats (WebP) and set up server or CDN caching. This cuts the mobile bounce from hungry customers at peak hours.
+${planSteps}
 
 ---
 
 ## 4. Conclusion
 
-Aggregators (Glovo, Uber Eats, Just Eat) are useful for new customers discovering you, but **not for your regulars ordering every weekend at ${params.comisionAgregadorPct}%**.
+${platforms} are useful for a ${w.customer} who has never heard of you. They are an expensive way to serve the ones who already have, at ${params.comisionAgregadorPct}% of every ${w.transaction}.
 
-Moving ${params.pctRecuperableCanalPropio}% of your repeat orders to your own channel means **+${eur(recoverableAnnualEuros)} EUR more this year**.
+Moving ${params.pctRecuperableCanalPropio}% of your repeat ${w.transactions} to your own channel means **+${eur(recoverableAnnualEuros)} EUR more this year**.
 `.trim();
 }
 
@@ -94,8 +101,18 @@ export async function generateGeminiDossier(
     const { audit, leaks, totalAnnualLossEuros, recoverableAnnualEuros, params, triage } = report;
     const eur = (n: number) => Math.round(n).toLocaleString("en-IE");
     
-    // Fallback to "local business" if triage didn't detect it clearly
-    const businessType = (triage as any)?.businessRead || "local business";
+    /* The classifier decides the trade from the site's own structured data and
+       the platforms it links to. The model's free-text read is the fallback,
+       not the source of truth. */
+    const verdict = report.vertical ?? classifyVertical(audit);
+    const w = verdict.definition.words;
+    const businessType = `${verdict.definition.label}. ${verdict.evidence} ${
+      (triage as any)?.businessRead || ""
+    }`.trim();
+    const platformNames = Array.from(
+      new Set([...(audit.marketplaces || []).map((m) => m.platform), ...(audit.aggregators || [])])
+    );
+    const repairHours = leaks.reduce((acc, l) => acc + l.remedyHours, 0);
 
     const prompt = `
 You are an elite financial strategy consultant and conversion rate expert.
@@ -109,23 +126,24 @@ Write exclusively in clear British English.
 REAL AUDITED DATA:
 - Name: ${audit.name}
 - URL: ${audit.finalUrl}
-- Aggregator/Third-party platforms detected: ${audit.aggregators.join(", ") || "None"}
+- Platforms it hands customers to: ${platformNames.join(", ") || "None"}
 - CMS/Tech: WordPress: ${audit.wordpress} | WooCommerce: ${audit.woocommerce}
 - Time to first byte (TTFB): ${audit.ttfb} s
 - Homepage image weight: ${audit.imgKb} KB
 - Total annual leak calculated: ${eur(totalAnnualLossEuros)} EUR/year
 - Estimated recoverable margin: +${eur(recoverableAnnualEuros)} EUR/year
-- Assumptions: ${params.pedidosDia} transactions/day, average ticket ${params.ticketMedio} EUR, third-party commission ${params.comisionAgregadorPct}%.
+- Assumptions: ${params.pedidosDia} ${w.transactions} per ${verdict.definition.ratePeriod}, ${w.valueLabel.toLowerCase()} ${params.ticketMedio} EUR, platform fee ${params.comisionAgregadorPct}%.
+- The words this owner uses: one transaction is a "${w.transaction}", a customer is a "${w.customer}", what they list is their "${w.catalogue}". Use them.
 
 CONCRETE LEAKS DETECTED:
 ${leaks.map((l) => `- ${l.title}: -${eur(l.annualLossEuros)} EUR/year. Explanation: ${l.explanation}. Fix: ${l.remedy}`).join("\n")}
 
 REQUIRED DOSSIER STRUCTURE (You must include Markdown tables):
 1. **Headline**: A hard-hitting headline with the business name and the exact figure it loses per year.
-2. **Executive Diagnosis**: What is happening and why paying ${params.comisionAgregadorPct}% to middlemen is bleeding their specific business model. Use terms relevant to their industry (e.g., if restaurant, talk about tables/kitchen; if clinic, talk about patients/appointments; if retail, talk about inventory/basket size).
-3. **The Margin Reality (Comparison Table)**: Create a markdown table comparing the profit of a typical order/booking through a third-party platform vs. a Direct Channel. Use a realistic example product/service for their specific industry based on the ${params.ticketMedio} EUR average ticket.
+2. **Executive Diagnosis**: What is happening and why paying ${params.comisionAgregadorPct}% to middlemen is bleeding their specific business model. Use the vocabulary of their trade throughout.
+3. **The Margin Reality (Comparison Table)**: Create a markdown table comparing the profit of a typical order/booking through a third-party platform vs. a Direct Channel. Use a realistic example ${w.catalogue} item for their specific industry based on the ${params.ticketMedio} EUR ${w.valueLabel.toLowerCase()}.
 4. **Breakdown of Leaks**: A detailed analysis of the top leaks, explaining with numbers how they arise and their impact on customer acquisition cost.
-5. **48-Hour Action Plan**: 3 actionable, highly specific steps to stop the bleed without disrupting their daily operations.
+5. **Action Plan**: 3 actionable, highly specific steps to stop the bleed without disrupting their daily operations. The total work measured is ${repairHours} hours — use that figure and never promise a deadline we did not measure.
 6. **Financial Projection (Table)**: A 12-month projection table showing the cumulative cash recovered if they move ${params.pctRecuperableCanalPropio}% of volume to their direct channel.
 
 Return ONLY the content in clean Markdown, no preamble. Make it visually engaging with bolding and blockquotes.

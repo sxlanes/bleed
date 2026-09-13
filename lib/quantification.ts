@@ -1,25 +1,37 @@
 import {
   AuditResult,
   AuditSimulationParams,
+  ContactChannel,
   FullAuditReport,
   Leak,
+  LeakAssumption,
   TriageResult,
   PipelineStage,
 } from "./types";
-import { constante } from "./calibracion";
+import { constante, Constante } from "./calibracion";
+import { classifyVertical, PERIODS_PER_YEAR, VerticalId, VerticalVerdict } from "./vertical";
+import { ECONOMIA_VERTICAL } from "./calibracion-verticales";
 
 /**
- * Every euro on this page traces to a constant in lib/calibracion.ts, which
- * carries its source and its date. Numbers that have no published source are
- * marked as team estimates in their own assumption line, never hidden.
+ * Every euro on this page traces to a constant, either in lib/calibracion.ts
+ * (the restaurant numbers this product was born with) or in
+ * lib/calibracion-verticales.ts (the same four numbers for every other trade).
+ * Numbers that have no published source are marked as team estimates in their
+ * own assumption line, never hidden.
+ *
+ * This file used to know only restaurants. It now prices the same shape of
+ * leak — a middleman taking a cut, a slow page, an idle channel, no way to
+ * reach the business, no way to be found, a stale server, and the floor every
+ * clean site still leaves on the table — for whatever trade classifyVertical
+ * decided this business is. The words change (a restaurant's "order" is a
+ * clinic's "appointment"), the arithmetic doesn't.
  */
 
 const TICKET = constante("ticketMedioRestauracion"); // 21 EUR
 const COMMISSION_FULL = constante("comisionAgregadorCompleto"); // 25 %
-const COMMISSION_OWN_FLEET = constante("comisionAgregadorCaptacion"); // 13 %
+const COMMISSION_OWN_FLEET = constante("comisionAgregadorCaptacion"); // 13 % (not yet wired into a leak)
 const DIRECT_PREFERENCE = constante("preferenciaCanalDirecto"); // 58 %
 const CONVERSION_DROP_PER_SECOND = constante("caidaConversionPorSegundo"); // 0.3 points/s
-const DIGITAL_CHANNEL_SHARE = constante("pesoCanalDigital"); // 20 %
 
 export const DEFAULT_PARAMS: AuditSimulationParams = {
   ticketMedio: TICKET.valor,
@@ -31,87 +43,198 @@ export const DEFAULT_PARAMS: AuditSimulationParams = {
   reservasMes: 180,
 };
 
+/**
+ * The restaurant defaults above, generalised: for any other trade, pull the
+ * same four numbers out of lib/calibracion-verticales.ts instead of
+ * lib/calibracion.ts. `visitasMes`, `comisionReservaPorCubierto` and
+ * `reservasMes` have no per-trade research yet, so every vertical starts from
+ * the same working estimate until they do — same as the restaurant did.
+ */
+export function defaultParamsFor(verticalId: VerticalId): AuditSimulationParams {
+  const econ = ECONOMIA_VERTICAL[verticalId];
+  return {
+    ticketMedio: econ.valorTransaccion.valor,
+    pedidosDia: econ.transaccionesPorPeriodo.valor,
+    comisionAgregadorPct: econ.comisionPlataforma.valor,
+    visitasMes: DEFAULT_PARAMS.visitasMes,
+    pctRecuperableCanalPropio: econ.desvioADirecto.valor,
+    comisionReservaPorCubierto: DEFAULT_PARAMS.comisionReservaPorCubierto,
+    reservasMes: DEFAULT_PARAMS.reservasMes,
+  };
+}
+
+/** Every quick way a customer can start a transaction without waiting on a form. */
+const QUICK_CHANNELS: ContactChannel[] = ["phone", "whatsapp", "chat", "booking", "checkout"];
+
+/** The middle value of the prices this audit actually read off the site. A
+    measured price beats a national average every time — it IS this business's
+    catalogue, not a guess about it. Undefined when nothing was read. */
+function medianPriceSignal(signals: number[] | undefined): number | undefined {
+  if (!signals || signals.length === 0) return undefined;
+  const sorted = [...signals].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+/**
+ * Turns a calibrated Constante into an on-screen assumption line, honestly.
+ * A real, published source gets its citation and an openable URL. A constant
+ * marked `estimacionPropia` gets told for exactly what it is — our own guess,
+ * no published source, adjustable in the simulator — never a bare citation
+ * that reads as if it were backed by research it isn't.
+ */
+/* Monthly visits multiply three of the leaks below and come from no published
+   source and no analytics access — we cannot see a stranger's traffic. It was
+   being used silently, which is the one thing this project does not do. It now
+   appears as its own line wherever it is used, and the simulator moves it. */
+function trafficAssumption(visits: number): LeakAssumption {
+  return {
+    label: "Visits a month",
+    value: `${visits.toLocaleString("en-IE")}`,
+    citation:
+      "Team estimate — we cannot see your traffic from outside, and there is no published figure for a single site. This is the number that moves this figure most: put your real one in and the page recalculates.",
+  };
+}
+
+function assumptionFromConstant(label: string, value: string, c: Constante): LeakAssumption {
+  if (c.estimacionPropia) {
+    return {
+      label,
+      value,
+      citation: `Team estimate — no published source for this figure yet.${
+        c.advertencia ? ` ${c.advertencia}` : ""
+      } Adjustable in the simulator.`,
+    };
+  }
+  const citation = `${c.fuente} (${c.fecha}).${c.advertencia ? ` ${c.advertencia}` : ""}`.trim();
+  return c.url && c.url.trim().length > 0
+    ? { label, value, citation, sourceUrl: c.url }
+    : { label, value, citation };
+}
+
 export function calculateLeaks(
   audit: AuditResult,
   customParams?: Partial<AuditSimulationParams>,
-  triage?: TriageResult
+  triage?: TriageResult,
+  verdict?: VerticalVerdict
 ): FullAuditReport {
+  const v = verdict ?? classifyVertical(audit);
+  const words = v.definition.words;
+
+  // THE MOST DANGEROUS LINE IN THIS FILE. `pedidosDia` counts transactions per
+  // the vertical's OWN period (a restaurant's day, a trade's week, a
+  // professional's month) — never per calendar day. Annualising it always
+  // means periodsPerYear, never a hardcoded 365: a trade doing 8 jobs a WEEK
+  // is ×52 a year, not ×365, and typing 365 there would inflate its loss
+  // roughly sevenfold while looking perfectly innocent in a diff.
+  const periodsPerYear = PERIODS_PER_YEAR[v.definition.ratePeriod];
+
   const params: AuditSimulationParams = {
-    ...DEFAULT_PARAMS,
+    ...defaultParamsFor(v.id),
     ...customParams,
   };
+
+  // The economics for this vertical. The restaurant path still reads its
+  // direct-preference figure from lib/calibracion.ts, which is the original
+  // and the one the field study was calibrated against; both files now carry
+  // the same warning about the 70% figure being vendor-sourced.
+  const econ = ECONOMIA_VERTICAL[v.id];
+  const directConst = v.id === "restaurant" ? DIRECT_PREFERENCE : econ.desvioADirecto;
+
+  // The site's own published prices beat any national average — measured
+  // beats assumed, always. Falls back to the vertical's calibrated average
+  // when the crawler read no prices.
+  const measuredTicket = medianPriceSignal(audit.priceSignals);
+  const usingMeasuredTicket = measuredTicket !== undefined;
+  const effectiveTicket = usingMeasuredTicket ? measuredTicket! : params.ticketMedio;
+  const ticketAssumption = (): LeakAssumption =>
+    usingMeasuredTicket
+      ? {
+          label: words.valueLabel,
+          value: `${effectiveTicket.toFixed(2)} EUR`,
+          citation: `Measured from the prices published on your own site (median of ${audit.priceSignals!.length} price${
+            audit.priceSignals!.length === 1 ? "" : "s"
+          } found). A figure measured from this business's own catalogue beats any national average.`,
+        }
+      : assumptionFromConstant(words.valueLabel, `${effectiveTicket} EUR`, econ.valorTransaccion);
 
   const leaks: Leak[] = [];
   const eur = (n: number) => Math.round(n).toLocaleString("en-IE");
 
-  // 1. Aggregator commission drain
-  if (audit.aggregators.length > 0) {
-    const deliveryGrossYear = params.pedidosDia * params.ticketMedio * 365;
-    const commissionsYear = Math.round(
-      deliveryGrossYear * (params.comisionAgregadorPct / 100)
-    );
-    const recoverableYear = Math.round(
-      commissionsYear * (params.pctRecuperableCanalPropio / 100)
-    );
-    const apps = audit.aggregators.join(", ");
+  // Whether this site gives a customer any quick way to start a transaction —
+  // the new `contactChannels` signal when recon found it, or the legacy
+  // whatsapp/ownOrder flags when it didn't.
+  const hasQuickContact =
+    audit.contactChannels && audit.contactChannels.length > 0
+      ? audit.contactChannels.some((c) => QUICK_CHANNELS.includes(c))
+      : audit.whatsapp || audit.ownOrder;
+
+  // 1. Marketplace commission drain — a platform stands between this business
+  // and its own customer and charges for the introduction. Glovo for a
+  // pizzeria, Booking.com for a guesthouse, Doctoralia for a dentist, Amazon
+  // for a shop: same leak, different name over the door. Fires on the new
+  // `marketplaces` signal or the legacy `aggregators` list, whichever the
+  // recon pass on this audit actually filled in.
+  const marketplaceNames = Array.from(
+    new Set([...(audit.marketplaces || []).map((m) => m.platform), ...audit.aggregators])
+  );
+
+  if (marketplaceNames.length > 0) {
+    const grossPerYear = params.pedidosDia * effectiveTicket * periodsPerYear;
+    const commissionsYear = Math.round(grossPerYear * (params.comisionAgregadorPct / 100));
+    const recoverableYear = Math.round(commissionsYear * (params.pctRecuperableCanalPropio / 100));
+    const platforms = marketplaceNames.join(", ");
 
     leaks.push({
       id: "fuga-agregadores",
-      title: `Commission handed to aggregators (${apps})`,
+      title: `Commission handed to ${words.marketplaceLabel} (${platforms})`,
       category: "agregadores",
       severity: "critica",
       annualLossEuros: commissionsYear,
       monthlyLossEuros: Math.round(commissionsYear / 12),
-      formula: `orders a day (${params.pedidosDia}) × average ticket (${params.ticketMedio} EUR) × platform fee (${params.comisionAgregadorPct}%) × 365 days = ${eur(commissionsYear)} EUR a year`,
-      calculationDetails: `On an estimated ${eur(deliveryGrossYear)} EUR of yearly delivery revenue, the platforms keep ${eur(commissionsYear)} EUR. Moving back the ${params.pctRecuperableCanalPropio}% of diners who would rather order direct puts +${eur(recoverableYear)} EUR/year back in the till.`,
-      explanation: `Your site links straight to ${apps}. Every order from a regular or a neighbour who was already on your own page still pays the aggregator ${params.comisionAgregadorPct}% of the ticket, and the aggregator keeps the customer's data.`,
+      formula: `${words.transactions} per ${v.definition.ratePeriod} (${params.pedidosDia}) × ${words.valueLabel.toLowerCase()} (${effectiveTicket.toFixed(
+        2
+      )} EUR) × platform fee (${params.comisionAgregadorPct}%) × ${periodsPerYear} ${v.definition.ratePeriod}s a year = ${eur(commissionsYear)} EUR a year`,
+      calculationDetails: `On an estimated ${eur(grossPerYear)} EUR a year through ${platforms}, the platform keeps ${eur(
+        commissionsYear
+      )} EUR. Moving back the ${params.pctRecuperableCanalPropio}% of ${words.customers} who would rather ${words.verb} direct puts +${eur(
+        recoverableYear
+      )} EUR/year back in the ${words.place}.`,
+      explanation: `Your site links straight to ${platforms}. Every ${words.transaction} from a regular ${words.customer} who was already on your own page still pays ${platforms} ${params.comisionAgregadorPct}% of the ${words.transaction}, and the platform keeps the ${words.customer}'s data.`,
       assumptions: [
-        {
-          label: "Average ticket",
-          value: `${params.ticketMedio} EUR`,
-          citation: `${TICKET.fuente} (${TICKET.fecha}). Range ${TICKET.minimo}-${TICKET.maximo} EUR.`,
-          sourceUrl: TICKET.url,
-        },
-        {
-          label: "Aggregator commission",
-          value: `${params.comisionAgregadorPct}%`,
-          citation: `${COMMISSION_FULL.fuente} (${COMMISSION_FULL.fecha}). ${COMMISSION_FULL.advertencia ?? ""}`.trim(),
-          sourceUrl: COMMISSION_FULL.url,
-        },
-        {
-          label: "Share that would return to a direct channel",
-          value: `${params.pctRecuperableCanalPropio}%`,
-          citation: `${DIRECT_PREFERENCE.fuente} (${DIRECT_PREFERENCE.fecha}). ${DIRECT_PREFERENCE.advertencia ?? ""}`.trim(),
-          sourceUrl: DIRECT_PREFERENCE.url,
-        },
-        {
-          label: "Daily order volume",
-          value: `${params.pedidosDia} orders/day`,
-          citation: "Team estimate for a casual-food restaurant with delivery. No published source; adjustable in the simulator.",
-        },
+        ticketAssumption(),
+        assumptionFromConstant("Platform commission", `${params.comisionAgregadorPct}%`, econ.comisionPlataforma),
+        assumptionFromConstant(
+          "Share that would return to a direct channel",
+          `${params.pctRecuperableCanalPropio}%`,
+          directConst
+        ),
+        assumptionFromConstant(words.rateLabel, `${params.pedidosDia} ${words.transactions}/${v.definition.ratePeriod}`, econ.transaccionesPorPeriodo),
       ],
-      remedy: `Turn on a direct web/WhatsApp order path with its own checkout (0% commission) and put a card in every delivery bag: order direct and keep 10% for good.`,
+      remedy: `Turn on a direct ${words.verb} path on your own site (0% commission)${
+        audit.woocommerce || audit.storeApi || audit.bookingProvider
+          ? " — the engine for it is already installed and paid for"
+          : ""
+      }, and tell every ${words.customer}: ${words.verb} direct and keep the discount for good.`,
       remedyHours: 4,
     });
   }
 
-  // 2. Load speed and mobile weight
+  // 2. Load speed and page weight — universal. A slow, heavy page loses a
+  // visitor before they ever get to buy, book or ask, whatever the trade.
   const isSlowTtfb = audit.ttfb > 1.2;
   const isHeavyPage = audit.imgKb > 1800;
 
   if (isSlowTtfb || isHeavyPage) {
-    // Conversion points lost = extra seconds over a 1.0 s baseline x the calibrated drop per second
+    // Conversion points lost = extra seconds over a 1.0s baseline x the calibrated drop per second
     const extraSeconds = Math.max(0, audit.ttfb - 1.0);
     const heavyPenaltySeconds = audit.imgKb > 2500 ? 1 : audit.imgKb > 1800 ? 0.5 : 0;
-    const pointsLost =
-      (extraSeconds + heavyPenaltySeconds) * CONVERSION_DROP_PER_SECOND.valor;
-    const baselineConversion = 7; // percent of hungry visits that would convert
+    const pointsLost = (extraSeconds + heavyPenaltySeconds) * CONVERSION_DROP_PER_SECOND.valor;
+    const baselineConversion = 7; // percent of intent-bearing visits that would convert
     const keptFraction = Math.max(0, (baselineConversion - pointsLost) / baselineConversion);
     const lostFraction = 1 - keptFraction;
-    const lostOrdersMonth = Math.round(
-      params.visitasMes * (baselineConversion / 100) * lostFraction
-    );
-    const speedLossYear = Math.round(lostOrdersMonth * params.ticketMedio * 12);
+    const lostTransactionsMonth = Math.round(params.visitasMes * (baselineConversion / 100) * lostFraction);
+    const speedLossYear = Math.round(lostTransactionsMonth * effectiveTicket * 12);
 
     const reasons: string[] = [];
     if (isSlowTtfb) reasons.push(`a ${audit.ttfb}s time to first byte (the recommended threshold is under 0.6s)`);
@@ -120,14 +243,26 @@ export function calculateLeaks(
 
     leaks.push({
       id: "fuga-velocidad",
-      title: `Customers lost to slow, heavy pages (${audit.ttfb}s / ${audit.imgKb} KB)`,
+      /* A 0.12s server with 1.9 MB of photos is not "slow" — it is heavy, and
+         saying otherwise in the headline is the first thing a sceptical reader
+         checks. The title names the condition that actually fired. */
+      title:
+        isSlowTtfb && isHeavyPage
+          ? `${words.customers[0].toUpperCase()}${words.customers.slice(1)} lost to slow, heavy pages (${audit.ttfb}s / ${audit.imgKb} KB)`
+          : isSlowTtfb
+          ? `${words.customers[0].toUpperCase()}${words.customers.slice(1)} lost to a slow server (${audit.ttfb}s to first byte)`
+          : `${words.customers[0].toUpperCase()}${words.customers.slice(1)} lost to heavy pages (${audit.imgKb} KB of images)`,
       category: "velocidad",
       severity: audit.ttfb > 2.0 || audit.imgKb > 3500 ? "critica" : "alta",
       annualLossEuros: speedLossYear,
       monthlyLossEuros: Math.round(speedLossYear / 12),
-      formula: `(${extraSeconds.toFixed(1)}s over the 1.0s baseline + ${heavyPenaltySeconds}s image penalty) × ${CONVERSION_DROP_PER_SECOND.valor} conversion points lost per second = ${pointsLost.toFixed(2)} points; ${eur(speedLossYear)} EUR a year at a ${params.ticketMedio} EUR ticket`,
-      calculationDetails: `About ${lostOrdersMonth} orders a month (${lostOrdersMonth * 12}/year) from people who arrived meaning to order and closed the tab while it loaded.`,
-      explanation: `Your site has ${reasons.join(" and ")}. At 21:15 a hungry person on a phone does not wait: they go back to search results or open the aggregator app.`,
+      formula: `(${extraSeconds.toFixed(1)}s over the 1.0s baseline + ${heavyPenaltySeconds}s image penalty) × ${CONVERSION_DROP_PER_SECOND.valor} conversion points lost per second = ${pointsLost.toFixed(
+        2
+      )} points; ${eur(speedLossYear)} EUR a year at a ${effectiveTicket.toFixed(2)} EUR ${words.transaction}`,
+      calculationDetails: `About ${lostTransactionsMonth} ${words.transactions} a month (${
+        lostTransactionsMonth * 12
+      }/year) from people who arrived meaning to ${words.verb} and closed the tab while it loaded.`,
+      explanation: `Your site has ${reasons.join(" and ")}. A ${words.customer} on a phone does not wait: they go back to search results or leave for whoever loads first.`,
       assumptions: [
         {
           label: "Measured time to first byte",
@@ -139,125 +274,165 @@ export function calculateLeaks(
           value: `${audit.imgKb} KB`,
           citation: "Measured live during this audit: sum of image bytes transferred on the main page.",
         },
+        assumptionFromConstant("Conversion drop per extra second", `${CONVERSION_DROP_PER_SECOND.valor} points/s`, CONVERSION_DROP_PER_SECOND),
         {
-          label: "Conversion drop per extra second",
-          value: `${CONVERSION_DROP_PER_SECOND.valor} points/s`,
-          citation: `${CONVERSION_DROP_PER_SECOND.fuente} (${CONVERSION_DROP_PER_SECOND.fecha}). ${CONVERSION_DROP_PER_SECOND.advertencia ?? ""}`.trim(),
-          sourceUrl: CONVERSION_DROP_PER_SECOND.url,
-        },
-        {
-          label: "Baseline conversion of hungry visits",
+          label: "Baseline conversion of intent-bearing visits",
           value: `${baselineConversion}%`,
           citation: "Team estimate. No published source; adjustable in the simulator.",
         },
+        ...(heavyPenaltySeconds > 0
+          ? [
+              {
+                label: "Delay attributed to page weight",
+                value: `${heavyPenaltySeconds}s`,
+                citation:
+                  "Team estimate — we measure the bytes, not the wait they cause on your customers' phones. Above 1.8 MB we count half a second, above 2.5 MB a full one. No published source maps weight to delay on a real mobile network.",
+              },
+            ]
+          : []),
+        trafficAssumption(params.visitasMes),
       ],
       remedy: `Convert photos to compressed WebP/AVIF (about 80% lighter straight away) and cache the page at the server or a CDN.`,
       remedyHours: 2,
     });
   }
 
-  // 3. Dormant WooCommerce store
-  if (audit.woocommerce && (audit.aggregators.length > 0 || !audit.ownOrderSignals.includes("checkout"))) {
-    // The digital channel is worth about DIGITAL_CHANNEL_SHARE of restaurant spend;
-    // a store that exists but is bypassed forfeits a slice of that.
-    const digitalYear =
-      params.pedidosDia * params.ticketMedio * 365 * (DIGITAL_CHANNEL_SHARE.valor / 100);
-    const forfeited = Math.round(digitalYear * 0.6);
+  // 3. Idle own channel — the business already pays for a shop or booking
+  // engine (WooCommerce, a Store API, a booking provider) that is installed
+  // but buried behind friction or bypassed by buttons that hand the customer
+  // to a marketplace instead.
+  const hasOwnChannel = audit.woocommerce || !!audit.storeApi || !!audit.bookingProvider;
+  const noUsablePath = !(
+    audit.contactChannels?.some((c) => c === "checkout" || c === "booking") ??
+    audit.ownOrderSignals.includes("checkout")
+  );
+
+  /* This leak used to fire alongside the marketplace one, and the two priced
+     the same transactions twice: once as the fee a platform kept, once as the
+     revenue an idle channel forfeited. On the demo pizzeria that inflated the
+     headline by 59% with no new evidence behind it, to 62% of the whole
+     business's delivery revenue — a figure an owner throws out on sight, and
+     with it the rest of the report. When a platform is already taking a cut,
+     the fee IS the loss and the idle channel is its cause, not a second bill. */
+  if (hasOwnChannel && noUsablePath && marketplaceNames.length === 0) {
+    // `pctRecuperableCanalPropio` already measures the share of customers who
+    // would rather deal with this business directly if that path worked —
+    // that share is exactly the ceiling an idle or buried own channel
+    // forfeits. The 0.6 is our own estimate of how much of that ceiling is
+    // actually lost to a channel that is slower or harder to find than the
+    // shortcut to a marketplace.
+    const ownChannelCeilingYear = params.pedidosDia * effectiveTicket * periodsPerYear * (params.pctRecuperableCanalPropio / 100);
+    const forfeited = Math.round(ownChannelCeilingYear * 0.6);
+    const channelName = audit.woocommerce || audit.storeApi ? "online store" : audit.bookingProvider ? "booking system" : "own channel";
 
     leaks.push({
       id: "fuga-woocommerce-dormido",
-      title: "Own online store paid for and left idle (WooCommerce)",
+      title: `Own ${channelName} paid for and left idle`,
       category: "canal_propio",
       severity: "alta",
       annualLossEuros: forfeited,
       monthlyLossEuros: Math.round(forfeited / 12),
-      formula: `orders a day (${params.pedidosDia}) × average ticket (${params.ticketMedio} EUR) × 365 days × share ordered online (${DIGITAL_CHANNEL_SHARE.valor}%) × 0.6 given away = ${eur(forfeited)} EUR a year`,
-      calculationDetails: `The restaurant already paid to build a WordPress + WooCommerce site with a catalogue, but checkout friction or aggregator buttons send buyers elsewhere.`,
-      explanation: `Your site already has the WooCommerce store engine installed${audit.storeApi ? " with the Store API open and responding" : ""}. Either the buying flow is slow and confusing, or buttons hand customers to Glovo. The store is paid for; paying a middleman on top makes no sense.`,
+      formula: `${words.transactions} per ${v.definition.ratePeriod} (${params.pedidosDia}) × ${words.valueLabel.toLowerCase()} (${effectiveTicket.toFixed(
+        2
+      )} EUR) × ${periodsPerYear} ${v.definition.ratePeriod}s × share that prefers direct (${params.pctRecuperableCanalPropio}%) × 0.6 given away = ${eur(
+        forfeited
+      )} EUR a year`,
+      calculationDetails: `The business already paid to build a ${channelName}, but friction or marketplace links send ${words.customers} elsewhere.`,
+      explanation: `Your site already has a ${channelName} installed${
+        audit.storeApi ? ", with the store API open and responding" : ""
+      }. Either the ${words.verb} flow is slow and confusing, or buttons hand ${words.customers} to a marketplace instead. The channel is paid for; paying a middleman on top of it makes no sense.`,
       assumptions: [
         {
-          label: "Detected stack",
-          value: "WordPress + WooCommerce",
-          citation: "Measured live during this audit: identified from plugin paths and the Store API.",
+          label: "Detected own channel",
+          value: audit.woocommerce ? "WordPress + WooCommerce" : audit.bookingProvider || "booking engine",
+          citation: "Measured live during this audit: identified from the site's own plugin paths, store API, or booking widget.",
         },
+        assumptionFromConstant("Share that would come through this channel directly", `${params.pctRecuperableCanalPropio}%`, directConst),
         {
-          label: "Digital share of restaurant spend",
-          value: `${DIGITAL_CHANNEL_SHARE.valor}%`,
-          citation: `${DIGITAL_CHANNEL_SHARE.fuente} (${DIGITAL_CHANNEL_SHARE.fecha}). ${DIGITAL_CHANNEL_SHARE.advertencia ?? ""}`.trim(),
-          sourceUrl: DIGITAL_CHANNEL_SHARE.url,
-        },
-        {
-          label: "Fraction of the digital channel forfeited",
+          label: "Fraction of that share actually forfeited",
           value: "60%",
-          citation: "Team estimate for a store that is installed but bypassed. No published source.",
+          citation: "Team estimate for a channel that is installed but buried or bypassed. No single published rate; adjustable in the simulator.",
         },
       ],
-      remedy: `Wire the existing Store API to a two-tap mobile checkout, or a direct WhatsApp order with the ticket prefilled.`,
+      remedy: `Wire the existing ${channelName} to a fast, two-tap ${words.verb} flow, or a direct contact button with the ${words.transaction} prefilled.`,
       remedyHours: 3,
     });
   }
 
-  // 4. No fast direct contact channel (no WhatsApp)
-  if (!audit.whatsapp && !audit.ownOrder) {
-    const lostOrdersYear = Math.round(params.visitasMes * 0.04 * 12);
-    const whatsappLossYear = Math.round(lostOrdersYear * params.ticketMedio);
+  // 4. No direct contact — no quick way for a customer to reach or buy. A
+  // trade with no phone link and a clinic with no booking button are the same
+  // leak wearing different words.
+  if (!hasQuickContact) {
+    const intentShare = 0.04; // team estimate, carried over unchanged from the restaurant-only version
+    const lostTransactionsYear = Math.round(params.visitasMes * intentShare * 12);
+    const lossYear = Math.round(lostTransactionsYear * effectiveTicket);
 
     leaks.push({
       id: "fuga-sin-whatsapp",
-      title: "No fast direct contact channel (no WhatsApp)",
+      title: `No fast way for a ${words.customer} to ${words.verb}`,
       category: "movil",
       severity: "media",
-      annualLossEuros: whatsappLossYear,
-      monthlyLossEuros: Math.round(whatsappLossYear / 12),
-      formula: `visits a month (${params.visitasMes}) × 4% who mean to order × 12 months × average ticket (${params.ticketMedio} EUR) = ${eur(whatsappLossYear)} EUR a year`,
-      calculationDetails: `About ${Math.round(lostOrdersYear / 12)} orders a month fall through because there is no direct enquiry or order button on the phone.`,
-      explanation: `A local checking "do you have a table for six?" or "do you do gluten-free for collection?" will not fill in a WordPress contact form. With no WhatsApp in sight, they ring the restaurant next door.`,
+      annualLossEuros: lossYear,
+      monthlyLossEuros: Math.round(lossYear / 12),
+      formula: `visits a month (${params.visitasMes}) × ${intentShare * 100}% who mean to ${words.verb} × 12 months × ${words.valueLabel.toLowerCase()} (${effectiveTicket.toFixed(
+        2
+      )} EUR) = ${eur(lossYear)} EUR a year`,
+      calculationDetails: `About ${Math.round(lostTransactionsYear / 12)} ${words.transactions} a month fall through because there is no quick way to reach or ${words.verb} on a phone.`,
+      explanation: `A ${words.customer} with a quick question will not fill in a contact form. With no phone link, WhatsApp or booking button in sight, they go to the next ${words.place} on the search results page.`,
       assumptions: [
         {
           label: "Visit-to-enquiry intent",
           value: "4%",
           citation: "Team estimate. No published source; adjustable in the simulator.",
         },
+        trafficAssumption(params.visitasMes),
       ],
-      remedy: `Add a floating WhatsApp Business button with a prefilled message ("Hi, I'd like to order for collection / a table").`,
+      remedy: `Add a floating WhatsApp or call button with a prefilled message ("Hi, I'd like to ${words.verb}").`,
       remedyHours: 1,
     });
   }
 
-  // 5. External reservation platforms (TheFork / CoverManager)
-  if (audit.reserva && !audit.whatsapp) {
-    const reservationLossYear = Math.round(
-      params.reservasMes * 2.2 * params.comisionReservaPorCubierto * 12
-    );
+  // 5. External booking widget fees — narrower than the marketplace leak
+  // above: this is a reservation or appointment widget embedded on the
+  // business's OWN page that still charges per transaction (TheFork,
+  // CoverManager, a paid Calendly tier), rather than a marketplace listing
+  // that sends the customer elsewhere entirely.
+  if ((audit.reserva || !!audit.bookingProvider) && !audit.whatsapp) {
+    const reservationLossYear = Math.round(params.reservasMes * 2.2 * params.comisionReservaPorCubierto * 12);
+    const providerName = audit.reservaProvider || audit.bookingProvider || "a third-party widget";
 
     leaks.push({
       id: "fuga-reservas-externas",
-      title: `Per-cover fees on external reservations (${audit.reservaProvider || "platform"})`,
+      title: `Per-${words.transaction} fees on an external booking widget (${providerName})`,
       category: "reservas",
       severity: "media",
       annualLossEuros: reservationLossYear,
       monthlyLossEuros: Math.round(reservationLossYear / 12),
-      formula: `bookings a month (${params.reservasMes}) × 2.2 covers each × ${params.comisionReservaPorCubierto.toFixed(2)} EUR a cover × 12 months = ${eur(reservationLossYear)} EUR a year`,
-      calculationDetails: `Fees paid on covers that book through the external widget instead of a direct reservation.`,
-      explanation: `Your site uses ${audit.reservaProvider || "a reservation middleman"}. Each table booked through that widget costs 1.50 to 3.00 EUR per cover. Steering regulars to a direct WhatsApp booking saves thousands in a busy restaurant.`,
+      formula: `${words.transactions} a month (${params.reservasMes}) × 2.2 participants each × ${params.comisionReservaPorCubierto.toFixed(
+        2
+      )} EUR × 12 months = ${eur(reservationLossYear)} EUR a year`,
+      calculationDetails: `Fees paid on ${words.transactions} that go through the external widget instead of a direct one.`,
+      explanation: `Your site uses ${providerName}. Each ${words.transaction} booked through that widget costs a per-unit fee. Steering repeat ${words.customers} to a direct booking saves real money over a year.`,
       assumptions: [
         {
-          label: "Cost per cover",
+          label: `Fee per ${words.transaction}`,
           value: `${params.comisionReservaPorCubierto.toFixed(2)} EUR`,
-          citation: "Team estimate from TheFork / reservation-software per-booking fees. No single published rate.",
+          citation: "Team estimate from typical third-party booking-widget per-transaction fees. No single published rate across trades; adjustable in the simulator.",
         },
         {
-          label: "Covers per reservation",
+          label: "Participants per booking",
           value: "2.2",
-          citation: "Team estimate, Spanish restaurant average.",
+          citation: "Team estimate, general average. No published source; adjustable in the simulator.",
         },
       ],
-      remedy: `Put a direct WhatsApp booking button ahead of the third-party widget for repeat customers.`,
+      remedy: `Put a direct booking button ahead of the third-party widget for repeat ${words.customers}.`,
       remedyHours: 1,
     });
   }
 
-  // 6. Technical obsolescence and security (PHP EOL / no HTTPS)
+  // 6. Technical obsolescence and security — universal. No HTTPS, an
+  // end-of-life PHP version, no mobile viewport: all three cost ranking and
+  // trust whatever the site sells.
   if (audit.eolPhp || !audit.https || !audit.viewport) {
     const securityRiskYear = 1200;
     const reasons: string[] = [];
@@ -267,14 +442,14 @@ export function calculateLeaks(
 
     leaks.push({
       id: "fuga-seguridad-tecnica",
-      title: `Technical vulnerability and SEO penalty (${reasons.join(", ")})`,
+      title: `Technical vulnerability and search penalty (${reasons.join(", ")})`,
       category: "tecnico",
       severity: !audit.https || audit.eolPhp ? "alta" : "media",
       annualLossEuros: securityRiskYear,
       monthlyLossEuros: 100,
       formula: `Flat estimate of downtime plus lost local ranking = 1,200 EUR a year`,
-      calculationDetails: `Risk of malware, an active Chrome "Not secure" warning, and lost organic visibility on Google Maps.`,
-      explanation: `Your server advertises an out-of-date setup (${reasons.join(", ")}). Beyond the hack risk, modern browsers demote the ranking and warn users in ways that break trust.`,
+      calculationDetails: `Risk of malware, an active browser "Not secure" warning, and lost visibility on local search and maps.`,
+      explanation: `Your server advertises an out-of-date setup (${reasons.join(", ")}). Beyond the hack risk, modern browsers demote the ranking and warn ${words.customers} in ways that break trust.`,
       assumptions: [
         {
           label: "PHP status",
@@ -292,9 +467,48 @@ export function calculateLeaks(
     });
   }
 
-  // If nothing specific fired (a clean site), quantify the minimum optimisation gap
+  // 7. Discovery — no address, no phone, no local-business structured data,
+  // so local search and maps have nothing to place on a map. New leak: it
+  // only fires once the recon pass has actually looked (schemaTypes is an
+  // array, even an empty one) — an OLD audit that never checked stays silent
+  // rather than accusing a site of a problem nobody measured.
+  if (audit.schemaTypes !== undefined && audit.schemaTypes.length === 0 && !audit.address && !audit.telephone) {
+    const missShare = 0.03; // team estimate: share of local searches that never arrive at a business invisible to local search
+    const lostTransactionsYear = Math.round(params.visitasMes * missShare * 12);
+    const lossYear = Math.round(lostTransactionsYear * effectiveTicket);
+
+    leaks.push({
+      id: "fuga-descubrimiento-local",
+      title: "Invisible to local search (no address, phone or structured data)",
+      category: "tecnico",
+      severity: "media",
+      annualLossEuros: lossYear,
+      monthlyLossEuros: Math.round(lossYear / 12),
+      formula: `visits a month (${params.visitasMes}) × ${missShare * 100}% of local searches that never arrive × 12 months × ${words.valueLabel.toLowerCase()} (${effectiveTicket.toFixed(
+        2
+      )} EUR) = ${eur(lossYear)} EUR a year`,
+      calculationDetails: `No street address, no phone number and no local-business structured data were found on the page, so a map search or a "near me" query has nothing to place on a map.`,
+      explanation: `Search engines and maps place a ${words.place} using its address, phone and schema.org markup. With none of the three, a ${words.customer} searching nearby finds a competitor instead.`,
+      assumptions: [
+        {
+          label: "Local search miss rate",
+          value: "3%",
+          citation: "Team estimate. No published source; adjustable in the simulator.",
+        },
+        trafficAssumption(params.visitasMes),
+      ],
+      remedy: `Publish a full street address and phone number, and add LocalBusiness structured data to the homepage.`,
+      remedyHours: 1,
+    });
+  }
+
+  // If nothing specific fired (a clean site), quantify the minimum
+  // optimisation gap — the floor. Even a clean site leaves something on the
+  // table, so this must keep firing when every other check comes back clean;
+  // a report that says "nothing" reads as a report that didn't look.
   if (leaks.length === 0) {
-    const minLoss = Math.round(params.visitasMes * 0.03 * params.ticketMedio * 12);
+    const frictionShare = 0.03;
+    const minLoss = Math.round(params.visitasMes * frictionShare * effectiveTicket * 12);
     leaks.push({
       id: "fuga-potencial-directo",
       title: "Opportunity cost in mobile conversion",
@@ -302,17 +516,20 @@ export function calculateLeaks(
       severity: "media",
       annualLossEuros: minLoss,
       monthlyLossEuros: Math.round(minLoss / 12),
-      formula: `visits a month (${params.visitasMes}) × 3% lost to friction × average ticket (${params.ticketMedio} EUR) × 12 months = ${eur(minLoss)} EUR a year`,
-      calculationDetails: `Margin not captured for want of a direct, interactive call to action for mobile orders.`,
-      explanation: `The site is technically sound but has no direct interactive channel (0% commission) built for a phone to turn casual visits into repeat orders.`,
+      formula: `visits a month (${params.visitasMes}) × 3% lost to friction × ${words.valueLabel.toLowerCase()} (${effectiveTicket.toFixed(
+        2
+      )} EUR) × 12 months = ${eur(minLoss)} EUR a year`,
+      calculationDetails: `Margin not captured for want of a direct, interactive call to action that turns a casual visit into a ${words.transaction}.`,
+      explanation: `The site is technically sound but has no direct, interactive channel (0% commission) built to turn casual visits into repeat ${words.transactions}.`,
       assumptions: [
         {
           label: "Conversion friction",
           value: "3%",
           citation: "Team estimate. No published source; adjustable in the simulator.",
         },
+        trafficAssumption(params.visitasMes),
       ],
-      remedy: `Add a quick-order card with a touch catalogue and an immediate order button.`,
+      remedy: `Add a quick-${words.verb} card with a touch ${words.catalogue} and an immediate ${words.verb} button.`,
       remedyHours: 2,
     });
   }
@@ -320,13 +537,13 @@ export function calculateLeaks(
   let finalLeaks = leaks;
 
   if (triage && triage.source === "gemini") {
-    const triageMap = new Map(triage.verdicts.map((v) => [v.leakId, v]));
+    const triageMap = new Map(triage.verdicts.map((t) => [t.leakId, t]));
     finalLeaks = leaks.filter((l) => triageMap.has(l.id));
 
     finalLeaks.forEach((l) => {
-      const verdict = triageMap.get(l.id);
-      if (verdict) {
-        l.explanation = `${verdict.whyItMattersHere} ${l.explanation}`;
+      const tv = triageMap.get(l.id);
+      if (tv) {
+        l.explanation = `${tv.whyItMattersHere} ${l.explanation}`;
       }
     });
 
@@ -353,7 +570,7 @@ export function calculateLeaks(
       id: "recon",
       label: "Recon",
       engine: "deterministic",
-      detail: `Audited ${audit.domain}`,
+      detail: `Audited ${audit.domain} — read as ${v.definition.label.toLowerCase()}`,
     },
     {
       id: "triage",
@@ -377,6 +594,7 @@ export function calculateLeaks(
   ];
 
   return {
+    vertical: v,
     audit,
     params,
     leaks: finalLeaks,

@@ -1268,11 +1268,17 @@
   color: var(--ink);
 }
 
+/* Tailwind's reset strips list markers globally; the dossier is prose and
+   wants them back, or a numbered plan reads as three unrelated paragraphs. */
 .dossier ul,
 .dossier ol {
   margin: 0 0 1rem;
-  padding-left: 1.25rem;
+  padding-left: 1.5rem;
 }
+
+.dossier ul { list-style: disc; }
+.dossier ol { list-style: decimal; }
+.dossier li::marker { color: var(--ink-3); }
 
 .dossier li { margin-bottom: 0.4rem; }
 
