@@ -241,11 +241,11 @@ Esta es la lista de comprobacion secuencial e inmutable. El domingo 13 de septie
 | Tarea / Fase | Componente | Responsable | Horas | Estado |
 | :--- | :--- | :--- | :--- | :--- |
 | **1. Planificacion** | Aprobacion y cierre definitivo de este documento (`01-guion-y-entrega.md`). | Arquitecto | 1 h | **Completado** |
-| **2. Cimientos** | Inicializacion del repositorio, limpieza del historial de secretos (git filter-repo), link y despliegue a Vercel con CI/CD activo. | Arquitecto | 1 h | En Progreso |
-| **3. Backend (Motor)** | Motor de reconocimiento usando Playwright y extraccion rapida con Claude Haiku 4.5. Resolucion estricta de `tipos.ts`. | Worker (agy) | 4 h | Pendiente |
-| **4. Backend (Cerebro)**| Implementacion del analisis cualitativo con Claude Sonnet 5, forzando la inyeccion del modulo `calibracion.ts` en el Prompt. | Worker (Claude) | 3 h | Pendiente |
-| **5. Frontend** | Interfaz Next.js 16, Tailwind CSS y vanilla CSS para la Splash Screen, Pantalla de Carga interactiva y el Informe Financiero. | Worker (agy) | 5 h | Pendiente |
-| **6. Entorno Demo** | Pre-poblado (seeding) de la base de datos Supabase con el JSON analizado de el negocio de demostracion anonimizado para asegurar latencia cero. | Arquitecto | 2 h | Pendiente |
+| **2. Cimientos** | Inicializacion del repositorio, limpieza del historial de secretos (git filter-repo), link y despliegue a Vercel con CI/CD activo. | Arquitecto | 1 h | **Completado** |
+| **3. Backend (Motor)** | Motor de reconocimiento usando Playwright y extraccion rapida con Claude Haiku 4.5. Resolucion estricta de `tipos.ts`. | Worker (agy) | 4 h | **Completado** |
+| **4. Backend (Cerebro)**| Implementacion del analisis cualitativo con Claude Sonnet 5, forzando la inyeccion del modulo `calibracion.ts` en el Prompt. | Worker (Claude) | 3 h | **Completado** |
+| **5. Frontend** | Interfaz Next.js 16, Tailwind CSS y vanilla CSS para la Splash Screen, Pantalla de Carga interactiva y el Informe Financiero. | Worker (agy) | 5 h | **Completado** |
+| **6. Entorno Demo** | Pre-poblado (seeding) de la base de datos Supabase con el JSON analizado de el negocio de demostracion anonimizado para asegurar latencia cero. | Arquitecto | 2 h | **Completado** |
 | **7. Rodaje / Voz** | Grabacion limpia de tomas de pantalla de alta resolucion y locucion del audio en ingles bajo las pautas del guion. | Nico | 3 h | Pendiente |
 | **8. Edicion Video** | Montaje de planos, aplicacion estricta de los efectos de desenfoque (blur) para anonimizacion y exportacion a formato final. | Nico | 4 h | Pendiente |
 | **9. Pitch Deck** | Composicion grafica y diseno de las 10 diapositivas establecidas en formato PDF optimizado. | Nico / Design | 3 h | Pendiente |
