@@ -248,7 +248,7 @@ Esta es la lista de comprobacion secuencial e inmutable. El domingo 13 de septie
 | **6. Entorno Demo** | Pre-poblado (seeding) de la base de datos Supabase con el JSON analizado de el negocio de demostracion anonimizado para asegurar latencia cero. | Arquitecto | 2 h | **Completado** |
 | **7. Rodaje / Voz** | Grabacion limpia de tomas de pantalla de alta resolucion y locucion del audio en ingles bajo las pautas del guion. | Nico | 3 h | Pendiente |
 | **8. Edicion Video** | Montaje de planos, aplicacion estricta de los efectos de desenfoque (blur) para anonimizacion y exportacion a formato final. | Nico | 4 h | Pendiente |
-| **9. Pitch Deck** | Composicion grafica y diseno de las 10 diapositivas establecidas en formato PDF optimizado. | Nico / Design | 3 h | Pendiente |
+| **9. Pitch Deck** | Composicion grafica y diseno de las 10 diapositivas establecidas en formato PDF optimizado. | Nico / Design | 3 h | **Completado** |
 | **10. Envio Devpost** | Rellenado final del formulario B2B con enlace publico al repo y subida de la url del video, antes de la fecha de cierre. | Nico | 1 h | Pendiente |
 
 *Tiempo total estimado de ejecucion restante para llegar a produccion y publicacion:* 26 a 28 horas de trabajo sincronizado.
