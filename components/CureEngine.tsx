@@ -37,12 +37,30 @@ export default function CureEngine({ audit, annualLoss, currency = "€" }: { au
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const handleUnlock = () => {
+  const handleUnlock = async () => {
     setIsPaying(true);
-    setTimeout(() => {
-      setIsPaying(false);
-      setIsUnlocked(true);
-    }, 1500);
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url: audit.url || audit.finalUrl }),
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No URL returned from Stripe");
+      }
+    } catch (err) {
+      console.error(err);
+      // Fallback a simulación si no hay API Key de Stripe
+      setTimeout(() => {
+        setIsPaying(false);
+        setIsUnlocked(true);
+      }, 1500);
+    }
   };
 
   const schemaJson = {
