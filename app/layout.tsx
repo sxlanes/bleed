@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     "Paste the URL of a local restaurant and see how much its website is losing to delivery aggregators, in euros, with the assumption behind every figure in plain sight.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"

@@ -3,6 +3,7 @@ import path from "path";
 import { AuditProduct, AuditResult, HeavyImage, AggregatorLink, MarketplaceLink, ContactChannel } from "./types";
 import { BENCHMARK_CASES, findBenchmark } from "./benchmarks";
 import { ALL_MARKETPLACES, ALL_BOOKING_PROVIDERS } from "./vertical";
+import { getTrafficData } from "./enrichment";
 
 /**
  * We say who we are. Auditing someone's site behind a spoofed Chrome string
@@ -18,7 +19,7 @@ const BATCH_PAUSE_MS = 250;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function auditUrlWithBrowser(targetUrl: string): Promise<{ html: string; url: string }> {
+async function auditUrlWithBrowser(targetUrl: string): Promise<{ html: string; url: string; screenshot?: string }> {
   let browser;
   try {
     const isLocal = !process.env.VERCEL && process.env.NODE_ENV !== "production";
@@ -58,7 +59,17 @@ async function auditUrlWithBrowser(targetUrl: string): Promise<{ html: string; u
 
     const html = await page.content();
     const url = page.url();
-    return { html, url };
+    
+    // Capture screenshot for UX analysis (low quality JPEG is enough)
+    let screenshot;
+    try {
+      const buffer = await page.screenshot({ type: "jpeg", quality: 50 });
+      screenshot = buffer.toString("base64");
+    } catch (e) {
+      // Ignore screenshot errors
+    }
+
+    return { html, url, screenshot };
   } finally {
     if (browser) {
       await browser.close().catch(() => {});
@@ -698,6 +709,7 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
   let needsJavaScript = false;
   let notRead: string[] | undefined = undefined;
   let fallbackError: string | undefined = undefined;
+  let screenshotBase64: string | undefined;
 
   if (textContent.length < 400 || isSpaRoot) {
     needsJavaScript = true;
@@ -709,6 +721,7 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     // Chromium Fallback (Point 2)
     try {
       const rendered = await auditUrlWithBrowser(finalUrl);
+      if (rendered.screenshot) screenshotBase64 = rendered.screenshot;
       if (rendered.html && rendered.html.length > bodyText.length) {
         bodyText = rendered.html;
         finalUrl = rendered.url || finalUrl;
@@ -741,6 +754,7 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
   if (!needsJavaScript && !identitySignals(bodyText)) {
     try {
       const rendered = await auditUrlWithBrowser(finalUrl);
+      if (rendered.screenshot) screenshotBase64 = rendered.screenshot;
       if (rendered.html && identitySignals(rendered.html)) {
         bodyText = rendered.html;
         finalUrl = rendered.url || finalUrl;
@@ -990,6 +1004,8 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     storeApiItems = benchmark.audit.products.length;
   }
 
+  const traffic = await getTrafficData(domain);
+
   return {
     url: normalized,
     finalUrl,
@@ -1033,6 +1049,9 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     priceSignals,
     textSample,
     currency,
+    screenshotBase64,
+    monthlyVisits: traffic.visits,
+    monthlyVisitsSource: traffic.source,
     source: "live",
     auditedAt: new Date().toISOString(),
   };

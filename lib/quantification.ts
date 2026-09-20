@@ -50,13 +50,13 @@ export const DEFAULT_PARAMS: AuditSimulationParams = {
  * `reservasMes` have no per-trade research yet, so every vertical starts from
  * the same working estimate until they do — same as the restaurant did.
  */
-export function defaultParamsFor(verticalId: VerticalId): AuditSimulationParams {
+export function defaultParamsFor(verticalId: VerticalId, audit?: AuditResult): AuditSimulationParams {
   const econ = ECONOMIA_VERTICAL[verticalId];
   return {
     ticketMedio: econ.valorTransaccion.valor,
     pedidosDia: econ.transaccionesPorPeriodo.valor,
     comisionAgregadorPct: econ.comisionPlataforma.valor,
-    visitasMes: DEFAULT_PARAMS.visitasMes,
+    visitasMes: audit?.monthlyVisits ?? DEFAULT_PARAMS.visitasMes,
     pctRecuperableCanalPropio: econ.desvioADirecto.valor,
     comisionReservaPorCubierto: DEFAULT_PARAMS.comisionReservaPorCubierto,
     reservasMes: DEFAULT_PARAMS.reservasMes,
@@ -87,12 +87,13 @@ function medianPriceSignal(signals: number[] | undefined): number | undefined {
    source and no analytics access — we cannot see a stranger's traffic. It was
    being used silently, which is the one thing this project does not do. It now
    appears as its own line wherever it is used, and the simulator moves it. */
-function trafficAssumption(visits: number): LeakAssumption {
+function trafficAssumption(visits: number, source?: string): LeakAssumption {
   return {
     label: "Visits a month",
     value: `${visits.toLocaleString("en-IE")}`,
-    citation:
-      "Team estimate — we cannot see your traffic from outside, and there is no published figure for a single site. This is the number that moves this figure most: put your real one in and the page recalculates.",
+    citation: source 
+      ? `External data provided by ${source}.`
+      : "Team estimate — we cannot see your traffic from outside, and there is no published figure for a single site. This is the number that moves this figure most: put your real one in and the page recalculates.",
   };
 }
 
@@ -130,7 +131,7 @@ export function calculateLeaks(
   const periodsPerYear = PERIODS_PER_YEAR[v.definition.ratePeriod];
 
   const params: AuditSimulationParams = {
-    ...defaultParamsFor(v.id),
+    ...defaultParamsFor(v.id, audit),
     ...customParams,
   };
 
@@ -298,7 +299,7 @@ export function calculateLeaks(
               },
             ]
           : []),
-        trafficAssumption(params.visitasMes),
+        trafficAssumption(params.visitasMes, audit.monthlyVisitsSource),
       ],
       remedy: `Convert photos to compressed WebP/AVIF (about 80% lighter straight away) and cache the page at the server or a CDN.`,
       remedyHours: 2,
@@ -393,7 +394,7 @@ export function calculateLeaks(
           value: "4%",
           citation: "Team estimate. No published source; adjustable in the simulator.",
         },
-        trafficAssumption(params.visitasMes),
+        trafficAssumption(params.visitasMes, audit.monthlyVisitsSource),
       ],
       remedy: `Add a floating WhatsApp or call button with a prefilled message ("Hi, I'd like to ${words.verb}").`,
       remedyHours: 1,
@@ -503,7 +504,7 @@ export function calculateLeaks(
           value: "3%",
           citation: "Team estimate. No published source; adjustable in the simulator.",
         },
-        trafficAssumption(params.visitasMes),
+        trafficAssumption(params.visitasMes, audit.monthlyVisitsSource),
       ],
       remedy: `Publish a full street address and phone number, and add LocalBusiness structured data to the homepage.`,
       remedyHours: 1,
@@ -535,7 +536,7 @@ export function calculateLeaks(
           value: "3%",
           citation: "Team estimate. No published source; adjustable in the simulator.",
         },
-        trafficAssumption(params.visitasMes),
+        trafficAssumption(params.visitasMes, audit.monthlyVisitsSource),
       ],
       remedy: `Add a quick-${words.verb} card with a touch ${words.catalogue} and an immediate ${words.verb} button.`,
       remedyHours: 2,

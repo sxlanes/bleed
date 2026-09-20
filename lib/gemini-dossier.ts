@@ -157,10 +157,24 @@ REQUIRED DOSSIER STRUCTURE (You must include Markdown tables):
 
 Return ONLY the content in clean Markdown, no preamble. Make it visually engaging with bolding and blockquotes.
 `.trim();
+    let finalPrompt = prompt;
+    const contents: any[] = [];
+    if (audit.screenshotBase64) {
+      finalPrompt += `
+7. **Visual UX Assessment**: Analyze the provided screenshot of their homepage. Point out 1 or 2 specific visual friction points (e.g., poor contrast, unclear call-to-action, cluttered design) that cost them ${w.customers}. Mention exactly what you see in the screenshot so they know it is real.`;
+      
+      contents.push({
+        inlineData: {
+          mimeType: "image/jpeg",
+          data: audit.screenshotBase64,
+        }
+      });
+    }
+    contents.push(finalPrompt);
 
     const genPromise = ai.models.generateContent({
       model: "gemini-2.5-pro",
-      contents: prompt,
+      contents: contents,
     });
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error("Gemini timeout")), 25000) // increased timeout for pro model

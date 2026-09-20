@@ -103,6 +103,11 @@ export interface AuditResult {
   /** The opening of the page's visible text. The classifier reads it: a title
       alone is too thin to tell a dental clinic from a car park. */
   textSample?: string;
+  /** Visual capture of the page, base64 JPEG, for LLM visual analysis. */
+  screenshotBase64?: string;
+  /** Traffic estimation from external APIs (SimilarWeb, Semrush, etc.) */
+  monthlyVisits?: number;
+  monthlyVisitsSource?: string;
 }
 
 export type LeakCategory =
