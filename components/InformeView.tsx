@@ -400,17 +400,15 @@ export default function InformeView({ initialReport }: Props) {
           </div>
         </div>
 
-        <button 
-          onClick={() => alert('Proceed to checkout')}
-          style={{ 
-            background: "#fff", color: "#000", fontSize: "2.5rem", fontWeight: 800, 
-            padding: "2rem 6rem", borderRadius: "100px", border: "none", 
-            cursor: "pointer", margin: "4rem 0", boxShadow: "0 0 60px rgba(255,255,255,0.4)",
-            fontFamily: "inherit", textTransform: "uppercase", letterSpacing: "0.05em"
-          }}
-        >
-          Buy Now & Fix It
-        </button>
+        
+        <div style={{ width: '100%', maxWidth: '1000px', margin: '4rem auto' }}>
+          <GravitySimulator />
+        </div>
+        
+        <div style={{ width: '100%', maxWidth: '1000px', margin: '0 auto' }}>
+          <CureEngine audit={audit} annualLoss={totalLoss} currency={sym} />
+        </div>
+
 
         <div style={{ marginTop: "2rem", padding: "2rem", borderTop: "1px solid rgba(255,255,255,0.1)", display: "flex", gap: "2rem", justifyContent: "center", flexWrap: "wrap", color: "rgba(255,255,255,0.6)", fontFamily: "var(--font-plex-mono, monospace)", fontSize: "1.1rem" }}>
           <div><strong>Assumption:</strong> {money2(params.ticketMedio)} avg transaction</div>
