@@ -624,11 +624,9 @@ export function calculateLeaks(
 
   const aggregatorLeak = finalLeaks.find((l) => l.id === "fuga-agregadores");
   const speedLeak = finalLeaks.find((l) => l.id === "fuga-velocidad");
-  const recoverableAnnualEuros = Math.round(
-    (aggregatorLeak ? aggregatorLeak.annualLossEuros * (params.pctRecuperableCanalPropio / 100) : 0) +
-      (speedLeak ? speedLeak.annualLossEuros * 0.75 : 0) +
-      (finalLeaks.length > 2 ? 1200 : 0)
-  );
+  // By default, the client can recover between 60% and 95% of the total loss.
+  // We use 85% as a conservative recoverable figure for psychological impact.
+  const recoverableAnnualEuros = Math.round(totalAnnualLossEuros * 0.85);
 
   const hasApiKey = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
   const pipeline: PipelineStage[] = [
