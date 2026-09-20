@@ -108,6 +108,14 @@ export interface AuditResult {
   /** Traffic estimation from external APIs (SimilarWeb, Semrush, etc.) */
   monthlyVisits?: number;
   monthlyVisitsSource?: string;
+  /** Google PageSpeed Insights real measurements */
+  performanceScore?: number | null;
+  seoScore?: number | null;
+  accessibilityScore?: number | null;
+  lcpMs?: number | null;
+  tbtMs?: number | null;
+  clsScore?: number | null;
+  psiSource?: "google-psi" | "none";
 }
 
 export type LeakCategory =

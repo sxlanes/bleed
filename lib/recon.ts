@@ -3,7 +3,7 @@ import path from "path";
 import { AuditProduct, AuditResult, HeavyImage, AggregatorLink, MarketplaceLink, ContactChannel } from "./types";
 import { BENCHMARK_CASES, findBenchmark } from "./benchmarks";
 import { ALL_MARKETPLACES, ALL_BOOKING_PROVIDERS } from "./vertical";
-import { getTrafficData } from "./enrichment";
+import { getTrafficData, getPageSpeedData } from "./enrichment";
 
 /**
  * We say who we are. Auditing someone's site behind a spoofed Chrome string
@@ -1018,7 +1018,13 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     storeApiItems = benchmark.audit.products.length;
   }
 
-  const traffic = await getTrafficData(domain);
+  const [traffic, psi] = await Promise.all([
+    getTrafficData(domain),
+    getPageSpeedData(finalUrl),
+  ]);
+
+  // Override TTFB with real Google measurement if available
+  const realTtfb = psi.ttfb != null ? psi.ttfb / 1000 : ttfb; // convert ms → s
 
   return {
     url: normalized,
@@ -1026,7 +1032,7 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     domain,
     name: benchmark?.name || name,
     status,
-    ttfb,
+    ttfb: realTtfb,
     https,
     htmlKb,
     viewport,
@@ -1066,6 +1072,14 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     screenshotBase64,
     monthlyVisits: traffic.visits,
     monthlyVisitsSource: traffic.source,
+    // Google PageSpeed Insights real data
+    performanceScore: psi.performanceScore,
+    seoScore: psi.seoScore,
+    accessibilityScore: psi.accessibilityScore,
+    lcpMs: psi.lcp,
+    tbtMs: psi.tbt,
+    clsScore: psi.cls,
+    psiSource: psi.source,
     source: "live",
     auditedAt: new Date().toISOString(),
   };
