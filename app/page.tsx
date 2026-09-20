@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import styles from "./pagina.module.css";
 import LiquidDrops from "@/components/LiquidDrops";
 
@@ -13,6 +13,8 @@ export default function Portada() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loss, setLoss] = useState("€0.0000");
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState("Establishing secure connection...");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,6 +26,27 @@ export default function Portada() {
     }
     try {
       new URL(url.startsWith("http") ? url : `https://${url}`);
+      
+      // Start Loading Sequence
+      setIsLoading(true);
+      
+      const phrases = [
+        "Resolving DNS...",
+        "Executing headless browser...",
+        "Scraping DOM structure...",
+        "Analyzing Core Web Vitals...",
+        "Quantifying financial leaks...",
+        "Generating executive dossier..."
+      ];
+      
+      let i = 0;
+      const interval = setInterval(() => {
+        i++;
+        if (i < phrases.length) {
+          setLoadingText(phrases[i]);
+        }
+      }, 1800);
+
       window.location.href = `/informe?url=${encodeURIComponent(url)}`;
     } catch {
       setUrlError("Invalid URL format.");
@@ -249,6 +272,19 @@ export default function Portada() {
           </h1>
 
           <div className={styles.field}>
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center p-8 border border-[#ff3b3b]/30 bg-[#0e1113]/80 rounded-lg w-full max-w-lg mx-auto" style={{ animation: "entrar 0.5s ease-out" }}>
+                <div className="relative w-16 h-16 mb-6">
+                  <div className="absolute inset-0 border-t-2 border-[#ff3b3b] rounded-full animate-spin"></div>
+                  <div className="absolute inset-2 border-r-2 border-white rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.7s' }}></div>
+                </div>
+                <h3 className="text-white font-instrument text-xl font-bold mb-2 tracking-wide uppercase">Audit in Progress</h3>
+                <p className="text-[#ff3b3b] font-mono text-sm tracking-widest animate-pulse">{loadingText}</p>
+                <div className="w-full h-1 bg-[#1a1e23] mt-6 rounded overflow-hidden">
+                  <div className="h-full bg-[#ff3b3b] animate-[loading-bar_8s_ease-in-out_forwards]"></div>
+                </div>
+              </div>
+            ) : (
             <form
               className={`${styles.form} ${urlError ? styles.formError : ""}`}
               onSubmit={handleSubmit}
@@ -281,6 +317,7 @@ export default function Portada() {
                 Run
               </button>
             </form>
+            )}
             {urlError && (
               <div className={styles.errorText} role="alert">
                 {urlError}
