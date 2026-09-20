@@ -122,7 +122,7 @@ export async function generateGeminiDossier(
     );
     const repairHours = leaks.reduce((acc, l) => acc + l.remedyHours, 0);
 
-    const prompt = `
+    const textPrompt = `
 You are an elite financial strategy consultant and conversion rate expert.
 Write an executive dossier for the owner of "${audit.name || audit.domain}".
 Crucially, you must adapt your entire language, examples, and metrics to this specific type of business:
@@ -136,13 +136,9 @@ REAL AUDITED DATA:
 - Name: ${audit.name}
 - URL: ${audit.finalUrl}
 - Platforms it hands customers to: ${platformNames.join(", ") || "None"}
-- CMS/Tech: WordPress: ${audit.wordpress} | WooCommerce: ${audit.woocommerce}
-- Time to first byte (TTFB): ${audit.ttfb} s
-- Homepage image weight: ${audit.imgKb} KB
 - Total annual leak calculated: ${eur(totalAnnualLossEuros)} a year
 - Estimated recoverable margin: +${eur(recoverableAnnualEuros)} a year
 - Assumptions: ${params.pedidosDia} ${w.transactions} per ${verdict.definition.ratePeriod}, ${w.valueLabel.toLowerCase()} ${params.ticketMedio} ${cur}, platform fee ${params.comisionAgregadorPct}%.
-- The words this owner uses: one transaction is a "${w.transaction}", a customer is a "${w.customer}", what they list is their "${w.catalogue}". Use them.
 
 CONCRETE LEAKS DETECTED:
 ${leaks.map((l) => `- ${l.title}: -${eur(l.annualLossEuros)} a year. Explanation: ${l.explanation}. Fix: ${l.remedy}`).join("\n")}
@@ -157,24 +153,65 @@ REQUIRED DOSSIER STRUCTURE (You must include Markdown tables):
 
 Return ONLY the content in clean Markdown, no preamble. Make it visually engaging with bolding and blockquotes.
 `.trim();
-    let finalPrompt = prompt;
-    const contents: any[] = [];
+
+    // Vision UX Assessment using Structured Outputs (JSON Schema)
+    let uxMarkdown = "";
     if (audit.screenshotBase64) {
-      finalPrompt += `
-7. **Visual UX Assessment**: Analyze the provided screenshot of their homepage. Point out 1 or 2 specific visual friction points (e.g., poor contrast, unclear call-to-action, cluttered design) that cost them ${w.customers}. Mention exactly what you see in the screenshot so they know it is real.`;
-      
-      contents.push({
-        inlineData: {
-          mimeType: "image/jpeg",
-          data: audit.screenshotBase64,
+      const uxPrompt = `Analyze this homepage screenshot as an expert in Cognitive UX and Conversion Rate Optimization. 
+Evaluate it strictly against these 4 heuristics:
+1. WCAG Contrast: Is the text easily readable against the background?
+2. Norman Affordances: Do buttons look like buttons? Are links obvious?
+3. Hick's Law: Are there too many options competing for attention?
+4. Cannibalization: Is there a massive button sending users to Glovo, UberEats, or Booking.com instead of a direct order?
+
+Return a JSON with the evaluation.`;
+
+      try {
+        const uxGenPromise = ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: [
+            { inlineData: { mimeType: "image/jpeg", data: audit.screenshotBase64 } },
+            uxPrompt
+          ],
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                hasContrastIssues: { type: "BOOLEAN" },
+                hasAffordanceIssues: { type: "BOOLEAN" },
+                violatesHicksLaw: { type: "BOOLEAN" },
+                hasAggregatorCannibalization: { type: "BOOLEAN" },
+                executiveSummary: { type: "STRING", description: "A 2-3 sentence brutal assessment of the visual friction" },
+                conversionImpact: { type: "STRING", description: "How this specifically loses them money" }
+              },
+              required: ["hasContrastIssues", "hasAffordanceIssues", "violatesHicksLaw", "hasAggregatorCannibalization", "executiveSummary", "conversionImpact"]
+            }
+          }
+        });
+        
+        const uxResponse = await Promise.race([
+          uxGenPromise, 
+          new Promise((_, reject) => setTimeout(() => reject(new Error("UX Vision timeout")), 15000))
+        ]) as any;
+        
+        if (uxResponse.text) {
+          const uxData = JSON.parse(uxResponse.text);
+          uxMarkdown = `
+7. **Visual UX Assessment (AI Vision)**: ${uxData.executiveSummary} ${uxData.conversionImpact}`;
+          
+          if (uxData.hasAggregatorCannibalization) {
+             uxMarkdown += " You are actively sending your own traffic away to third-party aggregators.";
+          }
         }
-      });
+      } catch (e) {
+        console.warn("UX Vision analysis failed:", e);
+      }
     }
-    contents.push(finalPrompt);
 
     const genPromise = ai.models.generateContent({
       model: "gemini-2.5-pro",
-      contents: contents,
+      contents: [textPrompt + uxMarkdown],
     });
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error("Gemini timeout")), 25000) // increased timeout for pro model
