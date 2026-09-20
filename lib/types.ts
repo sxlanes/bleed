@@ -183,7 +183,7 @@ export interface TriageResult {
   /** The trade the model picked, when the deterministic classifier was blind.
       One of VerticalId; validated before it is trusted. */
   vertical?: string;
-  source: "gemini" | "deterministic";
+  source: "gemini" | "deterministic" | "typesafe-ai";
   modelUsed?: string;
   ms: number;
 }
