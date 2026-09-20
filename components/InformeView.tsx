@@ -9,7 +9,9 @@ import { renderMarkdown } from "@/lib/markdown";
 import { classifyVertical, Words } from "@/lib/vertical";
 import { ECONOMIA_VERTICAL } from "@/lib/calibracion-verticales";
 import styles from "@/app/informe/informe.module.css";
-
+import FluidBackground from "./FluidBackground";
+import CureEngine from "./CureEngine";
+import GravitySimulator from "./GravitySimulator";
 interface Props {
   initialReport: FullAuditReport;
 }
@@ -350,6 +352,7 @@ export default function InformeView({ initialReport }: Props) {
 
   return (
     <main className={styles.page}>
+      <FluidBackground totalLoss={totalLoss} />
       <div className={styles.shell}>
         <header className={styles.topbar}>
           <Link href="/" className={styles.brand}>
@@ -477,6 +480,9 @@ export default function InformeView({ initialReport }: Props) {
 
         {activeTab === "leaks" && (
           <div id="panel-leaks" role="tabpanel" aria-labelledby="tab-leaks" className={styles.panel}>
+            <div style={{ marginBottom: "3rem" }}>
+              <GravitySimulator />
+            </div>
             <div className={styles.sectionHead}>
               <div>
                 <h2 className={styles.sectionTitle}>What each leak costs a year</h2>
@@ -1108,6 +1114,7 @@ export default function InformeView({ initialReport }: Props) {
 
             <div className={styles.dossierSource}>Source: {aiSource}</div>
             <article className={styles.dossier}>{renderMarkdown(dossierMarkdown)}</article>
+            <CureEngine audit={audit} />
           </div>
         )}
 
