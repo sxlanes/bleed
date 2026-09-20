@@ -359,46 +359,52 @@ export default function InformeView({ initialReport }: Props) {
           {audit.name} is <br/><span style={{ color: "#ff4d4d" }}>Bleeding Money</span>
         </h1>
         
-        <div style={{ display: "flex", gap: "2rem", margin: "4rem 0", flexWrap: "wrap", justifyContent: "center", width: "100%", maxWidth: "1200px" }}>
+        
+        <div style={{ display: "flex", flexDirection: "column", gap: "0", margin: "2rem 0 6rem 0", alignItems: "center", width: "100%", maxWidth: "1200px" }}>
+          <div style={{ fontSize: "1rem", color: "#ff3b3b", textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, marginBottom: "1rem", fontFamily: "var(--font-plex-mono, monospace)" }}>
+            [ Hemorragia Financiera Anual ]
+          </div>
+          <div style={{ fontSize: "clamp(6rem, 15vw, 12rem)", fontWeight: 800, color: "#ff3b3b", lineHeight: 0.9, letterSpacing: "-0.05em", fontFamily: "var(--font-instrument, sans-serif)" }}>
+            -{sym}{heroNumber(heroValue)}
+          </div>
+          <div style={{ fontSize: "1.2rem", color: "#ffffff", marginTop: "1rem", fontFamily: "var(--font-plex-mono, monospace)" }}>
+            ↳ Sangrando {sym}{Math.round(heroValue / 365).toLocaleString("es-ES")} cada 24 horas.
+          </div>
           
-          {/* Card 1: Loss */}
-          <div style={{ flex: "1 1 400px", background: "rgba(255, 77, 77, 0.1)", padding: "4rem 2rem", borderRadius: "32px", border: "2px solid rgba(255, 77, 77, 0.3)", backdropFilter: "blur(12px)" }}>
-            <div style={{ fontSize: "1.5rem", color: "#ff4d4d", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: "1rem" }}>
-              ⚠️ Annual Loss
+          <div style={{ display: "flex", gap: "4rem", marginTop: "4rem", paddingTop: "2rem", borderTop: "2px solid #1a1e23", width: "100%", justifyContent: "center" }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "3rem", fontWeight: 700, color: "#22c55e", lineHeight: 1 }}>
+                +{eur(recoverable)}
+              </div>
+              <div style={{ fontSize: "0.875rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: "0.5rem" }}>
+                Capital Recuperable
+              </div>
             </div>
-            <div style={{ fontSize: "clamp(4rem, 10vw, 8rem)", fontWeight: 800, color: "#ff4d4d", lineHeight: 1, letterSpacing: "-0.04em" }}>
-              {sym}{heroNumber(heroValue)}
+            
+            <div style={{ width: "2px", backgroundColor: "#1a1e23" }}></div>
+
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "3rem", fontWeight: 700, color: "#ffffff", lineHeight: 1 }}>
+                {leaks.length}
+              </div>
+              <div style={{ fontSize: "0.875rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: "0.5rem" }}>
+                Fugas Críticas
+              </div>
             </div>
-            <div style={{ fontSize: "1.5rem", color: "rgba(255,255,255,0.7)", marginTop: "2rem", fontFamily: "var(--font-plex-mono, monospace)" }}>
-              Money slipping through the cracks
+
+            <div style={{ width: "2px", backgroundColor: "#1a1e23" }}></div>
+
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "3rem", fontWeight: 700, color: "#ffffff", lineHeight: 1 }}>
+                {repairHours}h
+              </div>
+              <div style={{ fontSize: "0.875rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: "0.5rem" }}>
+                Tiempo de Curación
+              </div>
             </div>
           </div>
-
-          {/* Card 2: Recoverable */}
-          <div style={{ flex: "1 1 400px", background: "rgba(0, 255, 136, 0.1)", padding: "4rem 2rem", borderRadius: "32px", border: "2px solid rgba(0, 255, 136, 0.3)", backdropFilter: "blur(12px)" }}>
-            <div style={{ fontSize: "1.5rem", color: "#00ff88", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: "1rem" }}>
-              ✅ Recoverable
-            </div>
-            <div style={{ fontSize: "clamp(4rem, 10vw, 8rem)", fontWeight: 800, color: "#00ff88", lineHeight: 1, letterSpacing: "-0.04em" }}>
-              {eur(recoverable)}
-            </div>
-            <div style={{ fontSize: "1.5rem", color: "rgba(255,255,255,0.7)", marginTop: "2rem", fontFamily: "var(--font-plex-mono, monospace)" }}>
-              Waiting to be claimed back
-            </div>
-          </div>
-
         </div>
 
-        <div style={{ display: "flex", gap: "3rem", margin: "2rem 0", flexWrap: "wrap", justifyContent: "center" }}>
-          <div style={{ fontSize: "2.5rem", color: "#fff", display: "flex", alignItems: "center", gap: "1rem" }}>
-            <span style={{ fontSize: "3rem" }}>🚨</span> 
-            <span><strong>{leaks.length}</strong> Leaks Found</span>
-          </div>
-          <div style={{ fontSize: "2.5rem", color: "#fff", display: "flex", alignItems: "center", gap: "1rem" }}>
-            <span style={{ fontSize: "3rem" }}>⏱</span> 
-            <span><strong>{repairHours}h</strong> to Fix</span>
-          </div>
-        </div>
 
         
         <div style={{ width: '100%', maxWidth: '1000px', margin: '4rem auto' }}>
