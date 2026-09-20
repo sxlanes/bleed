@@ -98,7 +98,7 @@ export default function CureEngine({ audit }: { audit: AuditResult }) {
 
       <div className="p-6 space-y-8 relative">
         {!isUnlocked && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0e1113]/80 backdrop-blur-sm">
+          <div className="absolute inset-0 z-10 flex cure-blocked-overlay flex-col items-center justify-center bg-[#0e1113]/80 backdrop-blur-sm">
             <div className="bg-[#090a0c] border border-[#1a1e23] p-8 rounded-xl shadow-2xl max-w-sm w-full text-center flex flex-col gap-4">
               <div className="w-12 h-12 bg-[#22c55e]/10 rounded-full flex items-center justify-center mx-auto mb-2">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -225,7 +225,7 @@ function SnippetBlock({
         }}
       >
         <pre 
-          className="text-sm m-0 transition-all duration-700"
+          className="text-sm m-0 transition-all duration-700 cure-code-block"
           style={{ 
             filter: !isUnlocked ? "blur(6px)" : "none",
             userSelect: !isUnlocked ? "none" : "auto",

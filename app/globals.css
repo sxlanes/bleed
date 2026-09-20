@@ -20,3 +20,38 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ─── B2B PDF EXPORT OVERRIDES ─────── */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Ocultar elementos interactivos y física visceral */
+  #fluid-background, #gravity-simulator {
+    display: none !important;
+  }
+
+  /* Forzar lectura del CureEngine (Invertir Dark Mode) */
+  #cure-engine {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #ccc !important;
+  }
+  #cure-engine * {
+    color: black !important;
+    background: transparent !important;
+    border-color: #ccc !important;
+    text-shadow: none !important;
+  }
+
+  /* Bypass del Paywall para la Agencia (SaaS B2B) */
+  .cure-blocked-overlay {
+    display: none !important;
+  }
+  .cure-code-block {
+    filter: none !important;
+    opacity: 1 !important;
+  }
+}

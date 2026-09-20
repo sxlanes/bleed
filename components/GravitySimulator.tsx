@@ -26,7 +26,7 @@ export default function GravitySimulator() {
 
   return (
     <div 
-      className="p-6 rounded-2xl shadow-2xl transition-colors duration-500 max-w-md w-full mx-auto flex flex-col gap-6"
+      id="gravity-simulator" className="p-6 rounded-2xl shadow-2xl transition-colors duration-500 max-w-md w-full mx-auto flex flex-col gap-6"
       style={{
         backgroundColor: "var(--tinta, #0e1113)",
         border: `1px solid ${cardColor}`,
