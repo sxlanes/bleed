@@ -145,7 +145,7 @@ export default function CureEngine({ audit, annualLoss, currency = "€" }: { au
                   <h4 className="text-[#9ca3af] font-bold mb-2">1. INACCIÓN (HOY)</h4>
                   <div className="text-xl text-white mb-2">0 {currency} <span className="text-xs text-[#9ca3af]">desembolso</span></div>
                   <ul className="text-xs space-y-1 mb-4 text-[#9ca3af]">
-                    <li>Pérdida: -{currency}{annualLoss.toLocaleString()}/año</li>
+                    <li>Pérdida: -{currency}{annualLoss.toLocaleString("en-US")}/año</li>
                     <li>Tu competencia gana</li>
                   </ul>
                   <button className="w-full py-2 bg-transparent border border-[#1a1e23] text-[#4b5563] text-xs rounded hover:bg-[#1a1e23] transition-colors">
