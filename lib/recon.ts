@@ -854,12 +854,26 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
   else if (low.includes("resdiary")) reservaProvider = "ResDiary";
 
   // Business Name extraction
+  const GENERIC_TITLES = new Set([
+    "home", "inicio", "welcome", "bienvenido", "bienvenidos",
+    "index", "homepage", "main", "principal", "página principal",
+    "untitled", "new page", "nueva página",
+  ]);
   let name = domain;
   const titleMatch = bodyText.match(/<title[^>]*>([^<]+)<\/title>/i);
   if (titleMatch) {
     const rawTitle = decodeEntities(titleMatch[1]).split(/[|\-–•]/)[0].trim();
-    if (rawTitle && rawTitle.length > 2 && rawTitle.length < 40) {
+    if (rawTitle && rawTitle.length > 2 && rawTitle.length < 60 && !GENERIC_TITLES.has(rawTitle.toLowerCase())) {
       name = rawTitle;
+    }
+  }
+  // Also try og:site_name as a better source
+  const ogSiteNameMatch = bodyText.match(/<meta[^>]+property=[\"']og:site_name[\"'][^>]+content=[\"']([^\"']+)[\"']/i)
+    || bodyText.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:site_name[\"']/i);
+  if (ogSiteNameMatch) {
+    const ogName = decodeEntities(ogSiteNameMatch[1]).trim();
+    if (ogName && ogName.length > 1 && ogName.length < 60 && !GENERIC_TITLES.has(ogName.toLowerCase())) {
+      name = ogName;
     }
   }
 
