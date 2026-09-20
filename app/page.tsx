@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./pagina.module.css";
 import LiquidDrops from "@/components/LiquidDrops";
 
@@ -14,6 +15,7 @@ export default function Portada() {
   const [loss, setLoss] = useState("€0.0000");
   const [urlError, setUrlError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const [loadingText, setLoadingText] = useState("Establishing secure connection...");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -47,7 +49,7 @@ export default function Portada() {
         }
       }, 1800);
 
-      window.location.href = `/informe?url=${encodeURIComponent(url)}`;
+      router.push(`/informe?url=${encodeURIComponent(url)}`);
     } catch {
       setUrlError("Invalid URL format.");
     }
