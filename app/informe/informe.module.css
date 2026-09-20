@@ -7,23 +7,26 @@
   scroll-padding-top: 1rem;
 
   /* surfaces */
-  --paper: #f5f4f1;
-  --card: #ffffff;
-  --rule: #e3e1db;
-  --rule-soft: #efeee9;
+  --paper: var(--tinta, #0e1113);
+  --tinta: #0e1113;
+  --papel-tenue: #1a1d21;
+  --papel-debil: #22262b;
+  --card: var(--papel-tenue);
+  --rule: #2a2d32;
+  --rule-soft: #32363c;
 
   /* ink */
-  --ink: #191817;
-  --ink-2: #5c5a55;
-  --ink-3: #8b8880;
+  --ink: #ffffff;
+  --ink-2: #9ea4aa;
+  --ink-3: #6b727a;
 
   /* the only accent: what is being lost */
   --loss: #b3261e;
   --loss-deep: #8f1e17;
-  --loss-wash: #fbeceb;
+  --loss-wash: #3b1816;
   /* what stays with the business */
   --keep: #0b6b3f;
-  --keep-wash: #ecf3ef;
+  --keep-wash: #0e2a1b;
   --graphite: #3a3936;
 
   --sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
@@ -458,7 +461,7 @@
   transition: opacity 200ms ease;
 }
 
-.chartStale { opacity: 0.45; }
+.chartStale { color: var(--ink-3); filter: grayscale(1); }
 
 .rankRow {
   display: grid;
@@ -609,7 +612,7 @@
 .assumeBody {
   padding: 0 1.125rem 1.25rem;
   border-top: 1px solid var(--rule);
-  animation: unfold 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation: entrar 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .assumeIntro {
@@ -706,7 +709,7 @@
   transition: opacity 160ms ease;
 }
 
-.detailsToggle:hover { opacity: 0.7; }
+.detailsToggle:hover { color: var(--ink-2); }
 
 .detailsTitle {
   font-size: 0.9375rem;
@@ -716,16 +719,20 @@
 /* ─── leak rows ───────────────────────────────────────────── */
 
 .leaks {
-  border-bottom: 1px solid var(--rule);
-  animation: unfold 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 1.5rem;
+  animation: entrar 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .leak {
-  border-bottom: 1px solid var(--rule);
-  background: var(--card);
+  background: var(--papel-debil);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
 }
-
-.leak:first-child { border-radius: 0; }
 
 .leakHead {
   display: grid;
@@ -733,7 +740,7 @@
   align-items: center;
   gap: 1rem;
   width: 100%;
-  padding: 1.125rem clamp(0.75rem, 2vw, 1.25rem);
+  padding: 1.5rem clamp(1.25rem, 3vw, 1.75rem);
   background: none;
   border: 0;
   font: inherit;
@@ -743,7 +750,7 @@
   transition: background-color 160ms ease;
 }
 
-.leakHead:hover { background: var(--rule-soft); }
+.leakHead:hover { background: var(--papel-tenue); }
 
 .leakHead:focus-visible {
   outline: 2px solid var(--ink);
@@ -815,8 +822,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: clamp(1.25rem, 3vw, 2.5rem);
-  padding: 0 clamp(0.75rem, 2vw, 1.25rem) 1.75rem;
-  animation: unfold 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  padding: 0 clamp(1.25rem, 3vw, 1.75rem) 1.75rem;
+  animation: entrar 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .leakText {
@@ -965,7 +972,7 @@
   border: 1px solid var(--rule);
   border-radius: 16px;
   padding: 1rem;
-  box-shadow: 0 1px 2px rgba(25, 24, 23, 0.04), 0 8px 24px -12px rgba(25, 24, 23, 0.15);
+  box-shadow: 0 1px 2px var(--rule), 0 8px 24px -12px none;
 }
 
 .phoneBar {
@@ -998,7 +1005,7 @@
   border-radius: 7px;
   font-size: 0.8125rem;
   color: var(--keep);
-  animation: unfold 220ms ease;
+  animation: entrar 220ms ease;
 }
 
 .products {
@@ -1209,7 +1216,7 @@
 
 .actionPrimary:hover { background: #000; border-color: #000; color: var(--card); }
 
-.actionPrimary:disabled { opacity: 0.6; cursor: progress; }
+.actionPrimary:disabled { background: var(--rule-soft); color: var(--ink-3); border-color: var(--rule-soft); cursor: progress; }
 
 .dossierSource {
   font-size: 0.8125rem;
@@ -1488,7 +1495,7 @@
 
 .loadingLineActive { color: #191817; font-weight: 500; }
 
-.loadingLinePending { opacity: 0.4; }
+.loadingLinePending { color: var(--ink-3); }
 
 .loadingMark {
   font-family: var(--font-plex-mono), ui-monospace, monospace;
@@ -1504,7 +1511,7 @@
   from { width: 0; }
 }
 
-@keyframes unfold {
+@keyframes entrar {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: none; }
 }
