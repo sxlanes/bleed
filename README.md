@@ -103,3 +103,24 @@ The dossier writer uses Gemini and falls back to a deterministic template when n
 
 The pre-audited field cases are real Málaga businesses that never agreed to have their
 figures published, so they only resolve behind `BLEED_DEMOS=1` and never in production.
+
+## The 2030 Architecture (Hackathon Upgrades)
+
+To make Bleed the ultimate B2B SaaS weapon, the architecture has been upgraded with the following:
+
+- **TypeSafe AI (Jev) Triage:** The `lib/triage.ts` router now uses `@typesafe-ai/sdk` (System One). It classifies the business vertical and scores the 8 leak heuristics with strictly typed schemas in under 70ms. Falls back safely to Gemini if `TYPESAFE_API_KEY` is not present.
+- **Visceral Physics (FluidBackground):** Abstract € losses don't trigger urgency. A `framer-motion` background acts as a physical digital twin of the loss: as the total lost euros climb, the red `--tinta` droplets multiply, accelerate, and blur like heavy sweat or bleeding.
+- **Gravity Simulator:** Interactive sliders for aggregator commissions (%) and TTFB (seconds). The business owner moves the sliders and watches the loss recalculate at 60fps, changing the interface from panic-red to clean-gold.
+- **The CureEngine & B2B Paywall:** Bleed doesn't just diagnose; it writes the cure. It generates the exact `.htaccess` rules for HTTPS and `LocalBusiness` JSON-LD schemas required to fix the leaks.
+  - **SaaS Model:** The code is blurred behind a Stripe paywall simulation (`Desbloquear por 49€`).
+  - **Agency Print Bypass:** If a B2B Agency clicks *Print to PDF*, custom `@media print` CSS kicks in. It overrides the paywall, drops the fluid physics to save ink, and outputs a pristine, un-blurred white-paper dossier. 
+- **B2B Mass Lead Generator:** Run `npx tsx scripts/mass-audit.ts` to crawl 100 local businesses asynchronously and output a sorted CSV "Kill List" of the businesses losing the most money.
+
+### Environment Setup
+
+```bash
+# .env.local
+TYPESAFE_API_KEY="your_typesafe_key"
+GEMINI_API_KEY="your_gemini_key"
+RAPIDAPI_KEY="your_rapidapi_key"
+```
