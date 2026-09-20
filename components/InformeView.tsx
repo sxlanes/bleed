@@ -360,50 +360,52 @@ export default function InformeView({ initialReport }: Props) {
         </h1>
         
         
-        <div style={{ display: "flex", flexDirection: "column", gap: "0", margin: "2rem 0 6rem 0", alignItems: "center", width: "100%", maxWidth: "1200px" }}>
-          <div style={{ fontSize: "1rem", color: "#ff3b3b", textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, marginBottom: "1rem", fontFamily: "var(--font-plex-mono, monospace)" }}>
-            [ Hemorragia Financiera Anual ]
-          </div>
-          <div style={{ fontSize: "clamp(6rem, 15vw, 12rem)", fontWeight: 800, color: "#ff3b3b", lineHeight: 0.9, letterSpacing: "-0.05em", fontFamily: "var(--font-instrument, sans-serif)" }}>
-            -{sym}{heroNumber(heroValue)}
-          </div>
-          <div style={{ fontSize: "1.2rem", color: "#ffffff", marginTop: "1rem", fontFamily: "var(--font-plex-mono, monospace)" }}>
-            ↳ Sangrando {sym}{Math.round(heroValue / 365).toLocaleString("es-ES")} cada 24 horas.
-          </div>
+        
+        <div style={{ display: "flex", gap: "1.5rem", margin: "4rem 0", flexWrap: "wrap", justifyContent: "center", width: "100%", maxWidth: "1000px" }}>
           
-          <div style={{ display: "flex", gap: "4rem", marginTop: "4rem", paddingTop: "2rem", borderTop: "2px solid #1a1e23", width: "100%", justifyContent: "center" }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "3rem", fontWeight: 700, color: "#22c55e", lineHeight: 1 }}>
-                +{eur(recoverable)}
-              </div>
-              <div style={{ fontSize: "0.875rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: "0.5rem" }}>
-                Capital Recuperable
-              </div>
+          {/* Card 1: Loss */}
+          <div style={{ flex: "1 1 300px", background: "#0a0c10", padding: "3rem", borderRadius: "16px", border: "1px solid #1a1e23", boxShadow: "0 20px 40px rgba(0,0,0,0.4)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, marginBottom: "1rem" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              Annual Revenue Leak
             </div>
-            
-            <div style={{ width: "2px", backgroundColor: "#1a1e23" }}></div>
-
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "3rem", fontWeight: 700, color: "#ffffff", lineHeight: 1 }}>
-                {leaks.length}
-              </div>
-              <div style={{ fontSize: "0.875rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: "0.5rem" }}>
-                Fugas Críticas
-              </div>
+            <div style={{ fontSize: "clamp(3rem, 6vw, 4.5rem)", fontWeight: 700, color: "#fff", lineHeight: 1, letterSpacing: "-0.03em" }}>
+              {sym}{heroNumber(heroValue)}
             </div>
-
-            <div style={{ width: "2px", backgroundColor: "#1a1e23" }}></div>
-
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "3rem", fontWeight: 700, color: "#ffffff", lineHeight: 1 }}>
-                {repairHours}h
-              </div>
-              <div style={{ fontSize: "0.875rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: "0.5rem" }}>
-                Tiempo de Curación
-              </div>
+            <div style={{ fontSize: "0.875rem", color: "#666", marginTop: "1rem" }}>
+              Estimated capital lost over 12 months.
             </div>
+          </div>
+
+          {/* Card 2: Recoverable */}
+          <div style={{ flex: "1 1 300px", background: "#0a0c10", padding: "3rem", borderRadius: "16px", border: "1px solid #1a1e23", boxShadow: "0 20px 40px rgba(0,0,0,0.4)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, marginBottom: "1rem" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00ff88" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Recoverable Capital
+            </div>
+            <div style={{ fontSize: "clamp(3rem, 6vw, 4.5rem)", fontWeight: 700, color: "#fff", lineHeight: 1, letterSpacing: "-0.03em" }}>
+              {eur(recoverable)}
+            </div>
+            <div style={{ fontSize: "0.875rem", color: "#666", marginTop: "1rem" }}>
+              Capital that can be claimed back today.
+            </div>
+          </div>
+
+        </div>
+
+        {/* Small Data Row */}
+        <div style={{ display: "flex", gap: "3rem", margin: "1rem 0 3rem 0", flexWrap: "wrap", justifyContent: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
+            <div style={{ fontSize: "1.5rem", fontWeight: 600, color: "#fff" }}>{leaks.length}</div>
+            <div style={{ fontSize: "0.75rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.05em" }}>Critical Leaks</div>
+          </div>
+          <div style={{ width: "1px", background: "#1a1e23" }}></div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
+            <div style={{ fontSize: "1.5rem", fontWeight: 600, color: "#fff" }}>{repairHours}h</div>
+            <div style={{ fontSize: "0.75rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.05em" }}>Repair Time</div>
           </div>
         </div>
+
 
 
         
