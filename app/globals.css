@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
-/* Only what every page shares. Each surface owns its own palette:
-   the landing is a red field, the report is a dark diagnostic room. */
 :root {
+  --tinta: #0e1113;
+  --papel: #ffffff;
+  --papel-tenue: #d1d5db;
+  --papel-debil: #9ca3af;
+  --accent: #ff3333;
   --mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
@@ -19,4 +22,7 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--tinta);
+  color: var(--papel);
+  font-family: var(--font-sans);
 }
