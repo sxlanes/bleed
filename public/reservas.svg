@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+  <!-- Top binder rings -->
+  <rect x="6" y="1" width="2" height="3"/>
+  <rect x="16" y="1" width="2" height="3"/>
+  <!-- Solid calendar ledger with punched clock face -->
+  <path fill-rule="evenodd" d="M4 3h16v18H4V3zm2 5h12v11H6V8zm6 1a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm0 1.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
+  <!-- Clock hands set to reservation time -->
+  <polygon points="11.2,11.5 12.8,11.5 12.8,13.5 14.5,13.5 14.5,15 11.2,15"/>
+</svg>

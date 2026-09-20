@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+  <!-- Brutalist cantilevered awning -->
+  <rect x="2" y="3" width="20" height="3.5"/>
+  <!-- Dentil fluting under awning -->
+  <rect x="3" y="6.5" width="3" height="2"/>
+  <rect x="8" y="6.5" width="3" height="2"/>
+  <rect x="13" y="6.5" width="3" height="2"/>
+  <rect x="18" y="6.5" width="3" height="2"/>
+  <!-- Structural columns -->
+  <rect x="3" y="8.5" width="3" height="11.5"/>
+  <rect x="18" y="8.5" width="3" height="11.5"/>
+  <!-- Foundation plinth -->
+  <rect x="1" y="20" width="22" height="2.5"/>
+  <!-- Direct inward conversion arrow (direct customer flow) -->
+  <polygon points="12,9.5 7.5,14 10.5,14 10.5,19 13.5,19 13.5,14 16.5,14"/>
+</svg>

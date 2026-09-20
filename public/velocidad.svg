@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+  <!-- Top stopwatch plunger & stem -->
+  <rect x="10" y="1" width="4" height="2"/>
+  <rect x="11" y="3" width="2" height="2"/>
+  <!-- Tactical corner button -->
+  <rect x="17.5" y="3.5" width="2" height="3" transform="rotate(45 18.5 5)"/>
+  <!-- Speed drag bars on left edge -->
+  <rect x="1" y="8" width="4" height="2"/>
+  <rect x="0" y="11.5" width="5.5" height="2.5"/>
+  <rect x="2" y="15.5" width="3.5" height="2"/>
+  <!-- Tachometer circular bezel with hollow core -->
+  <path fill-rule="evenodd" d="M12 5a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 2.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11z"/>
+  <!-- Lightning needle pegged past the threshold -->
+  <polygon points="14,4.5 9,12 12.5,12 10,18.5 17,11 13.5,11"/>
+</svg>

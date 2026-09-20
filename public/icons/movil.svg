@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+  <!-- Solid smartphone chassis with punched screen and direct action lightning -->
+  <path fill-rule="evenodd" d="M5 2h14v20H5V2zm2 2.5h10v13H7v-13zm4 14.5h2v1.5h-2V19z"/>
+  <!-- Action prompt inside screen -->
+  <polygon points="13,6.5 9,11.5 12,11.5 11,16 15,11 12,11"/>
+</svg>
