@@ -32,9 +32,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${anton.variable} ${instrument.variable} ${plexMono.variable} h-full`}
+      className={`${anton.variable} ${instrument.variable} ${plexMono.variable} h-full overflow-x-hidden`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full overflow-x-hidden">{children}</body>
     </html>
   );
 }
