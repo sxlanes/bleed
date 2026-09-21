@@ -3,7 +3,20 @@ import path from "path";
 import { AuditProduct, AuditResult, HeavyImage, AggregatorLink, MarketplaceLink, ContactChannel } from "./types";
 import { BENCHMARK_CASES, findBenchmark } from "./benchmarks";
 import { ALL_MARKETPLACES, ALL_BOOKING_PROVIDERS } from "./vertical";
-import { getTrafficData, getPageSpeedData } from "./enrichment";
+import { getTrafficData, getPageSpeedData, PageSpeedData } from "./enrichment";
+
+export const psiCache = new Map<string, { data: PageSpeedData | null, timestamp: number }>();
+
+export function fetchAndCachePsi(url: string, domain: string) {
+  const existing = psiCache.get(domain);
+  if (existing && Date.now() - existing.timestamp < 3600 * 1000) return;
+  
+  psiCache.set(domain, { data: null, timestamp: Date.now() });
+
+  getPageSpeedData(url).then(data => {
+    psiCache.set(domain, { data, timestamp: Date.now() });
+  }).catch(() => {});
+}
 
 /**
  * We say who we are. Auditing someone's site behind a spoofed Chrome string
@@ -1018,13 +1031,13 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     storeApiItems = benchmark.audit.products.length;
   }
 
-  const [traffic, psi] = await Promise.all([
-    getTrafficData(domain),
-    getPageSpeedData(finalUrl),
-  ]);
+  const traffic = await getTrafficData(domain);
 
-  // Override TTFB with real Google measurement if available
-  const realTtfb = psi.ttfb != null ? psi.ttfb / 1000 : ttfb; // convert ms → s
+  // Fire PSI in the background, don't wait for it.
+  fetchAndCachePsi(finalUrl, domain);
+
+  // Fallback to local TTFB since PSI is async now
+  const realTtfb = ttfb;
 
   return {
     url: normalized,
@@ -1073,13 +1086,13 @@ export async function auditUrl(targetUrl: string): Promise<AuditResult> {
     monthlyVisits: traffic.visits,
     monthlyVisitsSource: traffic.source,
     // Google PageSpeed Insights real data
-    performanceScore: psi.performanceScore,
-    seoScore: psi.seoScore,
-    accessibilityScore: psi.accessibilityScore,
-    lcpMs: psi.lcp,
-    tbtMs: psi.tbt,
-    clsScore: psi.cls,
-    psiSource: psi.source,
+    performanceScore: null,
+    seoScore: null,
+    accessibilityScore: null,
+    lcpMs: null,
+    tbtMs: null,
+    clsScore: null,
+    psiSource: "none",
     source: "live",
     auditedAt: new Date().toISOString(),
   };
