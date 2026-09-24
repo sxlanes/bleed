@@ -130,63 +130,108 @@ export default function CureEngine({ audit, annualLoss, currency = "€" }: { au
 
       <div className="p-6 space-y-8 relative">
         {!isUnlocked && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0e1113]/90 backdrop-blur-md cure-blocked-overlay" style={{ paddingTop: '10rem' }}>
-            <div className="bg-[#090a0c] border border-[#ff3b3b]/30 p-8 rounded-xl shadow-2xl max-w-3xl w-full text-center flex flex-col gap-6" style={{ marginTop: '-10rem' }}>
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0e1113]/80 backdrop-blur-md p-4" style={{ paddingTop: '8rem' }}>
+            
+            <div className="bg-[#0e1113] border border-[#2a2d32] rounded-2xl shadow-2xl max-w-5xl w-full flex flex-col overflow-hidden" style={{ marginTop: '-8rem' }}>
               
-              <div className="text-left border-l-2 border-[#ff3b3b] pl-4 mb-4">
-                <div className="text-[#ff3b3b] font-bold text-lg mb-1">[!] HEMORRAGIA ACTIVA NO DETENIDA</div>
-                <div className="text-[#e5e7eb] text-sm">Esta fuga le cuesta a tu negocio: <strong className="text-white">{currency}{dailyLoss} / día</strong> ({currency}{hourlyLoss} cada hora)</div>
-                <div className="text-[#9ca3af] text-sm mt-1">Desde que abriste esta auditoría has perdido: <strong className="text-[#ff3b3b] font-mono">{currency}{activeBleed}</strong></div>
+              {/* Header */}
+              <div className="bg-[#ff3b3b]/10 border-b border-[#ff3b3b]/20 px-8 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[#ff3b3b]/20 flex items-center justify-center animate-pulse flex-shrink-0">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff3b3b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  </div>
+                  <div>
+                    <h3 className="text-[#ff3b3b] font-bold text-xl tracking-tight">HEMORRAGIA ACTIVA NO DETENIDA</h3>
+                    <p className="text-[#9ca3af] text-sm mt-1">Has perdido <span className="text-[#ff3b3b] font-mono font-bold">{currency}{activeBleed}</span> desde que abriste esta página.</p>
+                  </div>
+                </div>
+                <div className="md:text-right">
+                  <div className="text-[#e5e7eb] font-bold text-2xl tracking-tight">{currency}{dailyLoss} <span className="text-[#6b7280] text-sm font-normal">/ día</span></div>
+                  <div className="text-[#6b7280] text-xs mt-1 font-mono">({currency}{hourlyLoss} / hora)</div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+              {/* Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#2a2d32] bg-[#090a0c]">
+                
                 {/* Option 1 */}
-                <div className="border border-[#1a1e23] rounded-lg p-4 bg-[#0e1113]/50 opacity-60">
-                  <h4 className="text-[#9ca3af] font-bold mb-2">1. INACCIÓN (HOY)</h4>
-                  <div className="text-xl text-white mb-2">0 {currency} <span className="text-xs text-[#9ca3af]">desembolso</span></div>
-                  <ul className="text-xs space-y-1 mb-4 text-[#9ca3af]">
-                    <li>Pérdida: -{currency}{annualLoss.toLocaleString("en-US")}/año</li>
-                    <li>Tu competencia gana</li>
+                <div className="p-8 flex flex-col opacity-60 hover:opacity-100 transition-opacity">
+                  <div className="text-[#6b7280] font-bold text-xs tracking-widest mb-4">1. IGNORAR EL PROBLEMA</div>
+                  <div className="text-4xl font-light text-white mb-2">0 {currency}</div>
+                  <div className="text-xs text-[#6b7280] mb-8 pb-4 border-b border-[#2a2d32]">Desembolso inicial</div>
+                  
+                  <ul className="text-sm space-y-4 text-[#9ca3af] flex-1">
+                    <li className="flex items-start gap-3">
+                      <svg className="w-5 h-5 mt-0.5 text-[#ff3b3b] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                      <span>Pérdida de <strong className="text-white">-{currency}{annualLoss.toLocaleString("en-US")}</strong> al año.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <svg className="w-5 h-5 mt-0.5 text-[#ff3b3b] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                      <span>La competencia absorbe tus ventas.</span>
+                    </li>
                   </ul>
-                  <button className="w-full py-2 bg-transparent border border-[#1a1e23] text-[#4b5563] text-xs rounded hover:bg-[#1a1e23] transition-colors">
+                  <button className="mt-8 w-full py-3 bg-transparent border border-[#2a2d32] text-[#6b7280] font-bold text-xs rounded-lg hover:bg-[#1a1e23] hover:text-white transition-colors uppercase tracking-wider">
                     Continuar sangrando
                   </button>
                 </div>
 
                 {/* Option 2 */}
-                <div className="border border-[#1a1e23] rounded-lg p-4 bg-[#0e1113]">
-                  <h4 className="text-[#e5e7eb] font-bold mb-2">2. AGENCIA / DEV</h4>
-                  <div className="text-xl text-white mb-2">650 {currency} <span className="text-xs text-[#9ca3af]">tarifa media</span></div>
-                  <ul className="text-xs space-y-1 mb-4 text-[#d1d5db]">
-                    <li>Demora: 3 semanas</li>
-                    <li>+{currency}{(annualLoss/365 * 21).toFixed(0)} perdidos en espera</li>
+                <div className="p-8 flex flex-col">
+                  <div className="text-[#9ca3af] font-bold text-xs tracking-widest mb-4">2. CONTRATAR AGENCIA</div>
+                  <div className="text-4xl font-light text-white mb-2">650 {currency}</div>
+                  <div className="text-xs text-[#6b7280] mb-8 pb-4 border-b border-[#2a2d32]">Tarifa media del sector</div>
+                  
+                  <ul className="text-sm space-y-4 text-[#9ca3af] flex-1">
+                    <li className="flex items-start gap-3">
+                      <svg className="w-5 h-5 mt-0.5 text-[#eab308] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      <span>Demora de implementación: <strong className="text-white">3 semanas</strong>.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <svg className="w-5 h-5 mt-0.5 text-[#ff3b3b] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                      <span>Pierdes <strong className="text-white">{currency}{(annualLoss/365 * 21).toFixed(0)}</strong> mientras esperas la entrega.</span>
+                    </li>
                   </ul>
-                  <button className="w-full py-2 bg-[#1a1e23] text-[#e5e7eb] text-xs rounded hover:bg-[#2a2d32] transition-colors">
+                  <button className="mt-8 w-full py-3 bg-[#1a1e23] border border-[#2a2d32] text-[#e5e7eb] font-bold text-xs rounded-lg hover:bg-[#2a2d32] transition-colors uppercase tracking-wider">
                     Pedir presupuesto
                   </button>
                 </div>
 
                 {/* Option 3 */}
-                <div className="border border-[#ff3b3b] rounded-lg p-4 bg-[#ff3b3b]/5 transform scale-105 shadow-[0_0_15px_rgba(255,59,59,0.15)]">
-                  <h4 className="text-[#ff3b3b] font-bold mb-2">3. PARCHE BLEED</h4>
-                  <div className="text-xl text-white mb-2">49,00 {currency} <span className="text-xs text-[#9ca3af]">pago único</span></div>
-                  <ul className="text-xs space-y-1 mb-4 text-[#e5e7eb]">
-                    <li>Desbloqueo inmediato</li>
-                    <li>Taponado en 60 seg</li>
+                <div className="p-8 flex flex-col bg-[#ff3b3b]/5 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-[#ff3b3b]/10 blur-3xl rounded-full"></div>
+                  <div className="text-[#ff3b3b] font-bold text-xs tracking-widest mb-4 flex items-center justify-between">
+                    <span>3. PARCHE BLEED</span>
+                    <span className="bg-[#ff3b3b]/20 px-2 py-0.5 rounded text-[10px]">RECOMENDADO</span>
+                  </div>
+                  <div className="text-4xl font-bold text-white mb-2">49 {currency}</div>
+                  <div className="text-xs text-[#ff3b3b] mb-8 pb-4 border-b border-[#ff3b3b]/20">Pago único, acceso instantáneo</div>
+                  
+                  <ul className="text-sm space-y-4 text-[#e5e7eb] flex-1 relative z-10">
+                    <li className="flex items-start gap-3">
+                      <svg className="w-5 h-5 mt-0.5 text-[#22c55e] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                      <span>Desbloqueo inmediato del código.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <svg className="w-5 h-5 mt-0.5 text-[#22c55e] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                      <span>Fuga taponada en menos de <strong className="text-white">60 segundos</strong>.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <svg className="w-5 h-5 mt-0.5 text-[#22c55e] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                      <span>Listo para copiar y pegar (Copy-paste).</span>
+                    </li>
                   </ul>
                   <button 
                     onClick={handleUnlock}
                     disabled={isPaying}
-                    className="w-full py-2 bg-[#ff3b3b] text-white font-bold text-xs rounded hover:bg-[#dc2626] transition-colors"
+                    className="mt-8 w-full py-4 bg-[#ff3b3b] text-white font-bold text-sm rounded-lg hover:bg-[#dc2626] transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(255,59,59,0.3)] uppercase tracking-wider relative z-10"
                   >
-                    {isPaying ? "Procesando..." : `Taponar por 49 ${currency}`}
+                    {isPaying ? "Procesando..." : `Comprar Parche por 49 ${currency}`}
                   </button>
+                  <div className="text-center mt-4 text-xs text-[#ff3b3b]/70 font-mono relative z-10">
+                    Amortizado en {Math.max(1, Math.ceil(49 / (annualLoss / 8760)))} horas.
+                  </div>
                 </div>
-              </div>
 
-              <div className="text-[10px] text-[#4b5563] flex items-center justify-center gap-1 mt-2">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                Amortizado en {Math.max(1, Math.ceil(49 / (annualLoss / 8760)))} horas de tráfico.
               </div>
             </div>
           </div>
