@@ -1,0 +1,110 @@
+const fs = require('fs');
+let code = fs.readFileSync('lib/calibracion.ts', 'utf8');
+
+const newConstants = `
+  // --- CONSTANTES EXPERTAS (UX, PERFORMANCE, SEGURIDAD, PRICING) ---
+  deloitteImpactoConversion: {
+    id: "deloitteImpactoConversion",
+    descripcion: "Caída relativa en tasa de conversión por cada segundo de retardo móvil",
+    valor: 8.4,
+    minimo: 6.0,
+    maximo: 10.5,
+    unidad: "porcentaje",
+    fuente: "Deloitte Digital & Google, 'Milliseconds Make Millions' (30M sesiones)",
+    url: "https://www.deloitte.com/ie/en/services/consulting/perspectives/milliseconds-make-millions.html",
+    fecha: "2020-02-15",
+  },
+  anchoBandaMovilMedianoEspana: {
+    id: "anchoBandaMovilMedianoEspana",
+    descripcion: "Rendimiento mediano de descarga móvil 4G en España",
+    valor: 16000, // Kbps
+    minimo: 10000,
+    maximo: 35000,
+    unidad: "ratio",
+    fuente: "CNMC Data & Speedtest Intelligence Spain",
+    url: "https://www.cnmc.es",
+    fecha: "2025-06-30",
+  },
+  tasaAbandonoPorDesconfianzaSeguridad: {
+    id: "tasaAbandonoPorDesconfianzaSeguridad",
+    descripcion: "Shoppers abandoning checkout due to security/trust concerns",
+    valor: 19,
+    minimo: 18,
+    maximo: 25,
+    unidad: "porcentaje",
+    fuente: "Baymard Institute, Cart Abandonment Rate Study",
+    url: "https://baymard.com/lists/cart-abandonment-rate",
+    fecha: "2024-05-01",
+  },
+  costeMinimoLimpiezaIncidente: {
+    id: "costeMinimoLimpiezaIncidente",
+    descripcion: "Minimum technical disinfection and recovery cost",
+    valor: 850,
+    minimo: 500,
+    maximo: 2500,
+    unidad: "euros",
+    fuente: "INCIBE / Industry benchmark SME CMS malware remediation",
+    url: "https://www.incibe.es/pyme",
+    fecha: "2025-12-31",
+  },
+  probabilidadIncidenteSoftwareEOL: {
+    id: "probabilidadIncidenteSoftwareEOL",
+    descripcion: "Annual probability of automated exploit on EOL software",
+    valor: 15,
+    minimo: 10,
+    maximo: 30,
+    unidad: "porcentaje",
+    fuente: "Hiscox Cyber Readiness / Sucuri Website Threat Report",
+    url: "https://www.hiscox.co.uk/cyber-readiness-report",
+    fecha: "2026-09-01",
+  },
+  efectoBillboardTasaVisitaWeb: {
+    id: "efectoBillboardTasaVisitaWeb",
+    descripcion: "Share of OTA bookers who visit direct website",
+    valor: 55,
+    minimo: 50,
+    maximo: 75,
+    unidad: "porcentaje",
+    fuente: "Cornell Center for Hospitality Research (Chris Anderson)",
+    url: "https://scholarship.sha.cornell.edu/chrpubs/5/",
+    fecha: "2018-04-01",
+  },
+  caidaConversionParidadDirecta: {
+    id: "caidaConversionParidadDirecta",
+    descripcion: "Direct engine conversion drop under parity",
+    valor: 32,
+    minimo: 20,
+    maximo: 45,
+    unidad: "porcentaje",
+    fuente: "Amadeus Hospitality & Mirai Parity Benchmark",
+    url: "https://www.amadeus-hospitality.com/",
+    fecha: "2024-05-15",
+  },
+  elasticidadLucaEstrella: {
+    id: "elasticidadLucaEstrella",
+    descripcion: "Caída porcentual en ingresos por estrella menos",
+    valor: 5,
+    minimo: 5,
+    maximo: 9,
+    unidad: "porcentaje",
+    fuente: "Michael Luca (HBS), Reviews, Reputation, and Revenue",
+    url: "https://www.hbs.edu/faculty/Pages/item.aspx?num=41233",
+    fecha: "2016-09-01",
+  },
+  umbralFiltroMapsBrightLocal: {
+    id: "umbralFiltroMapsBrightLocal",
+    descripcion: "Consumidores que descartan negocios < 4.0",
+    valor: 68,
+    minimo: 55,
+    maximo: 70,
+    unidad: "porcentaje",
+    fuente: "BrightLocal, Local Consumer Review Survey",
+    url: "https://www.brightlocal.com/research/local-consumer-review-survey/",
+    fecha: "2026-01-15",
+  },
+  // --- FIN CONSTANTES EXPERTAS ---
+`;
+
+// Insert right before the last closing brace in CONSTANTES
+code = code.replace(/(};\s*)$/, newConstants + "$1");
+fs.writeFileSync('lib/calibracion.ts', code);
